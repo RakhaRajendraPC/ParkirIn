@@ -1,0 +1,296 @@
+// lib/screens/booking_detail_screen.dart
+import 'package:flutter/material.dart';
+import '../models/booking_model.dart';
+import 'checkin_screen.dart';
+import 'checkout_screen.dart';
+import 'reschedule_cancel_screen.dart';
+import 'rating_review_screen.dart';
+
+class BookingDetailScreen extends StatelessWidget {
+  final BookingModel booking;
+
+  const BookingDetailScreen({super.key, required this.booking});
+
+  static const Color primaryBlue = Color(0xFF1E5EFF);
+
+  String _fmt(DateTime d) {
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des'
+    ];
+    final hh = d.hour.toString().padLeft(2, '0');
+    final mm = d.minute.toString().padLeft(2, '0');
+    return '${d.day} ${months[d.month]} ${d.year}, $hh:$mm';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = switch (booking.status) {
+      BookingStatus.aktif => primaryBlue,
+      BookingStatus.selesai => Colors.green,
+      BookingStatus.dibatalkan => Colors.redAccent,
+    };
+    final statusLabel = switch (booking.status) {
+      BookingStatus.aktif => 'AKTIF',
+      BookingStatus.selesai => 'SELESAI',
+      BookingStatus.dibatalkan => 'DIBATALKAN',
+    };
+
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF7F8FA),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text('Detail Booking',
+              style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17)),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.04), blurRadius: 8)
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8)),
+                        child: Text(statusLabel,
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor)),
+                      ),
+                      Text(booking.bookingCode,
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(booking.locationName,
+                      style: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 2),
+                  Text(booking.locationAddress,
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _buildInfoCard('Jadwal', [
+              ('Check-in', _fmt(booking.checkIn)),
+              ('Check-out', _fmt(booking.checkOut)),
+              ('Durasi', '${booking.durationNights} malam'),
+              if (booking.actualCheckoutTime != null)
+                ('Check-out aktual', _fmt(booking.actualCheckoutTime!)),
+            ]),
+            const SizedBox(height: 14),
+            _buildInfoCard('Kendaraan', [('Plat Nomor', booking.vehiclePlate)]),
+            const SizedBox(height: 14),
+            _buildBillingCard(),
+            const SizedBox(height: 20),
+            if (booking.status == BookingStatus.aktif)
+              ..._buildActiveActions(context),
+            if (booking.status == BookingStatus.selesai)
+              _buildRateButton(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String title, List<(String, String)> rows) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          const SizedBox(height: 8),
+          ...rows.map((r) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(r.$1,
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade600)),
+                    Text(r.$2,
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillingCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Rincian Biaya',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          const SizedBox(height: 8),
+          _billRow('Tarif dasar', booking.subtotal),
+          _billRow('Biaya layanan', booking.serviceFee),
+          if (booking.overstayFee > 0)
+            _billRow('Biaya overstay', booking.overstayFee, warn: true),
+          const Padding(
+              padding: EdgeInsets.symmetric(vertical: 6),
+              child: Divider(height: 1)),
+          _billRow('Total', booking.total, bold: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _billRow(String label, double amount,
+      {bool bold = false, bool warn = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: TextStyle(
+                  fontSize: bold ? 13 : 12,
+                  fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
+          Text('Rp ${amount.toStringAsFixed(0)}',
+              style: TextStyle(
+                fontSize: bold ? 13 : 12,
+                fontWeight: bold ? FontWeight.bold : FontWeight.w500,
+                color: warn ? Colors.redAccent : Colors.black87,
+              )),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildActiveActions(BuildContext context) {
+    return [
+      Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => CheckinScreen(booking: booking))),
+              icon: const Icon(Icons.login, size: 16),
+              label: const Text('Check-in', style: TextStyle(fontSize: 12)),
+              style: OutlinedButton.styleFrom(
+                  foregroundColor: primaryBlue,
+                  side: const BorderSide(color: primaryBlue),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => CheckoutScreen(booking: booking))),
+              icon: const Icon(Icons.logout, size: 16),
+              label: const Text('Check-out', style: TextStyle(fontSize: 12)),
+              style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.orange,
+                  side: const BorderSide(color: Colors.orange),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 10),
+      SizedBox(
+        width: double.infinity,
+        height: 44,
+        child: TextButton.icon(
+          onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      RescheduleCancelScreen(booking: booking))),
+          icon: const Icon(Icons.edit_calendar_outlined,
+              size: 16, color: Colors.black54),
+          label: const Text('Reschedule / Batalkan Booking',
+              style: TextStyle(fontSize: 12, color: Colors.black54)),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildRateButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 46,
+      child: ElevatedButton.icon(
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => RatingReviewScreen(booking: booking))),
+        icon: const Icon(Icons.star_outline, size: 18),
+        label: const Text('Beri Rating & Ulasan'),
+        style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.amber.shade700,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12))),
+      ),
+    );
+  }
+}
