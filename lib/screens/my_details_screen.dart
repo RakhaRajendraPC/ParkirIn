@@ -1,5 +1,6 @@
 // lib/screens/my_details_screen.dart
 import 'package:flutter/material.dart';
+import '../services/user_session.dart';
 
 class MyDetailsScreen extends StatefulWidget {
   const MyDetailsScreen({super.key});
@@ -10,17 +11,41 @@ class MyDetailsScreen extends StatefulWidget {
 
 class _MyDetailsScreenState extends State<MyDetailsScreen> {
   static const Color primaryBlue = Color(0xFF1E5EFF);
+  final UserSession _session = UserSession.instance;
 
-  final _nameCtrl = TextEditingController(text: 'Budi Santoso');
-  final _emailCtrl = TextEditingController(text: 'budi.santoso@example.com');
-  final _phoneCtrl = TextEditingController(text: '0812-3456-7890');
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _emailCtrl;
+  late final TextEditingController _phoneCtrl;
   final _idCtrl = TextEditingController(text: '3171xxxxxxxxxxxx');
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: _session.name);
+    _emailCtrl = TextEditingController(text: _session.email);
+    _phoneCtrl = TextEditingController(text: _session.phone);
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _idCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _save() async {
     setState(() => _isSaving = true);
     await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
+
+    // Tulis balik ke UserSession — otomatis sinkron ke Profile & alur booking.
+    _session.name = _nameCtrl.text.trim();
+    _session.email = _emailCtrl.text.trim();
+    _session.phone = _phoneCtrl.text.trim();
+
     setState(() => _isSaving = false);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Data berhasil disimpan')),

@@ -1,7 +1,7 @@
 // lib/screens/location_detail_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
-import 'booking_summary_screen.dart';
+import 'parking_slot_map_screen.dart';
 
 class LocationDetailScreen extends StatelessWidget {
   final ParkingLocation location;
@@ -215,7 +215,7 @@ class LocationDetailScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => BookingSummaryScreen(
+                          builder: (context) => ParkingSlotMapScreen(
                             location: location,
                             checkIn: checkIn,
                             checkOut: checkOut,

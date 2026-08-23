@@ -1,12 +1,27 @@
+// lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
+import '../services/user_session.dart';
 import 'my_details_screen.dart';
 import 'payment_methods_screen.dart';
 import 'help_center_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   static const Color primaryBlue = Color(0xFF1E5EFF);
+  final UserSession _session = UserSession.instance;
+
+  Future<void> _openMyDetails() async {
+    await Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const MyDetailsScreen()));
+    setState(
+        () {}); // refresh tampilan setelah kembali, kalau ada perubahan data
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,16 +56,17 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
+              const SizedBox(height: 16),
+              _buildProfileHeader(),
+              const SizedBox(height: 24),
               _buildMenuTile(
                 icon: Icons.person_outline,
                 iconColor: primaryBlue,
                 title: 'My Details',
                 subtitle: 'Personal info, ID, password',
-                onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const MyDetailsScreen())),
+                onTap: _openMyDetails,
               ),
+              const SizedBox(height: 12),
               _buildMenuTile(
                 icon: Icons.credit_card,
                 iconColor: primaryBlue,
@@ -61,6 +77,7 @@ class ProfileScreen extends StatelessWidget {
                     MaterialPageRoute(
                         builder: (context) => const PaymentMethodsScreen())),
               ),
+              const SizedBox(height: 12),
               _buildMenuTile(
                 icon: Icons.help_outline,
                 iconColor: Colors.teal,
@@ -120,13 +137,13 @@ class ProfileScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Budi Santoso',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            _session.name,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 2),
           Text(
-            'budi.santoso@example.com',
+            _session.email,
             style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 10),
@@ -208,58 +225,6 @@ class ProfileScreen extends StatelessWidget {
             const Icon(Icons.chevron_right, color: Colors.black26),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildLoyaltyTile() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.loyalty, color: Colors.orange, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('Loyalty Points',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                SizedBox(height: 2),
-                Text('Redeem for parking discounts',
-                    style: TextStyle(fontSize: 12, color: Colors.black54)),
-              ],
-            ),
-          ),
-          const Text(
-            '2,450',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Colors.orange,
-            ),
-          ),
-          const Icon(Icons.chevron_right, color: Colors.black26),
-        ],
       ),
     );
   }

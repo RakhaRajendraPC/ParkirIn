@@ -1,13 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Notification types derived from PRD section 6.5 (Notifikasi & Reminder
-/// Real-time) plus related trigger points referenced elsewhere in the PRD:
-///  - Booking confirmation      -> Alur Booking, langkah 5
-///  - Check-in reminder (H-1)   -> 6.5
-///  - Shuttle arriving          -> 6.4 & 6.5
-///  - Check-out confirmation    -> 6.5
-///  - Overstay fee warning      -> 6.3 (kebijakan biaya tambahan otomatis)
-///  - Flight status change      -> 6.5 & 6.7 (Fase 2 - flight-linked booking)
 enum NotificationType {
   bookingConfirmation,
   checkinReminder,
@@ -17,9 +9,6 @@ enum NotificationType {
   flightStatusChange,
 }
 
-/// High-level filter categories shown as chips on the Alerts screen.
-/// Booking confirmation + overstay warning are grouped under "Booking"
-/// since both relate to the reservation/transaction lifecycle (6.1 & 6.3).
 enum AlertCategory { all, reminder, shuttle, booking, flight }
 
 extension NotificationTypeX on NotificationType {
@@ -38,7 +27,6 @@ extension NotificationTypeX on NotificationType {
     }
   }
 
-  /// Label shown as the small category tag on each card.
   String get label {
     switch (this) {
       case NotificationType.bookingConfirmation:

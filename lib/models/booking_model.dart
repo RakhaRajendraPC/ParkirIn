@@ -1,4 +1,3 @@
-// lib/models/booking_model.dart
 enum BookingStatus { aktif, selesai, dibatalkan }
 
 class BookingModel {

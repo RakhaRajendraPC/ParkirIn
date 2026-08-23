@@ -1,7 +1,10 @@
 // lib/screens/search_results_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
+import '../widgets/empty_search_view.dart';
 import 'location_detail_screen.dart';
+import 'map_view_screen.dart';
+import 'advanced_filter_screen.dart';
 
 class SearchResultsScreen extends StatefulWidget {
   final String airportName;
@@ -23,9 +26,32 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   static const Color primaryBlue = Color(0xFF1E5EFF);
   String _sortBy = 'Terdekat';
   bool _onlyAccessible = false;
+  SearchFilterResult? _advancedFilter;
 
   List<ParkingLocation> get _results {
     var list = List<ParkingLocation>.from(ParkingLocation.mockList());
+
+    // Filter dari toggle aksesibilitas cepat di filter bar
+    if (_onlyAccessible) {
+      list = list.where((e) => e.isAccessible).toList();
+    }
+
+    // Filter dari AdvancedFilterScreen (harga, tipe parkir, fasilitas, aksesibilitas)
+    final adv = _advancedFilter;
+    if (adv != null) {
+      list = list.where((e) {
+        final inPriceRange = e.pricePerNight >= adv.priceRange.start &&
+            e.pricePerNight <= adv.priceRange.end;
+        final matchType = adv.parkingType == null ||
+            (adv.parkingType == 'Indoor' && e.isIndoor) ||
+            (adv.parkingType == 'Outdoor' && !e.isIndoor);
+        final matchFacilities = adv.facilities.isEmpty ||
+            adv.facilities.every((f) => e.facilities.contains(f));
+        final matchAccessible = !adv.onlyAccessible || e.isAccessible;
+        return inPriceRange && matchType && matchFacilities && matchAccessible;
+      }).toList();
+    }
+
     switch (_sortBy) {
       case 'Termurah':
         list.sort((a, b) => a.pricePerNight.compareTo(b.pricePerNight));
@@ -73,13 +99,20 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           children: [
             _buildFilterBar(),
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: _results.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) =>
-                    _buildLocationCard(_results[index]),
-              ),
+              child: _results.isEmpty
+                  ? EmptySearchView(
+                      onResetFilter: () => setState(() {
+                        _advancedFilter = null;
+                        _onlyAccessible = false;
+                      }),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _results.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) =>
+                          _buildLocationCard(_results[index]),
+                    ),
             ),
           ],
         ),
@@ -131,6 +164,33 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               color: _onlyAccessible ? primaryBlue : Colors.grey.shade400,
             ),
             tooltip: 'Ramah kursi roda / lansia',
+          ),
+          IconButton(
+            onPressed: () async {
+              final result = await Navigator.push<SearchFilterResult>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      AdvancedFilterScreen(initialFilter: _advancedFilter),
+                ),
+              );
+              if (result != null) setState(() => _advancedFilter = result);
+            },
+            icon: const Icon(Icons.tune, color: primaryBlue),
+            tooltip: 'Filter Lanjutan',
+          ),
+          IconButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MapViewScreen(
+                  checkIn: widget.checkIn,
+                  checkOut: widget.checkOut,
+                ),
+              ),
+            ),
+            icon: const Icon(Icons.map_outlined, color: primaryBlue),
+            tooltip: 'Lihat di Peta',
           ),
         ],
       ),

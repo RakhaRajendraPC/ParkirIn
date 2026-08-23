@@ -10,6 +10,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'driver_chat_screen.dart';
 
 enum ShuttleStatus { menujuJemput, tiba, dalamPerjalanan, selesai }
 
@@ -32,6 +33,10 @@ class ShuttleTrackingScreen extends StatefulWidget {
 class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
     with SingleTickerProviderStateMixin {
   static const Color primaryBlue = Color(0xFF1E5EFF);
+
+  // Data driver & shuttle mock (production: ambil dari API tracking shuttle).
+  static const String _driverName = 'Agus Wijaya';
+  static const String _vehiclePlate = 'B 7788 KJ';
 
   // Mock state: dalam production, ini datang dari stream lokasi shuttle
   // (mis. websocket/polling ke Maps & Geolocation API, PRD §9).
@@ -125,6 +130,26 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
             child: const Text('Kirim Permintaan'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _callDriver() {
+    // Panggil driver langsung. Production: gunakan url_launcher untuk
+    // tel: URI, atau integrasi VoIP jika ingin panggilan in-app.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Menghubungi driver...')),
+    );
+  }
+
+  void _openDriverChat() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const DriverChatScreen(
+          driverName: _driverName,
+          vehiclePlate: _vehiclePlate,
+        ),
       ),
     );
   }
@@ -454,9 +479,10 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
               ],
             ),
           ),
-          _buildIconButton(Icons.call, primaryBlue, () {}),
+          _buildIconButton(Icons.call, primaryBlue, _callDriver),
           const SizedBox(width: 8),
-          _buildIconButton(Icons.chat_bubble_outline, Colors.orange, () {}),
+          _buildIconButton(
+              Icons.chat_bubble_outline, Colors.orange, _openDriverChat),
         ],
       ),
     );

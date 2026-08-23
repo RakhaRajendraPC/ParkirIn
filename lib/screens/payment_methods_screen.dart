@@ -1,5 +1,6 @@
 // lib/screens/payment_methods_screen.dart
 import 'package:flutter/material.dart';
+import 'add_payment_method_screen.dart';
 
 class SavedPaymentMethod {
   final String label;
@@ -181,14 +182,25 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
-        final options = [
-          ('Kartu Debit/Kredit', Icons.credit_card, primaryBlue),
+        final options = <(String, IconData, Color, PaymentMethodType)>[
+          (
+            'Kartu Debit/Kredit',
+            Icons.credit_card,
+            primaryBlue,
+            PaymentMethodType.card
+          ),
           (
             'E-Wallet (GoPay/OVO/Dana)',
             Icons.account_balance_wallet_outlined,
-            Colors.teal
+            Colors.teal,
+            PaymentMethodType.ewallet
           ),
-          ('Virtual Account', Icons.account_balance_outlined, Colors.purple),
+          (
+            'Virtual Account',
+            Icons.account_balance_outlined,
+            Colors.purple,
+            PaymentMethodType.virtualAccount
+          ),
         ];
         return SafeArea(
           child: Column(
@@ -197,7 +209,20 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 .map((o) => ListTile(
                       leading: Icon(o.$2, color: o.$3),
                       title: Text(o.$1, style: const TextStyle(fontSize: 13)),
-                      onTap: () => Navigator.pop(context),
+                      onTap: () async {
+                        Navigator.pop(context); // tutup bottom sheet dulu
+                        final saved = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                AddPaymentMethodScreen(type: o.$4),
+                          ),
+                        );
+                        if (saved == true && mounted) {
+                          // Metode pembayaran baru berhasil disimpan (mock).
+                          // Di production: refresh dari API/backend di sini.
+                        }
+                      },
                     ))
                 .toList(),
           ),

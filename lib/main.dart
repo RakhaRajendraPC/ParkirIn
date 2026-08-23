@@ -3,6 +3,7 @@ import 'screens/search_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/bookings_screen.dart';
+import 'screens/splash_onboarding_screen.dart';
 
 void main() {
   runApp(const ParkirInApp());
@@ -25,7 +26,8 @@ class ParkirInApp extends StatelessWidget {
           primary: const Color(0xFF1E5EFF),
         ),
       ),
-      home: const RootShell(),
+      home:
+          const SplashScreen(), // ⬅️ diubah dari RootShell() ke SplashScreen()
     );
   }
 }
@@ -52,7 +54,8 @@ class _RootShellState extends State<RootShell> {
   final List<_NavItem> _navItems = const [
     _NavItem(icon: Icons.search, label: 'Search'),
     _NavItem(icon: Icons.confirmation_number_outlined, label: 'Bookings'),
-    _NavItem(icon: Icons.notifications_none_rounded, label: 'Alerts', showDot: true),
+    _NavItem(
+        icon: Icons.notifications_none_rounded, label: 'Alerts', showDot: true),
     _NavItem(icon: Icons.person_outline, label: 'Profile'),
   ];
 
@@ -116,7 +119,8 @@ class _RootShellState extends State<RootShell> {
                         style: TextStyle(
                           fontSize: 11,
                           color: color,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight:
+                              selected ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
                     ],
@@ -136,5 +140,6 @@ class _NavItem {
   final String label;
   final bool showDot;
 
-  const _NavItem({required this.icon, required this.label, this.showDot = false});
+  const _NavItem(
+      {required this.icon, required this.label, this.showDot = false});
 }

@@ -1,4 +1,3 @@
-// lib/screens/booking_confirmation_screen.dart
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/parking_location_model.dart';

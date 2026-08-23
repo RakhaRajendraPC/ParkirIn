@@ -1,6 +1,7 @@
 // lib/screens/help_center_screen.dart
 import 'package:flutter/material.dart';
 import 'livechat_sos_screen.dart';
+import 'report_issue_screen.dart';
 
 class HelpCenterScreen extends StatelessWidget {
   const HelpCenterScreen({super.key});
@@ -111,11 +112,11 @@ class HelpCenterScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                     color: primaryBlue.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(14)),
-                child: Row(
+                child: const Row(
                   children: [
-                    const Icon(Icons.support_agent, color: primaryBlue),
-                    const SizedBox(width: 12),
-                    const Expanded(
+                    Icon(Icons.support_agent, color: primaryBlue),
+                    SizedBox(width: 12),
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -128,7 +129,34 @@ class HelpCenterScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right, color: Colors.black38),
+                    Icon(Icons.chevron_right, color: Colors.black38),
+                  ],
+                ),
+              ),
+            ),
+            InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ReportIssueScreen())),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.only(top: 10),
+                decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(14)),
+                child: const Row(
+                  children: [
+                    Icon(Icons.report_gmailerrorred_outlined,
+                        color: Colors.redAccent),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Lapor Masalah / Komplain',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 13)),
+                    ),
+                    Icon(Icons.chevron_right, color: Colors.black38),
                   ],
                 ),
               ),

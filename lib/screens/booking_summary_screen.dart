@@ -2,17 +2,30 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import 'booking_confirmation_screen.dart';
+import '../models/parking_slot_model.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   final ParkingLocation location;
   final DateTime checkIn;
   final DateTime checkOut;
+  final ParkingSlot? selectedSlot;
+  final String driverName;
+  final String driverPhone;
+  final String vehiclePlate;
+  final String vehicleBrand;
+  final String vehicleType;
 
   const BookingSummaryScreen({
     super.key,
     required this.location,
     required this.checkIn,
     required this.checkOut,
+    this.selectedSlot,
+    this.driverName = '',
+    this.driverPhone = '',
+    this.vehiclePlate = '',
+    this.vehicleBrand = '',
+    this.vehicleType = '',
   });
 
   @override
@@ -29,7 +42,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     return n.ceil() < 1 ? 1 : n.ceil();
   }
 
-  double get _subtotal => widget.location.pricePerNight * _nights;
+  double get _pricePerNight =>
+      widget.selectedSlot?.price ?? widget.location.pricePerNight;
+  double get _subtotal => _pricePerNight * _nights;
   double get _serviceFee => 10000;
   double get _total => _subtotal + _serviceFee;
 
@@ -223,6 +238,32 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                   fontSize: 11,
                   color: primaryBlue,
                   fontWeight: FontWeight.w600)),
+          if (widget.selectedSlot != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.local_parking,
+                    size: 13, color: widget.selectedSlot!.tierColor),
+                const SizedBox(width: 6),
+                Text(
+                    'Slot ${widget.selectedSlot!.code} · ${widget.selectedSlot!.tierLabel}',
+                    style: const TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ],
+          if (widget.driverName.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.person_outline,
+                    size: 13, color: Colors.black54),
+                const SizedBox(width: 6),
+                Text('${widget.driverName} · ${widget.vehiclePlate}',
+                    style: const TextStyle(fontSize: 11)),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -263,7 +304,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
           const Text('Rincian Biaya',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           const SizedBox(height: 8),
-          row('Tarif dasar (Rp ${widget.location.pricePerNight.toStringAsFixed(0)} × $_nights malam)',
+          row('Tarif dasar (Rp ${_pricePerNight.toStringAsFixed(0)} × $_nights malam)',
               _subtotal),
           row('Biaya layanan', _serviceFee),
           const Padding(

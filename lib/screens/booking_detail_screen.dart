@@ -5,6 +5,7 @@ import 'checkin_screen.dart';
 import 'checkout_screen.dart';
 import 'reschedule_cancel_screen.dart';
 import 'rating_review_screen.dart';
+import 'booking_qr_screen.dart';
 
 class BookingDetailScreen extends StatelessWidget {
   final BookingModel booking;
@@ -53,11 +54,14 @@ class BookingDetailScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Detail Booking',
-              style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17)),
+          title: const Text(
+            'Detail Booking',
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+              fontSize: 17,
+            ),
+          ),
         ),
         body: ListView(
           padding: const EdgeInsets.all(16),
@@ -69,7 +73,9 @@ class BookingDetailScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.04), blurRadius: 8)
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                  ),
                 ],
               ),
               child: Column(
@@ -80,32 +86,73 @@ class BookingDetailScreen extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8)),
-                        child: Text(statusLabel,
-                            style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: statusColor)),
-                      ),
-                      Text(booking.bookingCode,
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          statusLabel,
                           style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                              fontWeight: FontWeight.w600)),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: statusColor,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        booking.bookingCode,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(booking.locationName,
-                      style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.bold)),
+                  Text(
+                    booking.locationName,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(booking.locationAddress,
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  Text(
+                    booking.locationAddress,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookingQrScreen(booking: booking),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.qr_code, size: 18),
+                label: const Text('Lihat QR Code & Cetak Struk'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: primaryBlue,
+                  side: const BorderSide(color: primaryBlue),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -138,30 +185,41 @@ class BookingDetailScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
           const SizedBox(height: 8),
-          ...rows.map((r) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(r.$1,
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade600)),
-                    Text(r.$2,
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              )),
+          ...rows.map(
+            (r) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    r.$1,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  Text(
+                    r.$2,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -174,45 +232,57 @@ class BookingDetailScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Rincian Biaya',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          const Text(
+            'Rincian Biaya',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
           const SizedBox(height: 8),
           _billRow('Tarif dasar', booking.subtotal),
           _billRow('Biaya layanan', booking.serviceFee),
           if (booking.overstayFee > 0)
             _billRow('Biaya overstay', booking.overstayFee, warn: true),
           const Padding(
-              padding: EdgeInsets.symmetric(vertical: 6),
-              child: Divider(height: 1)),
+            padding: EdgeInsets.symmetric(vertical: 6),
+            child: Divider(height: 1),
+          ),
           _billRow('Total', booking.total, bold: true),
         ],
       ),
     );
   }
 
-  Widget _billRow(String label, double amount,
-      {bool bold = false, bool warn = false}) {
+  Widget _billRow(
+    String label,
+    double amount, {
+    bool bold = false,
+    bool warn = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: bold ? 13 : 12,
-                  fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
-          Text('Rp ${amount.toStringAsFixed(0)}',
-              style: TextStyle(
-                fontSize: bold ? 13 : 12,
-                fontWeight: bold ? FontWeight.bold : FontWeight.w500,
-                color: warn ? Colors.redAccent : Colors.black87,
-              )),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: bold ? 13 : 12,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          Text(
+            'Rp ${amount.toStringAsFixed(0)}',
+            style: TextStyle(
+              fontSize: bold ? 13 : 12,
+              fontWeight: bold ? FontWeight.bold : FontWeight.w500,
+              color: warn ? Colors.redAccent : Colors.black87,
+            ),
+          ),
         ],
       ),
     );
@@ -225,32 +295,40 @@ class BookingDetailScreen extends StatelessWidget {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => CheckinScreen(booking: booking))),
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CheckinScreen(booking: booking),
+                ),
+              ),
               icon: const Icon(Icons.login, size: 16),
               label: const Text('Check-in', style: TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryBlue,
-                  side: const BorderSide(color: primaryBlue),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10))),
+                foregroundColor: primaryBlue,
+                side: const BorderSide(color: primaryBlue),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => CheckoutScreen(booking: booking))),
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CheckoutScreen(booking: booking),
+                ),
+              ),
               icon: const Icon(Icons.logout, size: 16),
               label: const Text('Check-out', style: TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.orange,
-                  side: const BorderSide(color: Colors.orange),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10))),
+                foregroundColor: Colors.orange,
+                side: const BorderSide(color: Colors.orange),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
           ),
         ],
@@ -261,14 +339,20 @@ class BookingDetailScreen extends StatelessWidget {
         height: 44,
         child: TextButton.icon(
           onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      RescheduleCancelScreen(booking: booking))),
-          icon: const Icon(Icons.edit_calendar_outlined,
-              size: 16, color: Colors.black54),
-          label: const Text('Reschedule / Batalkan Booking',
-              style: TextStyle(fontSize: 12, color: Colors.black54)),
+            context,
+            MaterialPageRoute(
+              builder: (context) => RescheduleCancelScreen(booking: booking),
+            ),
+          ),
+          icon: const Icon(
+            Icons.edit_calendar_outlined,
+            size: 16,
+            color: Colors.black54,
+          ),
+          label: const Text(
+            'Reschedule / Batalkan Booking',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
         ),
       ),
     ];
@@ -280,16 +364,20 @@ class BookingDetailScreen extends StatelessWidget {
       height: 46,
       child: ElevatedButton.icon(
         onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => RatingReviewScreen(booking: booking))),
+          context,
+          MaterialPageRoute(
+            builder: (context) => RatingReviewScreen(booking: booking),
+          ),
+        ),
         icon: const Icon(Icons.star_outline, size: 18),
         label: const Text('Beri Rating & Ulasan'),
         style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.amber.shade700,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12))),
+          backgroundColor: Colors.amber.shade700,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       ),
     );
   }

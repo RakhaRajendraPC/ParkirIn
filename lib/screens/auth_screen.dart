@@ -1,6 +1,6 @@
-// lib/screens/auth_screen.dart
 import 'package:flutter/material.dart';
-import '/main.dart'; // ganti dengan import RootShell dari main.dart
+import '/main.dart';
+import 'otp_verification_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -29,14 +29,24 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _submit() async {
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1)); // simulasi auth API
+    await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
     setState(() => _isLoading = false);
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const RootShell()),
-      (route) => false,
-    );
+
+    if (!_isLogin) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OtpVerificationScreen(contact: _emailCtrl.text),
+        ),
+      );
+    } else {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const RootShell()),
+        (route) => false,
+      );
+    }
   }
 
   @override
@@ -50,8 +60,8 @@ class _AuthScreenState extends State<AuthScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 40),
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(Icons.location_on, color: primaryBlue, size: 32),
                   SizedBox(width: 8),
                   Text('ParkirIn',

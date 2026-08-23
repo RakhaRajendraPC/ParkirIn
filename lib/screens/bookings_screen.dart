@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
 import 'checkin_screen.dart';
 import 'checkout_screen.dart';
+import 'booking_qr_screen.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -40,11 +41,14 @@ class _BookingsScreenState extends State<BookingsScreen>
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('My Bookings',
-              style: TextStyle(
-                  color: primaryBlue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18)),
+          title: const Text(
+            'My Bookings',
+            style: TextStyle(
+              color: primaryBlue,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
           bottom: TabBar(
             controller: _tabController,
             labelColor: primaryBlue,
@@ -55,7 +59,7 @@ class _BookingsScreenState extends State<BookingsScreen>
             tabs: const [
               Tab(text: 'Aktif'),
               Tab(text: 'Selesai'),
-              Tab(text: 'Dibatalkan')
+              Tab(text: 'Dibatalkan'),
             ],
           ),
         ),
@@ -77,11 +81,16 @@ class _BookingsScreenState extends State<BookingsScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.confirmation_number_outlined,
-                size: 52, color: Colors.grey.shade300),
+            Icon(
+              Icons.confirmation_number_outlined,
+              size: 52,
+              color: Colors.grey.shade300,
+            ),
             const SizedBox(height: 10),
-            Text('Belum ada booking',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+            Text(
+              'Belum ada booking',
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+            ),
           ],
         ),
       );
@@ -113,9 +122,10 @@ class _BookingsScreenState extends State<BookingsScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2))
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -127,48 +137,67 @@ class _BookingsScreenState extends State<BookingsScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6)),
-                child: Text(statusLabel,
-                    style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: statusColor)),
-              ),
-              Text(b.bookingCode,
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  statusLabel,
                   style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w600)),
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+              Text(
+                b.bookingCode,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(b.locationName,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(
+            b.locationName,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
           const SizedBox(height: 2),
-          Text(b.locationAddress,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+          Text(
+            b.locationAddress,
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
           const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Divider(height: 1)),
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Divider(height: 1),
+          ),
           Row(
             children: [
-              Icon(Icons.calendar_today_outlined,
-                  size: 13, color: Colors.grey.shade500),
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 13,
+                color: Colors.grey.shade500,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   '${b.checkIn.day}/${b.checkIn.month} - ${b.checkOut.day}/${b.checkOut.month} · ${b.durationNights} malam',
                   style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w500),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-              Text('Rp ${b.total.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: primaryBlue)),
+              Text(
+                'Rp ${b.total.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: primaryBlue,
+                ),
+              ),
             ],
           ),
           if (b.status == BookingStatus.aktif) ...[
@@ -179,9 +208,11 @@ class _BookingsScreenState extends State<BookingsScreen>
                   child: OutlinedButton.icon(
                     onPressed: () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => CheckinScreen(booking: b)));
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CheckinScreen(booking: b),
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.login, size: 16),
                     label:
@@ -190,7 +221,8 @@ class _BookingsScreenState extends State<BookingsScreen>
                       foregroundColor: primaryBlue,
                       side: const BorderSide(color: primaryBlue),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),
@@ -199,10 +231,11 @@ class _BookingsScreenState extends State<BookingsScreen>
                   child: OutlinedButton.icon(
                     onPressed: () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  CheckoutScreen(booking: b)));
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CheckoutScreen(booking: b),
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.logout, size: 16),
                     label:
@@ -211,13 +244,39 @@ class _BookingsScreenState extends State<BookingsScreen>
                       foregroundColor: Colors.orange,
                       side: const BorderSide(color: Colors.orange),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
           ],
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 38,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BookingQrScreen(booking: b),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.qr_code, size: 16),
+              label:
+                  const Text('Lihat QR Code', style: TextStyle(fontSize: 12)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.black87,
+                side: BorderSide(color: Colors.grey.shade300),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
