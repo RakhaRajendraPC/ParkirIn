@@ -1,9 +1,13 @@
 // lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
 import '../services/user_session.dart';
+import 'accessibility_settings_screen.dart';
+import 'delete_account_screen.dart';
+import 'help_center_screen.dart';
+import 'language_settings_screen.dart';
 import 'my_details_screen.dart';
 import 'payment_methods_screen.dart';
-import 'help_center_screen.dart';
+import 'theme_settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -17,10 +21,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final UserSession _session = UserSession.instance;
 
   Future<void> _openMyDetails() async {
-    await Navigator.push(context,
-        MaterialPageRoute(builder: (context) => const MyDetailsScreen()));
-    setState(
-        () {}); // refresh tampilan setelah kembali, kalau ada perubahan data
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MyDetailsScreen()),
+    );
+    setState(() {}); // refresh tampilan setelah kembali jika ada perubahan data
   }
 
   @override
@@ -73,9 +78,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Payment Methods',
                 subtitle: 'Cards, e-wallets, bank transfer',
                 onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const PaymentMethodsScreen())),
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PaymentMethodsScreen(),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               _buildMenuTile(
@@ -84,9 +91,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Help Center',
                 subtitle: 'FAQs, contact support',
                 onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const HelpCenterScreen())),
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HelpCenterScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildMenuTile(
+                icon: Icons.dark_mode_outlined,
+                iconColor: primaryBlue,
+                title: 'Tampilan',
+                subtitle: 'Mode terang, gelap, atau ikuti sistem',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ThemeSettingsScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildMenuTile(
+                icon: Icons.accessibility_new_outlined,
+                iconColor: primaryBlue,
+                title: 'Aksesibilitas',
+                subtitle: 'Ukuran teks & kontras tinggi',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AccessibilitySettingsScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildMenuTile(
+                icon: Icons.language_outlined,
+                iconColor: primaryBlue,
+                title: 'Bahasa',
+                subtitle: 'Indonesia / English',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LanguageSettingsScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildMenuTile(
+                icon: Icons.delete_outline,
+                iconColor: Colors.redAccent,
+                title: 'Hapus Akun & Data',
+                subtitle: 'Kelola atau hapus data pribadi Anda',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DeleteAccountScreen(),
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               _buildLogoutButton(context),
@@ -153,9 +214,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: const Color(0xFFFFF4DE),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Icon(Icons.star, size: 14, color: Colors.amber),
                 SizedBox(width: 4),
                 Text(
@@ -212,13 +273,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 14)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(subtitle,
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -247,8 +316,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child:
-                      const Text('Logout', style: TextStyle(color: Colors.red)),
+                  child: const Text(
+                    'Logout',
+                    style: TextStyle(color: Colors.red),
+                  ),
                 ),
               ],
             ),
@@ -257,8 +328,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         icon: const Icon(Icons.logout, color: Colors.redAccent, size: 18),
         label: const Text(
           'Logout',
-          style:
-              TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: Colors.redAccent,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: Color(0xFFE0E0E0)),

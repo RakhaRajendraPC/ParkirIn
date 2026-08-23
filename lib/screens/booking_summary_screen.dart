@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import 'booking_confirmation_screen.dart';
 import '../models/parking_slot_model.dart';
+import '../services/slot_lock_service.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   final ParkingLocation location;
@@ -75,6 +76,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
         const Duration(seconds: 2)); // simulasi payment gateway (PRD §9)
     if (!mounted) return;
     setState(() => _isProcessing = false);
+    SlotLockService.instance.release();
 
     Navigator.pushReplacement(
       context,

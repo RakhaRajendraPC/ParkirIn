@@ -1,33 +1,81 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'screens/search_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/bookings_screen.dart';
 import 'screens/splash_onboarding_screen.dart';
+import 'services/app_settings.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppSettings.instance.load();
   runApp(const ParkirInApp());
 }
 
-class ParkirInApp extends StatelessWidget {
+class ParkirInApp extends StatefulWidget {
   const ParkirInApp({super.key});
 
   @override
+  State<ParkirInApp> createState() => _ParkirInAppState();
+}
+
+class _ParkirInAppState extends State<ParkirInApp> {
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() => setState(() {});
+
+  @override
   Widget build(BuildContext context) {
+    final settings = AppSettings.instance;
+    final highContrast = settings.highContrast;
+
+    final lightScheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFF1E5EFF),
+      primary: highContrast ? const Color(0xFF0033CC) : const Color(0xFF1E5EFF),
+    );
+    final darkScheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFF1E5EFF),
+      brightness: Brightness.dark,
+      primary: highContrast ? const Color(0xFF6E9BFF) : const Color(0xFF5C8DFF),
+    );
+
     return MaterialApp(
       title: 'ParkirIn',
       debugShowCheckedModeBanner: false,
+      themeMode: settings.themeMode,
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'Roboto',
         scaffoldBackgroundColor: const Color(0xFFF7F8FA),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E5EFF),
-          primary: const Color(0xFF1E5EFF),
-        ),
+        colorScheme: lightScheme,
       ),
-      home:
-          const SplashScreen(), // ⬅️ diubah dari RootShell() ke SplashScreen()
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        fontFamily: 'Roboto',
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        colorScheme: darkScheme,
+      ),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(settings.textScale),
+          ),
+          child: child!,
+        );
+      },
+      home: const SplashScreen(),
     );
   }
 }
@@ -52,11 +100,14 @@ class _RootShellState extends State<RootShell> {
   ];
 
   final List<_NavItem> _navItems = const [
-    _NavItem(icon: Icons.search, label: 'Search'),
-    _NavItem(icon: Icons.confirmation_number_outlined, label: 'Bookings'),
+    _NavItem(icon: Icons.search, labelKey: 'nav_search'),
     _NavItem(
-        icon: Icons.notifications_none_rounded, label: 'Alerts', showDot: true),
-    _NavItem(icon: Icons.person_outline, label: 'Profile'),
+        icon: Icons.confirmation_number_outlined, labelKey: 'nav_bookings'),
+    _NavItem(
+        icon: Icons.notifications_none_rounded,
+        labelKey: 'nav_alerts',
+        showDot: true),
+    _NavItem(icon: Icons.person_outline, labelKey: 'nav_profile'),
   ];
 
   @override
@@ -70,7 +121,9 @@ class _RootShellState extends State<RootShell> {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E1E1E)
+                : Colors.white,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.06),
@@ -115,7 +168,7 @@ class _RootShellState extends State<RootShell> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        item.label,
+                        AppStrings.t(item.labelKey),
                         style: TextStyle(
                           fontSize: 11,
                           color: color,
@@ -137,9 +190,9 @@ class _RootShellState extends State<RootShell> {
 
 class _NavItem {
   final IconData icon;
-  final String label;
+  final String labelKey;
   final bool showDot;
 
   const _NavItem(
-      {required this.icon, required this.label, this.showDot = false});
+      {required this.icon, required this.labelKey, this.showDot = false});
 }

@@ -1,6 +1,7 @@
 // lib/screens/bookings_screen.dart
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
+import '../widgets/quick_extend_sheet.dart';
 import 'checkin_screen.dart';
 import 'checkout_screen.dart';
 import 'booking_qr_screen.dart';
@@ -250,6 +251,35 @@ class _BookingsScreenState extends State<BookingsScreen>
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 36,
+              child: TextButton.icon(
+                onPressed: () async {
+                  final extraNights = await QuickExtendSheet.show(context, b);
+                  if (extraNights != null) {
+                    setState(() {
+                      b.checkOut = b.checkOut.add(Duration(days: extraNights));
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Durasi diperpanjang $extraNights malam'),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(
+                  Icons.add_circle_outline,
+                  size: 16,
+                  color: primaryBlue,
+                ),
+                label: const Text(
+                  'Perpanjang Durasi',
+                  style: TextStyle(fontSize: 12, color: primaryBlue),
+                ),
+              ),
             ),
           ],
           const SizedBox(height: 10),

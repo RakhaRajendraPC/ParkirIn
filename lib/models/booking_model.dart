@@ -1,3 +1,5 @@
+// lib/models/booking_model.dart
+
 enum BookingStatus { aktif, selesai, dibatalkan }
 
 class BookingModel {
@@ -5,7 +7,7 @@ class BookingModel {
   final String locationName;
   final String locationAddress;
   final DateTime checkIn;
-  final DateTime checkOut;
+  DateTime checkOut; // non-final agar durasi sewa dapat diperpanjang
   final String vehiclePlate;
   final double basePrice;
   final double serviceFee;
