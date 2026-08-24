@@ -1,10 +1,9 @@
-// lib/screens/bookings_screen.dart
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
-import '../widgets/quick_extend_sheet.dart';
 import 'checkin_screen.dart';
 import 'checkout_screen.dart';
 import 'booking_qr_screen.dart';
+import 'booking_detail_screen.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -22,7 +21,7 @@ class _BookingsScreenState extends State<BookingsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -31,8 +30,8 @@ class _BookingsScreenState extends State<BookingsScreen>
     super.dispose();
   }
 
-  List<BookingModel> _byStatus(BookingStatus status) =>
-      _bookings.where((b) => b.status == status).toList();
+  List<BookingModel> _byGroup(String group) =>
+      _bookings.where((b) => b.status.tabGroup == group).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -42,16 +41,14 @@ class _BookingsScreenState extends State<BookingsScreen>
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text(
-            'My Bookings',
-            style: TextStyle(
-              color: primaryBlue,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
+          title: const Text('My Bookings',
+              style: TextStyle(
+                  color: primaryBlue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18)),
           bottom: TabBar(
             controller: _tabController,
+            isScrollable: true,
             labelColor: primaryBlue,
             unselectedLabelColor: Colors.grey,
             indicatorColor: primaryBlue,
@@ -61,15 +58,17 @@ class _BookingsScreenState extends State<BookingsScreen>
               Tab(text: 'Aktif'),
               Tab(text: 'Selesai'),
               Tab(text: 'Dibatalkan'),
+              Tab(text: 'Kedaluwarsa')
             ],
           ),
         ),
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildList(_byStatus(BookingStatus.aktif)),
-            _buildList(_byStatus(BookingStatus.selesai)),
-            _buildList(_byStatus(BookingStatus.dibatalkan)),
+            _buildList(_byGroup('aktif')),
+            _buildList(_byGroup('selesai')),
+            _buildList(_byGroup('dibatalkan')),
+            _buildList(_byGroup('kedaluwarsa')),
           ],
         ),
       ),
@@ -82,16 +81,11 @@ class _BookingsScreenState extends State<BookingsScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.confirmation_number_outlined,
-              size: 52,
-              color: Colors.grey.shade300,
-            ),
+            Icon(Icons.confirmation_number_outlined,
+                size: 52, color: Colors.grey.shade300),
             const SizedBox(height: 10),
-            Text(
-              'Belum ada booking',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-            ),
+            Text('Belum ada booking',
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
           ],
         ),
       );
@@ -100,21 +94,30 @@ class _BookingsScreenState extends State<BookingsScreen>
       padding: const EdgeInsets.all(16),
       itemCount: bookings.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) => _buildBookingCard(bookings[index]),
+      itemBuilder: (context, index) => InkWell(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BookingDetailScreen(booking: bookings[index]),
+          ),
+        ),
+        borderRadius: BorderRadius.circular(16),
+        child: _buildBookingCard(bookings[index]),
+      ),
     );
   }
 
   Widget _buildBookingCard(BookingModel b) {
     final statusColor = switch (b.status) {
-      BookingStatus.aktif => primaryBlue,
-      BookingStatus.selesai => Colors.green,
+      BookingStatus.menungguPembayaran => Colors.orange,
+      BookingStatus.dipesan => primaryBlue,
+      BookingStatus.checkIn => Colors.teal,
+      BookingStatus.checkOut => Colors.green,
       BookingStatus.dibatalkan => Colors.redAccent,
+      BookingStatus.kedaluwarsa => Colors.grey.shade600,
     };
-    final statusLabel = switch (b.status) {
-      BookingStatus.aktif => 'AKTIF',
-      BookingStatus.selesai => 'SELESAI',
-      BookingStatus.dibatalkan => 'DIBATALKAN',
-    };
+    final canCheckin = b.status == BookingStatus.dipesan;
+    final canCheckout = b.status == BookingStatus.checkIn;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -123,10 +126,9 @@ class _BookingsScreenState extends State<BookingsScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2))
         ],
       ),
       child: Column(
@@ -138,173 +140,130 @@ class _BookingsScreenState extends State<BookingsScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  statusLabel,
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6)),
+                child: Text(b.status.label,
+                    style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor)),
+              ),
+              Text(b.bookingCode,
                   style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
-                  ),
-                ),
-              ),
-              Text(
-                b.bookingCode,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade500,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w600)),
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            b.locationName,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
+          Text(b.locationName,
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           const SizedBox(height: 2),
-          Text(
-            b.locationAddress,
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-          ),
+          Text(b.locationAddress,
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+          if (b.status == BookingStatus.kedaluwarsa) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8)),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline,
+                      size: 13, color: Colors.grey.shade600),
+                  const SizedBox(width: 6),
+                  Expanded(
+                      child: Text(
+                          'Dibatalkan otomatis karena tidak check-in sesuai batas waktu',
+                          style: TextStyle(
+                              fontSize: 10, color: Colors.grey.shade600))),
+                ],
+              ),
+            ),
+          ],
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(height: 1),
-          ),
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Divider(height: 1)),
           Row(
             children: [
-              Icon(
-                Icons.calendar_today_outlined,
-                size: 13,
-                color: Colors.grey.shade500,
-              ),
+              Icon(Icons.calendar_today_outlined,
+                  size: 13, color: Colors.grey.shade500),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   '${b.checkIn.day}/${b.checkIn.month} - ${b.checkOut.day}/${b.checkOut.month} · ${b.durationNights} malam',
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                      fontSize: 12, fontWeight: FontWeight.w500),
                 ),
               ),
-              Text(
-                'Rp ${b.total.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: primaryBlue,
-                ),
-              ),
+              Text('Rp ${b.total.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: primaryBlue)),
             ],
           ),
-          if (b.status == BookingStatus.aktif) ...[
+          if (canCheckin || canCheckout) ...[
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CheckinScreen(booking: b),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.login, size: 16),
-                    label:
-                        const Text('Check-in', style: TextStyle(fontSize: 12)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: primaryBlue,
-                      side: const BorderSide(color: primaryBlue),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                if (canCheckin)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => CheckinScreen(booking: b))),
+                      icon: const Icon(Icons.login, size: 16),
+                      label: const Text('Check-in',
+                          style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: primaryBlue,
+                          side: const BorderSide(color: primaryBlue),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10))),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CheckoutScreen(booking: b),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.logout, size: 16),
-                    label:
-                        const Text('Check-out', style: TextStyle(fontSize: 12)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.orange,
-                      side: const BorderSide(color: Colors.orange),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                if (canCheckout)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  CheckoutScreen(booking: b))),
+                      icon: const Icon(Icons.logout, size: 16),
+                      label: const Text('Check-out',
+                          style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.orange,
+                          side: const BorderSide(color: Colors.orange),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10))),
                     ),
                   ),
-                ),
               ],
             ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              height: 36,
-              child: TextButton.icon(
-                onPressed: () async {
-                  final extraNights = await QuickExtendSheet.show(context, b);
-                  if (extraNights != null) {
-                    setState(() {
-                      b.checkOut = b.checkOut.add(Duration(days: extraNights));
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Durasi diperpanjang $extraNights malam'),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(
-                  Icons.add_circle_outline,
-                  size: 16,
-                  color: primaryBlue,
-                ),
-                label: const Text(
-                  'Perpanjang Durasi',
-                  style: TextStyle(fontSize: 12, color: primaryBlue),
-                ),
-              ),
-            ),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
-            height: 38,
+            height: 36,
             child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => BookingQrScreen(booking: b),
-                  ),
-                );
-              },
+                      builder: (context) => BookingQrScreen(booking: b))),
               icon: const Icon(Icons.qr_code, size: 16),
               label:
                   const Text('Lihat QR Code', style: TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.black87,
-                side: BorderSide(color: Colors.grey.shade300),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+                  foregroundColor: Colors.black87,
+                  side: BorderSide(color: Colors.grey.shade300),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
             ),
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'shuttle_tracking_screen.dart';
 import 'search_results_screen.dart';
+import 'ground_transport_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -69,6 +70,8 @@ class _SearchScreenState extends State<SearchScreen> {
               _buildFeatureGrid(),
               const SizedBox(height: 12),
               _buildShuttleTracker(),
+              const SizedBox(height: 12),
+              _buildGroundTransportCard(),
               const SizedBox(height: 24),
             ],
           ),
@@ -417,9 +420,58 @@ class _SearchScreenState extends State<SearchScreen> {
             const Icon(Icons.chevron_right, color: Colors.black38),
           ],
         ),
-      ), // ⬅️ tutup Container
-    ); // ⬅️ tutup InkWell
-  } // ⬅️ tutup method
+      ),
+    );
+  }
+
+  Widget _buildGroundTransportCard() {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const GroundTransportScreen(),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEDF6F2),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.commute, color: Color(0xFF00A896)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Transportasi Lanjutan',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Taksi, bus, travel, kereta bandara, dan lainnya.',
+                    style: TextStyle(fontSize: 11, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.black38),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _showAirportPicker() {
     showModalBottomSheet(

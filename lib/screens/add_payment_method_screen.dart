@@ -1,4 +1,3 @@
-// lib/screens/add_payment_method_screen.dart
 import 'package:flutter/material.dart';
 
 enum PaymentMethodType { card, ewallet, virtualAccount }

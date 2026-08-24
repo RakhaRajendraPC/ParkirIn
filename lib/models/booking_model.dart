@@ -1,13 +1,53 @@
-// lib/models/booking_model.dart
+enum BookingStatus {
+  menungguPembayaran, // Lot terkunci sementara selama proses bayar
+  dipesan, // Bayar sukses, QR diterbitkan, menunggu check-in
+  checkIn, // Sedang parkir (sesi aktif)
+  checkOut, // Sesi selesai, lot kembali tersedia
+  dibatalkan, // Dibatalkan oleh user
+  kedaluwarsa, // Auto-cancel sistem karena tidak check-in
+}
 
-enum BookingStatus { aktif, selesai, dibatalkan }
+extension BookingStatusX on BookingStatus {
+  String get label {
+    switch (this) {
+      case BookingStatus.menungguPembayaran:
+        return 'MENUNGGU PEMBAYARAN';
+      case BookingStatus.dipesan:
+        return 'DIPESAN';
+      case BookingStatus.checkIn:
+        return 'SEDANG PARKIR';
+      case BookingStatus.checkOut:
+        return 'SELESAI';
+      case BookingStatus.dibatalkan:
+        return 'DIBATALKAN';
+      case BookingStatus.kedaluwarsa:
+        return 'KEDALUWARSA';
+    }
+  }
+
+  /// Grup tab pada riwayat booking: aktif mencakup dipesan & sedang parkir.
+  String get tabGroup {
+    switch (this) {
+      case BookingStatus.menungguPembayaran:
+      case BookingStatus.dipesan:
+      case BookingStatus.checkIn:
+        return 'aktif';
+      case BookingStatus.checkOut:
+        return 'selesai';
+      case BookingStatus.dibatalkan:
+        return 'dibatalkan';
+      case BookingStatus.kedaluwarsa:
+        return 'kedaluwarsa';
+    }
+  }
+}
 
 class BookingModel {
   final String bookingCode;
   final String locationName;
   final String locationAddress;
   final DateTime checkIn;
-  DateTime checkOut; // non-final agar durasi sewa dapat diperpanjang
+  DateTime checkOut;
   final String vehiclePlate;
   final double basePrice;
   final double serviceFee;
@@ -26,7 +66,7 @@ class BookingModel {
     required this.basePrice,
     required this.serviceFee,
     required this.shuttleFee,
-    this.status = BookingStatus.aktif,
+    this.status = BookingStatus.dipesan,
     this.overstayFee = 0,
     this.actualCheckoutTime,
   });
@@ -51,7 +91,7 @@ class BookingModel {
         basePrice: 45000,
         serviceFee: 10000,
         shuttleFee: 0,
-        status: BookingStatus.aktif,
+        status: BookingStatus.dipesan,
       ),
       BookingModel(
         bookingCode: 'PKR-88099',
@@ -63,7 +103,7 @@ class BookingModel {
         basePrice: 38000,
         serviceFee: 8000,
         shuttleFee: 0,
-        status: BookingStatus.selesai,
+        status: BookingStatus.checkOut,
         actualCheckoutTime: now.subtract(const Duration(days: 7)),
       ),
       BookingModel(
@@ -77,6 +117,18 @@ class BookingModel {
         serviceFee: 10000,
         shuttleFee: 0,
         status: BookingStatus.dibatalkan,
+      ),
+      BookingModel(
+        bookingCode: 'PKR-86112',
+        locationName: 'SkyPark Fly & Park CGK',
+        locationAddress: 'Jl. Marsekal Suryadarma No. 12, Tangerang',
+        checkIn: now.subtract(const Duration(days: 30)),
+        checkOut: now.subtract(const Duration(days: 27)),
+        vehiclePlate: 'B 1234 CD',
+        basePrice: 45000,
+        serviceFee: 10000,
+        shuttleFee: 0,
+        status: BookingStatus.kedaluwarsa,
       ),
     ];
   }

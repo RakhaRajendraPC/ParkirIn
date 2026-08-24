@@ -20,6 +20,23 @@ class _BookingQrScreenState extends State<BookingQrScreen> {
   static const Color primaryBlue = Color(0xFF1E5EFF);
   bool _isGeneratingReceipt = false;
 
+  Color get _statusColor {
+    switch (widget.booking.status) {
+      case BookingStatus.menungguPembayaran:
+        return Colors.orange;
+      case BookingStatus.dipesan:
+        return primaryBlue;
+      case BookingStatus.checkIn:
+        return Colors.teal;
+      case BookingStatus.checkOut:
+        return Colors.green;
+      case BookingStatus.dibatalkan:
+        return Colors.redAccent;
+      case BookingStatus.kedaluwarsa:
+        return Colors.grey.shade600;
+    }
+  }
+
   Future<void> _printReceipt() async {
     setState(() => _isGeneratingReceipt = true);
     try {
@@ -53,16 +70,6 @@ class _BookingQrScreenState extends State<BookingQrScreen> {
   @override
   Widget build(BuildContext context) {
     final b = widget.booking;
-    final statusColor = switch (b.status) {
-      BookingStatus.aktif => primaryBlue,
-      BookingStatus.selesai => Colors.green,
-      BookingStatus.dibatalkan => Colors.redAccent,
-    };
-    final statusLabel = switch (b.status) {
-      BookingStatus.aktif => 'AKTIF',
-      BookingStatus.selesai => 'SELESAI',
-      BookingStatus.dibatalkan => 'DIBATALKAN',
-    };
 
     return SafeArea(
       child: Scaffold(
@@ -96,13 +103,13 @@ class _BookingQrScreenState extends State<BookingQrScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
+                        color: _statusColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8)),
-                    child: Text(statusLabel,
+                    child: Text(b.status.label,
                         style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: statusColor)),
+                            color: _statusColor)),
                   ),
                   const SizedBox(height: 16),
                   Container(

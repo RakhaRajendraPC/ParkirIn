@@ -1,10 +1,9 @@
-// lib/screens/advanced_filter_screen.dart
 import 'package:flutter/material.dart';
 
 class SearchFilterResult {
   final RangeValues priceRange;
   final Set<String> facilities;
-  final String? parkingType; // 'Indoor', 'Outdoor', null = semua
+  final String? parkingType;
   final bool onlyAccessible;
 
   const SearchFilterResult({

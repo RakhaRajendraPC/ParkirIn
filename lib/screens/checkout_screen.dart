@@ -1,6 +1,10 @@
-// lib/screens/checkout_screen.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../models/booking_model.dart';
+import 'ground_transport_screen.dart';
+
+enum _GateStatus { waiting, validated }
 
 class CheckoutScreen extends StatefulWidget {
   final BookingModel booking;
@@ -14,49 +18,50 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   static const Color primaryBlue = Color(0xFF1E5EFF);
 
-  bool _qrScanned = false;
+  _GateStatus _gateStatus = _GateStatus.waiting;
+  Timer? _pollTimer;
   final List<bool> _photosTaken = [false, false, false, false];
-  bool _completed = false;
-  bool _isSubmitting = false;
-
+  bool _showPhotoStep = false;
   final List<String> _photoLabels = ['Depan', 'Belakang', 'Kiri', 'Kanan'];
-
-  bool get _canSubmit => _qrScanned && _photosTaken.every((e) => e);
 
   double get _overstayFee {
     final now = DateTime.now();
     if (now.isAfter(widget.booking.checkOut)) {
       final extraHours = now.difference(widget.booking.checkOut).inHours;
-      final extraDays = (extraHours / 24).ceil();
-      return extraDays * 20000.0; // contoh tarif overstay per hari
+      final extraBlocks =
+          (extraHours / 1).ceil(); // per jam, sesuai kebijakan bandara §6.2
+      return extraBlocks * 15000.0;
     }
     return 0;
   }
 
-  void _simulateScan() {
-    setState(() => _qrScanned = true);
-  }
-
-  void _simulateTakePhoto(int index) {
-    setState(() => _photosTaken[index] = true);
-  }
-
-  Future<void> _submitCheckout() async {
-    setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    setState(() {
-      _isSubmitting = false;
-      _completed = true;
-      widget.booking.overstayFee = _overstayFee;
-      widget.booking.actualCheckoutTime = DateTime.now();
-      widget.booking.status = BookingStatus.selesai;
+  @override
+  void initState() {
+    super.initState();
+    // Simulasi: kalau ada biaya tambahan tertunggak, portal keluar tidak
+    // akan divalidasi otomatis sampai user "melunasi" (di sini otomatis
+    // dianggap lunas setelah delay, karena pembayaran real terjadi di
+    // BookingSummaryScreen/payment gateway pada kasus nyata).
+    _pollTimer = Timer(const Duration(seconds: 6), () {
+      if (!mounted) return;
+      setState(() {
+        _gateStatus = _GateStatus.validated;
+        widget.booking.overstayFee = _overstayFee;
+        widget.booking.actualCheckoutTime = DateTime.now();
+        widget.booking.status = BookingStatus.checkOut;
+      });
     });
   }
 
   @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (_completed) return _buildInvoice();
+    if (_gateStatus == _GateStatus.validated) return _buildInvoice();
 
     return SafeArea(
       child: Scaffold(
@@ -73,55 +78,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (_overstayFee > 0) _buildOverstayWarning(),
-            if (_overstayFee > 0) const SizedBox(height: 16),
-            _buildStepTitle('1', 'Scan QR Code', done: _qrScanned),
-            const SizedBox(height: 10),
-            _buildQrScanBox(),
-            const SizedBox(height: 24),
-            _buildStepTitle('2', 'Foto Kondisi Kendaraan (Verifikasi Akhir)',
-                done: _photosTaken.every((e) => e)),
-            const SizedBox(height: 10),
-            _buildPhotoGrid(),
-            const SizedBox(height: 100),
-          ],
-        ),
-        bottomNavigationBar: SafeArea(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2))
-              ],
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed:
-                    (_canSubmit && !_isSubmitting) ? _submitCheckout : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey.shade300,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Text('Konfirmasi Check-out',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+            if (_overstayFee > 0) ...[
+              _buildOverstayWarning(),
+              const SizedBox(height: 16)
+            ],
+            Center(
+              child: Column(
+                children: [
+                  const Text('Tunjukkan QR ini di gerbang keluar',
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('Petugas atau kiosk akan memindai QR Code ini',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                ],
               ),
             ),
-          ),
+            const SizedBox(height: 16),
+            _buildQrCard(),
+            const SizedBox(height: 20),
+            TextButton.icon(
+              onPressed: () => setState(() => _showPhotoStep = !_showPhotoStep),
+              icon: Icon(_showPhotoStep ? Icons.expand_less : Icons.expand_more,
+                  size: 18),
+              label: const Text('Opsional: Verifikasi Akhir Kondisi Kendaraan',
+                  style: TextStyle(fontSize: 12)),
+            ),
+            if (_showPhotoStep) ...[
+              const SizedBox(height: 10),
+              _buildPhotoGrid(),
+            ],
+            const SizedBox(height: 100),
+          ],
         ),
       ),
     );
@@ -139,7 +129,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Anda melebihi durasi booking. Biaya tambahan (overstay fee) sebesar Rp ${_overstayFee.toStringAsFixed(0)} akan ditambahkan ke invoice.',
+              'Anda melebihi durasi booking. Biaya tambahan Rp ${_overstayFee.toStringAsFixed(0)} akan otomatis ditambahkan sebelum portal keluar dapat digunakan.',
               style: const TextStyle(fontSize: 12, color: Colors.black87),
             ),
           ),
@@ -148,59 +138,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildStepTitle(String number, String title, {required bool done}) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 12,
-          backgroundColor: done ? Colors.green : Colors.orange,
-          child: done
-              ? const Icon(Icons.check, color: Colors.white, size: 14)
-              : Text(number,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold)),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-            child: Text(title,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 14))),
-      ],
-    );
-  }
-
-  Widget _buildQrScanBox() {
-    return InkWell(
-      onTap: _qrScanned ? null : _simulateScan,
-      borderRadius: BorderRadius.circular(16),
+  Widget _buildQrCard() {
+    return Center(
       child: Container(
-        width: double.infinity,
-        height: 180,
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: _qrScanned ? Colors.green.withOpacity(0.06) : Colors.black87,
-          borderRadius: BorderRadius.circular(16),
-          border: _qrScanned ? Border.all(color: Colors.green) : null,
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
+          ],
         ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(_qrScanned ? Icons.check_circle : Icons.qr_code_scanner,
-                  color: _qrScanned ? Colors.green : Colors.white, size: 40),
-              const SizedBox(height: 8),
-              Text(
-                _qrScanned
-                    ? 'QR Code Terverifikasi'
-                    : 'Arahkan kamera ke QR Code\n(tap untuk simulasi scan)',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: _qrScanned ? Colors.green.shade800 : Colors.white70,
-                    fontSize: 12),
-              ),
-            ],
-          ),
+        child: Column(
+          children: [
+            QrImageView(
+                data: widget.booking.bookingCode,
+                version: QrVersions.auto,
+                size: 180),
+            const SizedBox(height: 12),
+            Text(widget.booking.bookingCode,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2)),
+            const SizedBox(height: 14),
+            const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: primaryBlue)),
+            const SizedBox(height: 8),
+            Text('Menunggu validasi gerbang...',
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+          ],
         ),
       ),
     );
@@ -212,15 +183,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _photoLabels.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 1.3,
-      ),
+          crossAxisCount: 2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.3),
       itemBuilder: (context, index) {
         final done = _photosTaken[index];
         return InkWell(
-          onTap: done ? null : () => _simulateTakePhoto(index),
+          onTap: done ? null : () => setState(() => _photosTaken[index] = true),
           borderRadius: BorderRadius.circular(14),
           child: Container(
             decoration: BoxDecoration(
@@ -280,19 +250,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 16),
             const Text('Check-out Berhasil',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            Text('Terima kasih telah menggunakan ParkirIn!',
+            Text('Lot parkir Anda telah kembali tersedia',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.04), blurRadius: 8)
-                ],
-              ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.04), blurRadius: 8)
+                  ]),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -309,7 +278,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   _row('Tarif dasar (${b.durationNights} malam)', b.subtotal),
                   _row('Biaya layanan', b.serviceFee),
                   if (b.overstayFee > 0)
-                    _row('Biaya overstay', b.overstayFee, isWarning: true),
+                    _row('Biaya keterlambatan', b.overstayFee, isWarning: true),
                   const Padding(
                       padding: EdgeInsets.symmetric(vertical: 6),
                       child: Divider(height: 1)),
@@ -325,13 +294,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 onPressed: () =>
                     Navigator.popUntil(context, (route) => route.isFirst),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryBlue,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
+                    backgroundColor: primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12))),
                 child: const Text('Selesai',
                     style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const GroundTransportScreen())),
+                icon: const Icon(Icons.commute, size: 18),
+                label: const Text('Cari Transportasi Lanjutan'),
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryBlue,
+                    side: const BorderSide(color: primaryBlue),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12))),
               ),
             ),
           ],
@@ -349,16 +335,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           Text(label,
               style: TextStyle(
-                fontSize: isTotal ? 14 : 12,
-                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-                color: isWarning ? Colors.redAccent : Colors.black87,
-              )),
+                  fontSize: isTotal ? 14 : 12,
+                  fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                  color: isWarning ? Colors.redAccent : Colors.black87)),
           Text('Rp ${amount.toStringAsFixed(0)}',
               style: TextStyle(
-                fontSize: isTotal ? 14 : 12,
-                fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-                color: isWarning ? Colors.redAccent : Colors.black87,
-              )),
+                  fontSize: isTotal ? 14 : 12,
+                  fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+                  color: isWarning ? Colors.redAccent : Colors.black87)),
         ],
       ),
     );

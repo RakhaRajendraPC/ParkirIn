@@ -1,4 +1,3 @@
-// lib/services/user_session.dart
 import 'package:flutter/material.dart';
 
 class SavedVehicle {
@@ -6,6 +5,7 @@ class SavedVehicle {
   final String plate;
   final String brand;
   final String type;
+  final String color;
   bool isDefault;
 
   SavedVehicle({
@@ -13,6 +13,7 @@ class SavedVehicle {
     required this.plate,
     required this.brand,
     required this.type,
+    this.color = '',
     this.isDefault = false,
   });
 }
@@ -36,9 +37,14 @@ class UserSession {
         plate: 'B 1234 CD',
         brand: 'Toyota Avanza',
         type: 'MPV',
+        color: 'Hitam',
         isDefault: true),
     SavedVehicle(
-        id: 'v2', plate: 'B 5566 XY', brand: 'Honda Brio', type: 'Hatchback'),
+        id: 'v2',
+        plate: 'B 5566 XY',
+        brand: 'Honda Brio',
+        type: 'Hatchback',
+        color: 'Putih'),
   ];
 
   SavedVehicle? get defaultVehicle {

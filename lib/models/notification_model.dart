@@ -78,9 +78,6 @@ extension NotificationTypeX on NotificationType {
     }
   }
 
-  /// Whether this notification type belongs to a Fase 2 feature
-  /// (flight integration, per PRD 6.7). Shown with a small "Fase 2" tag
-  /// so it's clear this depends on the Flight Data API integration.
   bool get isPhase2 => this == NotificationType.flightStatusChange;
 }
 

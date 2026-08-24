@@ -1,4 +1,3 @@
-// lib/screens/accessibility_settings_screen.dart
 import 'package:flutter/material.dart';
 import '../services/app_settings.dart';
 

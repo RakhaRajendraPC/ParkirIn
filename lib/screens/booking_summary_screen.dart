@@ -1,4 +1,3 @@
-// lib/screens/booking_summary_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import 'booking_confirmation_screen.dart';
@@ -72,8 +71,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
 
   Future<void> _pay() async {
     setState(() => _isProcessing = true);
-    await Future.delayed(
-        const Duration(seconds: 2)); // simulasi payment gateway (PRD §9)
+    await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     setState(() => _isProcessing = false);
     SlotLockService.instance.release();
@@ -320,11 +318,13 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
 
   Widget _buildPaymentMethod() {
     final methods = [
-      ('QRIS', Icons.qr_code),
-      ('E-Wallet', Icons.account_balance_wallet_outlined),
-      ('Kartu Debit/Kredit', Icons.credit_card),
-      ('Virtual Account', Icons.account_balance_outlined),
+      ('QRIS', Icons.qr_code, false),
+      ('Virtual Account BCA', Icons.account_balance_outlined, false),
+      ('Virtual Account BRI', Icons.account_balance_outlined, false),
+      ('E-Wallet', Icons.account_balance_wallet_outlined, true),
+      ('Kartu Debit/Kredit', Icons.credit_card, true),
     ];
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -359,6 +359,19 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                           fontSize: 13,
                           fontWeight:
                               selected ? FontWeight.w600 : FontWeight.normal)),
+                  if (m.$3) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(4)),
+                      child: Text('Opsional',
+                          style: TextStyle(
+                              fontSize: 8, color: Colors.grey.shade600)),
+                    ),
+                  ],
                 ],
               ),
             );

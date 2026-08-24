@@ -1,4 +1,3 @@
-// lib/screens/vehicles_screen.dart
 import 'package:flutter/material.dart';
 import '../services/user_session.dart';
 
@@ -20,6 +19,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
     final plateCtrl = TextEditingController();
     final brandCtrl = TextEditingController();
     final typeCtrl = TextEditingController();
+    final colorCtrl = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -54,12 +54,25 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10)))),
             const SizedBox(height: 12),
-            TextField(
-                controller: typeCtrl,
-                decoration: InputDecoration(
-                    labelText: 'Tipe (Sedan/SUV/MPV)',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)))),
+            Row(
+              children: [
+                Expanded(
+                    child: TextField(
+                        controller: typeCtrl,
+                        decoration: InputDecoration(
+                            labelText: 'Tipe (SUV/MPV)',
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10))))),
+                const SizedBox(width: 12),
+                Expanded(
+                    child: TextField(
+                        controller: colorCtrl,
+                        decoration: InputDecoration(
+                            labelText: 'Warna',
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10))))),
+              ],
+            ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
@@ -73,6 +86,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                       plate: plateCtrl.text.trim(),
                       brand: brandCtrl.text.trim(),
                       type: typeCtrl.text.trim(),
+                      color: colorCtrl.text.trim(),
                     ));
                   });
                   Navigator.pop(context);
@@ -179,9 +193,12 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text('${v.brand} · ${v.type}',
-                    style:
-                        TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                Text(
+                  [v.brand, v.type, v.color]
+                      .where((e) => e.isNotEmpty)
+                      .join(' · '),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
               ],
             ),
           ),

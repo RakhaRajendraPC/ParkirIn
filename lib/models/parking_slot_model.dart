@@ -1,4 +1,3 @@
-// lib/models/parking_slot_model.dart
 import 'package:flutter/material.dart';
 
 enum SlotAvailability { available, occupied }
@@ -6,8 +5,8 @@ enum SlotAvailability { available, occupied }
 enum SlotTier { premium, standard, economy }
 
 class ParkingSlot {
-  final String code; // contoh: A1, A2, B5, dst
-  final String rowLabel; // A, B, C, D
+  final String code;
+  final String rowLabel;
   final int col;
   final double distanceFromEntrance;
   final double price;
@@ -51,10 +50,8 @@ class ParkingSlot {
   }
 }
 
-/// Satu baris parkir, terbagi menjadi blok Kiri dan Kanan yang dipisah
-/// akses jalan (mirip lahan parkir sungguhan dengan jalur mobil di tengah).
 class ParkingRow {
-  final String label; // A, B, C, D
+  final String label;
   final List<ParkingSlot> leftBlock;
   final List<ParkingSlot> rightBlock;
 
@@ -62,11 +59,6 @@ class ParkingRow {
       {required this.label, required this.leftBlock, required this.rightBlock});
 }
 
-/// Generator layout parkir gaya lahan sungguhan: beberapa baris (A, B, C, D, ...)
-/// dipisah "Akses Jalan" horizontal antar baris, dan tiap baris terbagi 2 blok
-/// (Kiri/Kanan) dipisah "Akses Jalan" vertikal. Baris paling atas (A) paling
-/// dekat pintu masuk/lobi sehingga harganya paling mahal.
-/// Di production: ganti dengan data ketersediaan real-time dari backend.
 class ParkingSlotGenerator {
   static List<ParkingRow> generate({
     required double basePrice,

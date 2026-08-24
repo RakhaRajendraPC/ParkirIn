@@ -1,6 +1,3 @@
-// lib/models/parking_location_model.dart
-//import 'package:flutter/material.dart';
-
 class ParkingLocation {
   final String id;
   final String name;
@@ -9,8 +6,8 @@ class ParkingLocation {
   final double rating;
   final double distanceKm;
   final bool isIndoor;
-  final List<String> facilities; // e.g. CCTV 24 Jam, Pagar Keliling
-  final bool isAccessible; // ramah kursi roda / lansia
+  final List<String> facilities;
+  final bool isAccessible;
 
   const ParkingLocation({
     required this.id,
