@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/booking_model.dart';
+import '../services/booking_repository.dart';
 import 'ground_transport_screen.dart';
 
 enum _GateStatus { waiting, validated }
@@ -50,6 +51,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         widget.booking.actualCheckoutTime = DateTime.now();
         widget.booking.status = BookingStatus.checkOut;
       });
+      BookingRepository.instance.refresh();
     });
   }
 

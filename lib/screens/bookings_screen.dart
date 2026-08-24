@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
+import '../services/booking_repository.dart';
 import 'checkin_screen.dart';
 import 'checkout_screen.dart';
 import 'booking_qr_screen.dart';
 import 'booking_detail_screen.dart';
+import '../utils/currency_formatter.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -16,22 +18,28 @@ class _BookingsScreenState extends State<BookingsScreen>
     with SingleTickerProviderStateMixin {
   static const Color primaryBlue = Color(0xFF1E5EFF);
   late TabController _tabController;
-  final List<BookingModel> _bookings = BookingModel.mockList();
+  final BookingRepository _repo = BookingRepository.instance;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _repo.addListener(_onRepoChanged);
   }
 
   @override
   void dispose() {
+    _repo.removeListener(_onRepoChanged);
     _tabController.dispose();
     super.dispose();
   }
 
+  void _onRepoChanged() {
+    if (mounted) setState(() {});
+  }
+
   List<BookingModel> _byGroup(String group) =>
-      _bookings.where((b) => b.status.tabGroup == group).toList();
+      _repo.all.where((b) => b.status.tabGroup == group).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -96,11 +104,10 @@ class _BookingsScreenState extends State<BookingsScreen>
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) => InkWell(
         onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookingDetailScreen(booking: bookings[index]),
-          ),
-        ),
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    BookingDetailScreen(booking: bookings[index]))),
         borderRadius: BorderRadius.circular(16),
         child: _buildBookingCard(bookings[index]),
       ),
@@ -162,6 +169,21 @@ class _BookingsScreenState extends State<BookingsScreen>
           const SizedBox(height: 2),
           Text(b.locationAddress,
               style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+          if (b.slotCode.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.local_parking,
+                    size: 12, color: Colors.grey.shade500),
+                const SizedBox(width: 4),
+                Text('Slot ${b.slotCode}',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ],
           if (b.status == BookingStatus.kedaluwarsa) ...[
             const SizedBox(height: 8),
             Container(
@@ -198,7 +220,7 @@ class _BookingsScreenState extends State<BookingsScreen>
                       fontSize: 12, fontWeight: FontWeight.w500),
                 ),
               ),
-              Text('Rp ${b.total.toStringAsFixed(0)}',
+              Text(CurrencyFormatter.rupiah(b.total),
                   style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,

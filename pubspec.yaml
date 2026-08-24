@@ -16,6 +16,7 @@ dependencies:
   printing: ^5.11.1
   shared_preferences: ^2.2.2
   url_launcher: ^6.3.1
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:

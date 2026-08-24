@@ -3,12 +3,11 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/booking_model.dart';
+import 'package:intl/intl.dart';
 
-/// Men-generate struk booking dalam format PDF, lengkap dengan QR Code
-/// yang sama dengan yang ditampilkan di BookingQrScreen. QR di-generate
-/// langsung oleh package `pdf` (pw.BarcodeWidget), bukan gambar statis,
-/// sehingga tetap tajam saat dicetak di kertas thermal maupun A4.
 class ReceiptGenerator {
+  static final _fmt = NumberFormat.decimalPattern('id_ID');
+
   static Future<void> shareOrPrintReceipt(BookingModel booking) async {
     final doc = pw.Document();
 
@@ -66,14 +65,15 @@ class ReceiptGenerator {
             _kv('Check-out', _fmtDate(booking.checkOut)),
             _kv('Durasi', '${booking.durationNights} malam'),
             _kv('Plat Kendaraan', booking.vehiclePlate),
+            if (booking.slotCode.isNotEmpty)
+              _kv('Slot Parkir', booking.slotCode),
             pw.SizedBox(height: 8),
             pw.Divider(),
             pw.SizedBox(height: 8),
-            _kv('Tarif Dasar', 'Rp ${booking.subtotal.toStringAsFixed(0)}'),
-            _kv('Biaya Layanan', 'Rp ${booking.serviceFee.toStringAsFixed(0)}'),
+            _kv('Tarif Dasar', 'Rp ${_fmt.format(booking.subtotal)}'),
+            _kv('Biaya Layanan', 'Rp ${_fmt.format(booking.serviceFee)}'),
             if (booking.overstayFee > 0)
-              _kv('Biaya Overstay',
-                  'Rp ${booking.overstayFee.toStringAsFixed(0)}'),
+              _kv('Biaya Overstay', 'Rp ${_fmt.format(booking.overstayFee)}'),
             pw.SizedBox(height: 6),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -81,7 +81,7 @@ class ReceiptGenerator {
                 pw.Text('TOTAL',
                     style: pw.TextStyle(
                         fontSize: 13, fontWeight: pw.FontWeight.bold)),
-                pw.Text('Rp ${booking.total.toStringAsFixed(0)}',
+                pw.Text('Rp ${_fmt.format(booking.total)}',
                     style: pw.TextStyle(
                         fontSize: 13,
                         fontWeight: pw.FontWeight.bold,

@@ -168,6 +168,10 @@ class _BookingQrScreenState extends State<BookingQrScreen> {
                   _infoRow('Keluar', _fmtDate(b.checkOut)),
                   const SizedBox(height: 6),
                   _infoRow('Kendaraan', b.vehiclePlate),
+                  if (b.slotCode.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    _infoRow('Slot Parkir', b.slotCode),
+                  ],
                   const SizedBox(height: 6),
                   _infoRow('Total', 'Rp ${b.total.toStringAsFixed(0)}',
                       highlight: true),

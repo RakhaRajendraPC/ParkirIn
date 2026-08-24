@@ -1,6 +1,7 @@
 // lib/screens/reschedule_cancel_screen.dart
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
+import '../services/booking_repository.dart';
 
 class RescheduleCancelScreen extends StatefulWidget {
   final BookingModel booking;
@@ -82,8 +83,10 @@ class _RescheduleCancelScreenState extends State<RescheduleCancelScreen> {
           FilledButton(
             onPressed: () {
               setState(() {
-                widget.booking.checkIn.isBefore(_newCheckIn);
+                widget.booking.checkIn = _newCheckIn;
+                widget.booking.checkOut = _newCheckOut;
               });
+              BookingRepository.instance.refresh();
               Navigator.pop(context);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -113,6 +116,7 @@ class _RescheduleCancelScreenState extends State<RescheduleCancelScreen> {
           FilledButton(
             onPressed: () {
               widget.booking.status = BookingStatus.dibatalkan;
+              BookingRepository.instance.refresh();
               Navigator.pop(context);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(

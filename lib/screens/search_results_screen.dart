@@ -1,6 +1,7 @@
 // lib/screens/search_results_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
+import '../utils/currency_formatter.dart';
 import '../widgets/empty_search_view.dart';
 import 'location_detail_screen.dart';
 import 'map_view_screen.dart';
@@ -31,12 +32,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   List<ParkingLocation> get _results {
     var list = List<ParkingLocation>.from(ParkingLocation.mockList());
 
-    // Filter dari toggle aksesibilitas cepat di filter bar
     if (_onlyAccessible) {
       list = list.where((e) => e.isAccessible).toList();
     }
 
-    // Filter dari AdvancedFilterScreen (harga, tipe parkir, fasilitas, aksesibilitas)
     final adv = _advancedFilter;
     if (adv != null) {
       list = list.where((e) {
@@ -293,7 +292,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                     style: const TextStyle(color: Colors.black87),
                     children: [
                       TextSpan(
-                        text: 'Rp ${loc.pricePerNight.toStringAsFixed(0)}',
+                        text: CurrencyFormatter.rupiah(loc.pricePerNight),
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),

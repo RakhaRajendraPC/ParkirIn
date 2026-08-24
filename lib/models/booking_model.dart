@@ -25,7 +25,6 @@ extension BookingStatusX on BookingStatus {
     }
   }
 
-  /// Grup tab pada riwayat booking: aktif mencakup dipesan & sedang parkir.
   String get tabGroup {
     switch (this) {
       case BookingStatus.menungguPembayaran:
@@ -46,9 +45,10 @@ class BookingModel {
   final String bookingCode;
   final String locationName;
   final String locationAddress;
-  final DateTime checkIn;
+  DateTime checkIn;
   DateTime checkOut;
   final String vehiclePlate;
+  final String slotCode; // kode slot parkir yang dipilih user, mis. 'A3'
   final double basePrice;
   final double serviceFee;
   final double shuttleFee;
@@ -63,6 +63,7 @@ class BookingModel {
     required this.checkIn,
     required this.checkOut,
     required this.vehiclePlate,
+    this.slotCode = '',
     required this.basePrice,
     required this.serviceFee,
     required this.shuttleFee,
@@ -88,6 +89,7 @@ class BookingModel {
         checkIn: now.add(const Duration(days: 2, hours: 8)),
         checkOut: now.add(const Duration(days: 5, hours: 18)),
         vehiclePlate: 'B 1234 CD',
+        slotCode: 'A3',
         basePrice: 45000,
         serviceFee: 10000,
         shuttleFee: 0,
@@ -100,6 +102,7 @@ class BookingModel {
         checkIn: now.subtract(const Duration(days: 10)),
         checkOut: now.subtract(const Duration(days: 7)),
         vehiclePlate: 'B 1234 CD',
+        slotCode: 'C5',
         basePrice: 38000,
         serviceFee: 8000,
         shuttleFee: 0,
@@ -113,6 +116,7 @@ class BookingModel {
         checkIn: now.subtract(const Duration(days: 20)),
         checkOut: now.subtract(const Duration(days: 18)),
         vehiclePlate: 'B 5566 XY',
+        slotCode: 'B2',
         basePrice: 60000,
         serviceFee: 10000,
         shuttleFee: 0,
@@ -125,6 +129,7 @@ class BookingModel {
         checkIn: now.subtract(const Duration(days: 30)),
         checkOut: now.subtract(const Duration(days: 27)),
         vehiclePlate: 'B 1234 CD',
+        slotCode: 'D7',
         basePrice: 45000,
         serviceFee: 10000,
         shuttleFee: 0,

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/parking_slot_model.dart';
-import '../widgets/coach_mark_overlay.dart';
+import '../utils/currency_formatter.dart';
 import 'select_vehicle_screen.dart';
 
 class ParkingSlotMapScreen extends StatefulWidget {
@@ -32,29 +32,6 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
     super.initState();
     _rows =
         ParkingSlotGenerator.generate(basePrice: widget.location.pricePerNight);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      CoachMarkOverlay.showIfFirstTime(context, 'parking_slot_map', const [
-        CoachMarkStep(
-          icon: Icons.map_outlined,
-          title: 'Peta Parkir Interaktif',
-          description:
-              'Cubit untuk zoom, geser untuk melihat seluruh baris slot A, B, C, dan D.',
-        ),
-        CoachMarkStep(
-          icon: Icons.palette_outlined,
-          title: 'Warna Menunjukkan Harga',
-          description:
-              'Kuning = Premium (dekat pintu masuk), Biru = Standar, Hijau = Ekonomis (lebih jauh, lebih murah).',
-        ),
-        CoachMarkStep(
-          icon: Icons.timer_outlined,
-          title: 'Slot Dikunci Sementara',
-          description:
-              'Setelah memilih slot, Anda punya 10 menit untuk menyelesaikan booking sebelum slot dilepas kembali.',
-        ),
-      ]);
-    });
   }
 
   void _selectSlot(ParkingSlot slot) {
@@ -88,18 +65,13 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Pilih Slot Parkir',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-              Text(
-                widget.location.name,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-              ),
+              const Text('Pilih Slot Parkir',
+                  style: TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15)),
+              Text(widget.location.name,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
             ],
           ),
         ),
@@ -124,16 +96,12 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
         bottomNavigationBar: SafeArea(
           child: Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
+            decoration: BoxDecoration(color: Colors.white, boxShadow: [
+              BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
+                  offset: const Offset(0, -2))
+            ]),
             child: SizedBox(
               width: double.infinity,
               height: 48,
@@ -144,8 +112,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: Colors.grey.shade300,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: Text(
                   _selected == null
@@ -167,13 +134,10 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                  color: color, borderRadius: BorderRadius.circular(3))),
           const SizedBox(width: 5),
           Text(label, style: const TextStyle(fontSize: 11)),
         ],
@@ -222,14 +186,11 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
           SizedBox(
             width: 32,
             child: Center(
-              child: Text(
-                row.label,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
+              child: Text(row.label,
+                  style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87)),
             ),
           ),
           Expanded(flex: 2, child: _buildSlotBlock(row.leftBlock)),
@@ -245,9 +206,8 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
       children: [
         _hatchBar(),
         Row(
-          children:
-              slots.map((s) => Expanded(child: _buildSlotCell(s))).toList(),
-        ),
+            children:
+                slots.map((s) => Expanded(child: _buildSlotCell(s))).toList()),
         _hatchBar(),
       ],
     );
@@ -316,14 +276,11 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
           const SizedBox(width: 32),
           Expanded(
             child: Center(
-              child: Text(
-                'Akses Jalan',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade600,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
+              child: Text('Akses Jalan',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic)),
             ),
           ),
         ],
@@ -337,14 +294,11 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
       child: Center(
         child: RotatedBox(
           quarterTurns: 3,
-          child: Text(
-            'Akses Jalan',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
+          child: Text('Akses Jalan',
+              style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                  fontStyle: FontStyle.italic)),
         ),
       ),
     );
@@ -360,7 +314,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: slot.tierColor),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8),
+          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8)
         ],
       ),
       child: Row(
@@ -368,9 +322,8 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: slot.tierColor.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
+                color: slot.tierColor.withOpacity(0.15),
+                shape: BoxShape.circle),
             child: Icon(Icons.local_parking, color: slot.tierColor),
           ),
           const SizedBox(width: 12),
@@ -380,49 +333,36 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      'Slot ${slot.code}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
+                    Text('Slot ${slot.code}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: slot.tierColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        slot.tierLabel,
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: slot.tierColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                          color: slot.tierColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4)),
+                      child: Text(slot.tierLabel,
+                          style: TextStyle(
+                              fontSize: 9,
+                              color: slot.tierColor,
+                              fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
                 Text(
-                  'Baris ${slot.rowLabel} · ± ${slot.distanceFromEntrance.toStringAsFixed(0)} m dari pintu masuk',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
+                    'Baris ${slot.rowLabel} · ± ${slot.distanceFromEntrance.toStringAsFixed(0)} m dari pintu masuk',
+                    style:
+                        TextStyle(fontSize: 11, color: Colors.grey.shade600)),
               ],
             ),
           ),
-          Text(
-            'Rp ${slot.price.toStringAsFixed(0)}/malam',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: slot.tierColor,
-            ),
-          ),
+          Text('${CurrencyFormatter.rupiah(slot.price)}/malam',
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: slot.tierColor)),
         ],
       ),
     );

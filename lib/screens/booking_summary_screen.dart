@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
-import 'booking_confirmation_screen.dart';
 import '../models/parking_slot_model.dart';
+import '../models/booking_model.dart';
 import '../services/slot_lock_service.dart';
+import '../services/booking_repository.dart';
+import 'booking_confirmation_screen.dart';
+import '../utils/currency_formatter.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   final ParkingLocation location;
@@ -71,16 +74,36 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
 
   Future<void> _pay() async {
     setState(() => _isProcessing = true);
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(
+        const Duration(seconds: 2)); // simulasi payment gateway (PRD §9)
     if (!mounted) return;
     setState(() => _isProcessing = false);
+
+    final bookingCode = 'PKR-${DateTime.now().millisecondsSinceEpoch % 100000}';
+
+    // Buat booking asli dan simpan ke sumber data tunggal, supaya langsung
+    // muncul di Riwayat Booking dengan slotCode & data kendaraan yang benar.
+    final newBooking = BookingModel(
+      bookingCode: bookingCode,
+      locationName: widget.location.name,
+      locationAddress: widget.location.address,
+      checkIn: widget.checkIn,
+      checkOut: widget.checkOut,
+      vehiclePlate: widget.vehiclePlate,
+      slotCode: widget.selectedSlot?.code ?? '',
+      basePrice: _pricePerNight,
+      serviceFee: _serviceFee,
+      shuttleFee: 0,
+      status: BookingStatus.dipesan,
+    );
+    BookingRepository.instance.add(newBooking);
     SlotLockService.instance.release();
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) => BookingConfirmationScreen(
-          bookingCode: 'PKR-${DateTime.now().millisecondsSinceEpoch % 100000}',
+          bookingCode: bookingCode,
           location: widget.location,
           checkIn: widget.checkIn,
           checkOut: widget.checkOut,
@@ -141,7 +164,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                             style:
                                 TextStyle(fontSize: 11, color: Colors.black54)),
                         TextSpan(
-                          text: 'Rp ${_total.toStringAsFixed(0)}',
+                          text: CurrencyFormatter.rupiah(_total),
                           style: const TextStyle(
                               fontSize: 17, fontWeight: FontWeight.bold),
                         ),
@@ -280,7 +303,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                 style: TextStyle(
                     fontSize: isTotal ? 14 : 12,
                     fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
-            Text('Rp ${amount.toStringAsFixed(0)}',
+            Text(CurrencyFormatter.rupiah(amount),
                 style: TextStyle(
                     fontSize: isTotal ? 14 : 12,
                     fontWeight: isTotal ? FontWeight.bold : FontWeight.w500)),
@@ -304,7 +327,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
           const Text('Rincian Biaya',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           const SizedBox(height: 8),
-          row('Tarif dasar (Rp ${_pricePerNight.toStringAsFixed(0)} × $_nights malam)',
+          row('Tarif dasar (${CurrencyFormatter.rupiah(_pricePerNight)} × $_nights malam)',
               _subtotal),
           row('Biaya layanan', _serviceFee),
           const Padding(

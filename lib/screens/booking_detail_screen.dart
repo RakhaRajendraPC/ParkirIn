@@ -169,7 +169,11 @@ class BookingDetailScreen extends StatelessWidget {
                 ('Check-out aktual', _fmt(booking.actualCheckoutTime!)),
             ]),
             const SizedBox(height: 14),
-            _buildInfoCard('Kendaraan', [('Plat Nomor', booking.vehiclePlate)]),
+            _buildInfoCard('Kendaraan', [
+              ('Plat Nomor', booking.vehiclePlate),
+              if (booking.slotCode.isNotEmpty)
+                ('Slot Parkir', booking.slotCode),
+            ]),
             const SizedBox(height: 14),
             _buildBillingCard(),
             const SizedBox(height: 20),

@@ -1,6 +1,7 @@
 // lib/screens/location_detail_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
+import '../utils/currency_formatter.dart';
 import 'parking_slot_map_screen.dart';
 
 class LocationDetailScreen extends StatelessWidget {
@@ -196,8 +197,8 @@ class LocationDetailScreen extends StatelessWidget {
                       style: const TextStyle(color: Colors.black87),
                       children: [
                         TextSpan(
-                            text:
-                                'Rp ${location.pricePerNight.toStringAsFixed(0)}',
+                            text: CurrencyFormatter.rupiah(
+                                location.pricePerNight),
                             style: const TextStyle(
                                 fontSize: 17, fontWeight: FontWeight.bold)),
                         TextSpan(

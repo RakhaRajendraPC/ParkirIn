@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/booking_model.dart';
+import '../services/booking_repository.dart';
 import 'shuttle_tracking_screen.dart';
 
 enum _GateStatus { waiting, validated }
@@ -37,6 +38,8 @@ class _CheckinScreenState extends State<CheckinScreen> {
         _gateStatus = _GateStatus.validated;
         widget.booking.status = BookingStatus.checkIn;
       });
+      BookingRepository.instance
+          .refresh(); // beritahu BookingsScreen untuk rebuild
     });
   }
 
@@ -54,6 +57,8 @@ class _CheckinScreenState extends State<CheckinScreen> {
           bookingCode: widget.booking.bookingCode,
           pickupPointName: 'Titik Jemput A - ${widget.booking.locationName}',
           destinationName: 'Terminal Keberangkatan',
+          userSlotCode: widget.booking.slotCode,
+          venueAddress: widget.booking.locationAddress,
         ),
       ),
     );
