@@ -7,6 +7,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/notification_model.dart';
+import '../services/notification_repository.dart';
 
 enum ShuttleUnitStatus { berangkat, standby }
 
@@ -105,6 +107,20 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
           currentStopIndex: 4,
           etaToNextStop: Duration.zero),
     ];
+
+    Future.delayed(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      NotificationRepository.instance.add(AppNotification(
+        id: 'notif_shuttle_${DateTime.now().millisecondsSinceEpoch}',
+        type: NotificationType.shuttleArriving,
+        title: 'Shuttle Tersedia di Halte Terdekat',
+        description:
+            'Shuttle sudah standby di ${_nearestHalte.name}, siap mengantar Anda.',
+        timestamp: DateTime.now(),
+        actionLabel: 'Lacak Shuttle',
+        bookingCode: widget.bookingCode,
+      ));
+    });
 
     _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted) return;
@@ -283,13 +299,13 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
                 borderRadius: BorderRadius.circular(12)),
             child: Row(
               children: [
-                Icon(Icons.social_distance, size: 16, color: primaryBlue),
+                const Icon(Icons.social_distance, size: 16, color: primaryBlue),
                 const SizedBox(width: 8),
                 Text('± $meters meter',
                     style: const TextStyle(
                         fontSize: 12, fontWeight: FontWeight.w600)),
                 const SizedBox(width: 16),
-                Icon(Icons.timer_outlined, size: 16, color: primaryBlue),
+                const Icon(Icons.timer_outlined, size: 16, color: primaryBlue),
                 const SizedBox(width: 8),
                 Text('± $minutes menit jalan kaki',
                     style: const TextStyle(

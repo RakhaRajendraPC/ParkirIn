@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/user_session.dart';
 import 'accessibility_settings_screen.dart';
 import 'delete_account_screen.dart';
+import 'favorites_screen.dart';
 import 'help_center_screen.dart';
 import 'language_settings_screen.dart';
 import 'my_details_screen.dart';
@@ -81,6 +82,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const PaymentMethodsScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildMenuTile(
+                icon: Icons.favorite_border,
+                iconColor: Colors.redAccent,
+                title: 'Favorit Saya',
+                subtitle: 'Lokasi parkir yang Anda simpan',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FavoritesScreen(),
                   ),
                 ),
               ),

@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/booking_model.dart';
+import '../models/notification_model.dart';
 import '../services/booking_repository.dart';
+import '../services/notification_repository.dart';
 import 'shuttle_tracking_screen.dart';
 
 enum _GateStatus { waiting, validated }
@@ -38,6 +40,18 @@ class _CheckinScreenState extends State<CheckinScreen> {
         _gateStatus = _GateStatus.validated;
         widget.booking.status = BookingStatus.checkIn;
       });
+
+      NotificationRepository.instance.add(AppNotification(
+        id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
+        type: NotificationType.checkinConfirmation,
+        title: 'Check-in Berhasil',
+        description:
+            'Kendaraan ${widget.booking.vehiclePlate} tercatat aman di slot ${widget.booking.slotCode}.',
+        timestamp: DateTime.now(),
+        actionLabel: 'Lihat Booking',
+        bookingCode: widget.booking.bookingCode,
+      ));
+
       BookingRepository.instance
           .refresh(); // beritahu BookingsScreen untuk rebuild
     });
@@ -72,11 +86,14 @@ class _CheckinScreenState extends State<CheckinScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Check-in',
-              style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17)),
+          title: const Text(
+            'Check-in',
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+              fontSize: 17,
+            ),
+          ),
         ),
         body: ListView(
           padding: const EdgeInsets.all(16),
@@ -91,7 +108,9 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         ? 'Tunjukkan QR ini di gerbang masuk'
                         : 'Check-in Berhasil',
                     style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold),
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -114,10 +133,13 @@ class _CheckinScreenState extends State<CheckinScreen> {
                 onPressed: () =>
                     setState(() => _showPhotoStep = !_showPhotoStep),
                 icon: Icon(
-                    _showPhotoStep ? Icons.expand_less : Icons.expand_more,
-                    size: 18),
-                label: const Text('Opsional: Dokumentasikan Kondisi Kendaraan',
-                    style: TextStyle(fontSize: 12)),
+                  _showPhotoStep ? Icons.expand_less : Icons.expand_more,
+                  size: 18,
+                ),
+                label: const Text(
+                  'Opsional: Dokumentasikan Kondisi Kendaraan',
+                  style: TextStyle(fontSize: 12),
+                ),
               ),
               if (_showPhotoStep) ...[
                 const SizedBox(height: 4),
@@ -138,24 +160,32 @@ class _CheckinScreenState extends State<CheckinScreen> {
             ? SafeArea(
                 child: Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                    BoxShadow(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
                         color: Colors.black.withOpacity(0.05),
                         blurRadius: 10,
-                        offset: const Offset(0, -2))
-                  ]),
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
                   child: SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
                       onPressed: _goToShuttle,
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                      child: const Text('Lacak Shuttle',
-                          style: TextStyle(fontWeight: FontWeight.w600)),
+                        backgroundColor: primaryBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Lacak Shuttle',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ),
                 ),
@@ -169,17 +199,23 @@ class _CheckinScreenState extends State<CheckinScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
-          ]),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+          ),
+        ],
+      ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: primaryBlue.withOpacity(0.1), shape: BoxShape.circle),
+              color: primaryBlue.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
             child: const Icon(Icons.directions_car_filled, color: primaryBlue),
           ),
           const SizedBox(width: 12),
@@ -187,13 +223,21 @@ class _CheckinScreenState extends State<CheckinScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.booking.vehiclePlate,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(
+                  widget.booking.vehiclePlate,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(widget.booking.locationName,
-                    style:
-                        TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                Text(
+                  widget.booking.locationName,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
               ],
             ),
           ),
@@ -210,12 +254,16 @@ class _CheckinScreenState extends State<CheckinScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-              color: _gateStatus == _GateStatus.validated
-                  ? Colors.green
-                  : Colors.grey.shade200,
-              width: _gateStatus == _GateStatus.validated ? 2 : 1),
+            color: _gateStatus == _GateStatus.validated
+                ? Colors.green
+                : Colors.grey.shade200,
+            width: _gateStatus == _GateStatus.validated ? 2 : 1,
+          ),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+            ),
           ],
         ),
         child: Column(
@@ -223,26 +271,38 @@ class _CheckinScreenState extends State<CheckinScreen> {
             Opacity(
               opacity: _gateStatus == _GateStatus.validated ? 0.35 : 1,
               child: QrImageView(
-                  data: widget.booking.bookingCode,
-                  version: QrVersions.auto,
-                  size: 180),
+                data: widget.booking.bookingCode,
+                version: QrVersions.auto,
+                size: 180,
+              ),
             ),
             const SizedBox(height: 12),
-            Text(widget.booking.bookingCode,
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2)),
+            Text(
+              widget.booking.bookingCode,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
             if (_gateStatus == _GateStatus.waiting) ...[
               const SizedBox(height: 14),
               const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: primaryBlue)),
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: primaryBlue,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text('Menunggu validasi gerbang...',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+              Text(
+                'Menunggu validasi gerbang...',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                ),
+              ),
             ],
           ],
         ),
@@ -254,15 +314,19 @@ class _CheckinScreenState extends State<CheckinScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(12)),
+        color: Colors.green.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: const Row(
         children: [
           Icon(Icons.check_circle, color: Colors.green),
           SizedBox(width: 10),
           Expanded(
-              child: Text('QR berhasil divalidasi oleh gerbang masuk',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+            child: Text(
+              'QR berhasil divalidasi oleh gerbang masuk',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
       ),
     );
@@ -274,10 +338,11 @@ class _CheckinScreenState extends State<CheckinScreen> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _photoLabels.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.3),
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.3,
+      ),
       itemBuilder: (context, index) {
         final done = _photosTaken[index];
         return InkWell(
@@ -287,23 +352,27 @@ class _CheckinScreenState extends State<CheckinScreen> {
             decoration: BoxDecoration(
               color: done ? Colors.green.withOpacity(0.06) : Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border:
-                  Border.all(color: done ? Colors.green : Colors.grey.shade300),
+              border: Border.all(
+                color: done ? Colors.green : Colors.grey.shade300,
+              ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(done ? Icons.check_circle : Icons.camera_alt_outlined,
-                    color: done ? Colors.green : Colors.grey.shade400,
-                    size: 28),
+                Icon(
+                  done ? Icons.check_circle : Icons.camera_alt_outlined,
+                  color: done ? Colors.green : Colors.grey.shade400,
+                  size: 28,
+                ),
                 const SizedBox(height: 6),
-                Text('${_photoLabels[index]} ${done ? "✓" : ""}',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: done
-                            ? Colors.green.shade800
-                            : Colors.grey.shade600)),
+                Text(
+                  '${_photoLabels[index]} ${done ? "✓" : ""}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: done ? Colors.green.shade800 : Colors.grey.shade600,
+                  ),
+                ),
               ],
             ),
           ),

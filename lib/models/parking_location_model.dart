@@ -8,6 +8,7 @@ class ParkingLocation {
   final bool isIndoor;
   final List<String> facilities;
   final bool isAccessible;
+  final String imagePath;
 
   const ParkingLocation({
     required this.id,
@@ -19,6 +20,7 @@ class ParkingLocation {
     required this.isIndoor,
     required this.facilities,
     this.isAccessible = false,
+    this.imagePath = '',
   });
 
   static List<ParkingLocation> mockList() => const [
@@ -34,9 +36,10 @@ class ParkingLocation {
             'CCTV 24 Jam',
             'Pagar Keliling',
             'Petugas Jaga',
-            'Area Tertutup'
+            'Area Tertutup',
           ],
           isAccessible: true,
+          imagePath: 'assets/images/skypark_1.png',
         ),
         ParkingLocation(
           id: 'loc2',
@@ -47,6 +50,7 @@ class ParkingLocation {
           distanceKm: 2.5,
           isIndoor: false,
           facilities: ['CCTV 24 Jam', 'Petugas Jaga', 'Shuttle Reguler'],
+          imagePath: 'assets/images/safepark_1.png',
         ),
         ParkingLocation(
           id: 'loc3',
@@ -61,9 +65,10 @@ class ParkingLocation {
             'Pagar Keliling',
             'Petugas Jaga',
             'Area Tertutup',
-            'Car Wash'
+            'Car Wash',
           ],
           isAccessible: true,
+          imagePath: 'assets/images/angkasa_1.png',
         ),
       ];
 }

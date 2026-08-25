@@ -1,5 +1,6 @@
 // lib/screens/notification_settings_screen.dart
 import 'package:flutter/material.dart';
+import '../services/notification_preferences.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -12,14 +13,7 @@ class NotificationSettingsScreen extends StatefulWidget {
 class _NotificationSettingsScreenState
     extends State<NotificationSettingsScreen> {
   static const Color primaryBlue = Color(0xFF1E5EFF);
-
-  bool _reminder = true;
-  bool _shuttle = true;
-  bool _promo = true;
-  bool _booking = true;
-  bool _flight = false;
-  bool _emailNotif = true;
-  bool _pushNotif = true;
+  final NotificationPreferences _prefs = NotificationPreferences.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -40,32 +34,62 @@ class _NotificationSettingsScreenState
           children: [
             _buildSection('Saluran Notifikasi', [
               _switchTile('Push Notification', 'Notifikasi langsung di HP Anda',
-                  _pushNotif, (v) => setState(() => _pushNotif = v)),
+                  _prefs.pushEnabled, (v) {
+                _prefs.setPush(v);
+                setState(() {});
+              }),
               _switchTile('Email', 'Ringkasan & konfirmasi via email',
-                  _emailNotif, (v) => setState(() => _emailNotif = v)),
+                  _prefs.emailEnabled, (v) {
+                _prefs.setEmail(v);
+                setState(() {});
+              }),
             ]),
             const SizedBox(height: 16),
             _buildSection('Jenis Notifikasi', [
               _switchTile('Reminder Check-in', 'Pengingat H-1 sebelum jadwal',
-                  _reminder, (v) => setState(() => _reminder = v)),
-              _switchTile('Update Shuttle', 'Status & ETA shuttle jemputan',
-                  _shuttle, (v) => setState(() => _shuttle = v)),
+                  _prefs.reminderEnabled, (v) {
+                _prefs.setReminder(v);
+                setState(() {});
+              }),
+              _switchTile(
+                  'Update Shuttle',
+                  'Status & ketersediaan shuttle jemputan',
+                  _prefs.shuttleEnabled, (v) {
+                _prefs.setShuttle(v);
+                setState(() {});
+              }),
               _switchTile(
                   'Booking & Overstay',
-                  'Konfirmasi booking dan peringatan biaya tambahan',
-                  _booking,
-                  (v) => setState(() => _booking = v)),
+                  'Konfirmasi booking, check-in/out, dan peringatan biaya tambahan',
+                  _prefs.bookingEnabled, (v) {
+                _prefs.setBooking(v);
+                setState(() {});
+              }),
               _switchTile(
                   'Perubahan Penerbangan',
                   'Info delay/reschedule jadwal (Fase 2)',
-                  _flight,
-                  (v) => setState(() => _flight = v)),
-              _switchTile(
-                  'Promo & Voucher',
-                  'Info diskon dan penawaran spesial',
-                  _promo,
-                  (v) => setState(() => _promo = v)),
+                  _prefs.flightEnabled, (v) {
+                _prefs.setFlight(v);
+                setState(() {});
+              }),
             ]),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                  color: primaryBlue.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(12)),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: primaryBlue),
+                  SizedBox(width: 8),
+                  Expanded(
+                      child: Text(
+                          'Notifikasi yang dinonaktifkan tidak akan muncul di menu Alerts maupun sebagai notifikasi melayang.',
+                          style: TextStyle(fontSize: 11))),
+                ],
+              ),
+            ),
           ],
         ),
       ),

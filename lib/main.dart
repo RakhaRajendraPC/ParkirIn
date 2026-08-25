@@ -5,11 +5,15 @@ import 'screens/notifications_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/bookings_screen.dart';
 import 'screens/splash_onboarding_screen.dart';
-import 'services/app_settings.dart';
+import 'services/app_settings.dart'; // Sudah mencakup AppSettings dan AppStrings
+import 'services/notification_repository.dart';
+import 'services/notification_preferences.dart';
+import 'widgets/floating_notification_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSettings.instance.load();
+  await NotificationPreferences.instance.load();
   runApp(const ParkirInApp());
 }
 
@@ -51,6 +55,7 @@ class _ParkirInAppState extends State<ParkirInApp> {
     );
 
     return MaterialApp(
+      navigatorKey: NotificationBannerHost.navigatorKey,
       title: 'ParkirIn',
       debugShowCheckedModeBanner: false,
       themeMode: settings.themeMode,
@@ -91,6 +96,23 @@ class RootShell extends StatefulWidget {
 
 class _RootShellState extends State<RootShell> {
   int _currentIndex = 0;
+  final NotificationRepository _notifRepo = NotificationRepository.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _notifRepo.addListener(_onNotifChanged);
+  }
+
+  @override
+  void dispose() {
+    _notifRepo.removeListener(_onNotifChanged);
+    super.dispose();
+  }
+
+  void _onNotifChanged() {
+    if (mounted) setState(() {});
+  }
 
   final List<Widget> _pages = const [
     SearchScreen(),
@@ -103,10 +125,7 @@ class _RootShellState extends State<RootShell> {
     _NavItem(icon: Icons.search, labelKey: 'nav_search'),
     _NavItem(
         icon: Icons.confirmation_number_outlined, labelKey: 'nav_bookings'),
-    _NavItem(
-        icon: Icons.notifications_none_rounded,
-        labelKey: 'nav_alerts',
-        showDot: true),
+    _NavItem(icon: Icons.notifications_none_rounded, labelKey: 'nav_alerts'),
     _NavItem(icon: Icons.person_outline, labelKey: 'nav_profile'),
   ];
 
@@ -151,7 +170,8 @@ class _RootShellState extends State<RootShell> {
                         clipBehavior: Clip.none,
                         children: [
                           Icon(item.icon, color: color, size: 24),
-                          if (item.showDot)
+                          if (item.labelKey == 'nav_alerts' &&
+                              _notifRepo.unreadCount > 0)
                             Positioned(
                               right: -2,
                               top: -2,
@@ -191,8 +211,9 @@ class _RootShellState extends State<RootShell> {
 class _NavItem {
   final IconData icon;
   final String labelKey;
-  final bool showDot;
 
-  const _NavItem(
-      {required this.icon, required this.labelKey, this.showDot = false});
+  const _NavItem({
+    required this.icon,
+    required this.labelKey,
+  });
 }

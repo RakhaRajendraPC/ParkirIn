@@ -1,6 +1,7 @@
 // lib/screens/splash_onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'auth_screen.dart';
+import 'notification_permission_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,26 +30,11 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: primaryBlue,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                  color: Colors.white, shape: BoxShape.circle),
-              child:
-                  const Icon(Icons.local_parking, color: primaryBlue, size: 48),
-            ),
-            const SizedBox(height: 16),
-            const Text('ParkirIn',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            const Text('Solusi Parkir Inap Bandara',
-                style: TextStyle(color: Colors.white70, fontSize: 12)),
-          ],
+        child: Image.asset(
+          'assets/logo/logo_parkirin_white.png',
+          width: 480,
+          height: 480,
+          fit: BoxFit.contain,
         ),
       ),
     );
@@ -59,9 +45,14 @@ class OnboardingPage {
   final IconData icon;
   final String title;
   final String description;
+  final String? imagePath;
 
-  const OnboardingPage(
-      {required this.icon, required this.title, required this.description});
+  const OnboardingPage({
+    required this.icon,
+    required this.title,
+    required this.description,
+    this.imagePath,
+  });
 }
 
 class OnboardingScreen extends StatefulWidget {
@@ -99,7 +90,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _finish() {
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => const AuthScreen()));
+      context,
+      MaterialPageRoute(
+        builder: (context) => NotificationPermissionScreen(
+          onContinue: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AuthScreen()),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -129,25 +131,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(28),
-                          decoration: BoxDecoration(
-                              color: primaryBlue.withOpacity(0.1),
-                              shape: BoxShape.circle),
-                          child: Icon(p.icon, size: 56, color: primaryBlue),
-                        ),
+                        p.imagePath != null
+                            ? Image.asset(
+                                p.imagePath!,
+                                height: 180,
+                                fit: BoxFit.contain,
+                              )
+                            : Container(
+                                padding: const EdgeInsets.all(28),
+                                decoration: BoxDecoration(
+                                  color: primaryBlue.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child:
+                                    Icon(p.icon, size: 56, color: primaryBlue),
+                              ),
                         const SizedBox(height: 32),
-                        Text(p.title,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text(
+                          p.title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const SizedBox(height: 12),
-                        Text(p.description,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade600,
-                                height: 1.5)),
+                        Text(
+                          p.description,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                            height: 1.5,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -157,17 +174,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                  _pages.length,
-                  (i) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: i == _index ? 20 : 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color:
-                              i == _index ? primaryBlue : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      )),
+                _pages.length,
+                (i) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: i == _index ? 20 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: i == _index ? primaryBlue : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(24),
@@ -180,18 +197,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _finish();
                     } else {
                       _controller.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut);
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12))),
+                    backgroundColor: primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   child: Text(
-                      _index == _pages.length - 1 ? 'Mulai Sekarang' : 'Lanjut',
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                    _index == _pages.length - 1 ? 'Mulai Sekarang' : 'Lanjut',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ),

@@ -1,6 +1,7 @@
 // lib/screens/search_results_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
+import '../services/favorites_service.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/empty_search_view.dart';
 import 'location_detail_screen.dart';
@@ -25,6 +26,7 @@ class SearchResultsScreen extends StatefulWidget {
 
 class _SearchResultsScreenState extends State<SearchResultsScreen> {
   static const Color primaryBlue = Color(0xFF1E5EFF);
+  final FavoritesService _favorites = FavoritesService.instance;
   String _sortBy = 'Terdekat';
   bool _onlyAccessible = false;
   SearchFilterResult? _advancedFilter;
@@ -84,13 +86,18 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.airportName,
-                  style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold)),
-              Text('$_nights malam · ${_results.length} lokasi ditemukan',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
+              Text(
+                widget.airportName,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '$_nights malam · ${_results.length} lokasi ditemukan',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+              ),
             ],
           ),
         ),
@@ -146,8 +153,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                         side: BorderSide(
-                            color:
-                                selected ? primaryBlue : Colors.grey.shade300),
+                          color: selected ? primaryBlue : Colors.grey.shade300,
+                        ),
                       ),
                       showCheckmark: false,
                     ),
@@ -211,114 +218,186 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           ),
         );
       },
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2))
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                      loc.isIndoor ? Icons.warehouse : Icons.local_parking,
-                      color: primaryBlue,
-                      size: 30),
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(loc.name,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14)),
-                      const SizedBox(height: 2),
-                      Text(loc.address,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontSize: 11, color: Colors.grey.shade600)),
-                      const SizedBox(height: 6),
-                      Row(
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        color: primaryBlue.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: loc.imagePath.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.asset(
+                                loc.imagePath,
+                                fit: BoxFit.cover,
+                                width: 70,
+                                height: 70,
+                              ),
+                            )
+                          : Icon(
+                              loc.isIndoor
+                                  ? Icons.warehouse
+                                  : Icons.local_parking,
+                              color: primaryBlue,
+                              size: 30,
+                            ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.star, size: 14, color: Colors.amber),
-                          const SizedBox(width: 2),
-                          Text('${loc.rating}',
+                          Padding(
+                            padding: const EdgeInsets.only(right: 32),
+                            child: Text(
+                              loc.name,
                               style: const TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w600)),
-                          const SizedBox(width: 10),
-                          Icon(Icons.directions_car,
-                              size: 13, color: Colors.grey.shade500),
-                          const SizedBox(width: 2),
-                          Text('${loc.distanceKm} km',
-                              style: TextStyle(
-                                  fontSize: 11, color: Colors.grey.shade600)),
-                          if (loc.isAccessible) ...[
-                            const SizedBox(width: 10),
-                            Icon(Icons.accessible,
-                                size: 14, color: Colors.teal.shade400),
-                          ],
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            loc.address,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.star,
+                                  size: 14, color: Colors.amber),
+                              const SizedBox(width: 2),
+                              Text(
+                                '${loc.rating}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Icon(
+                                Icons.directions_car,
+                                size: 13,
+                                color: Colors.grey.shade500,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                '${loc.distanceKm} km',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              if (loc.isAccessible) ...[
+                                const SizedBox(width: 10),
+                                Icon(
+                                  Icons.accessible,
+                                  size: 14,
+                                  color: Colors.teal.shade400,
+                                ),
+                              ],
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Divider(height: 1)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(color: Colors.black87),
-                    children: [
-                      TextSpan(
-                        text: CurrencyFormatter.rupiah(loc.pricePerNight),
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  child: Divider(height: 1),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(color: Colors.black87),
+                        children: [
+                          TextSpan(
+                            text: CurrencyFormatter.rupiah(loc.pricePerNight),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' / malam',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
                       ),
-                      TextSpan(
-                          text: ' / malam',
-                          style: TextStyle(
-                              fontSize: 11, color: Colors.grey.shade600)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                      color: primaryBlue,
-                      borderRadius: BorderRadius.circular(8)),
-                  child: const Text('Pilih',
-                      style: TextStyle(
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryBlue,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Pilih',
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
-                          fontWeight: FontWeight.w600)),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: IconButton(
+              onPressed: () => setState(() => _favorites.toggle(loc.id)),
+              icon: Icon(
+                _favorites.isFavorite(loc.id)
+                    ? Icons.favorite
+                    : Icons.favorite_border,
+                color: _favorites.isFavorite(loc.id)
+                    ? Colors.redAccent
+                    : Colors.grey.shade400,
+                size: 20,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

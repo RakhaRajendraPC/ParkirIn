@@ -1,8 +1,10 @@
+// lib/models/notification_model.dart
 import 'package:flutter/material.dart';
 
 enum NotificationType {
   bookingConfirmation,
   checkinReminder,
+  checkinConfirmation, // ⬅️ baru
   shuttleArriving,
   checkoutConfirmation,
   overstayWarning,
@@ -19,6 +21,7 @@ extension NotificationTypeX on NotificationType {
       case NotificationType.shuttleArriving:
         return AlertCategory.shuttle;
       case NotificationType.bookingConfirmation:
+      case NotificationType.checkinConfirmation:
       case NotificationType.checkoutConfirmation:
       case NotificationType.overstayWarning:
         return AlertCategory.booking;
@@ -33,6 +36,8 @@ extension NotificationTypeX on NotificationType {
         return 'BOOKING';
       case NotificationType.checkinReminder:
         return 'REMINDER';
+      case NotificationType.checkinConfirmation:
+        return 'CHECK-IN';
       case NotificationType.shuttleArriving:
         return 'SHUTTLE UPDATE';
       case NotificationType.checkoutConfirmation:
@@ -50,6 +55,8 @@ extension NotificationTypeX on NotificationType {
         return Icons.qr_code_2;
       case NotificationType.checkinReminder:
         return Icons.event_available;
+      case NotificationType.checkinConfirmation:
+        return Icons.login;
       case NotificationType.shuttleArriving:
         return Icons.directions_bus_filled;
       case NotificationType.checkoutConfirmation:
@@ -66,6 +73,8 @@ extension NotificationTypeX on NotificationType {
       case NotificationType.bookingConfirmation:
         return const Color(0xFF1E5EFF);
       case NotificationType.checkinReminder:
+        return const Color(0xFF1E5EFF);
+      case NotificationType.checkinConfirmation:
         return const Color(0xFF1E5EFF);
       case NotificationType.shuttleArriving:
         return Colors.orange;

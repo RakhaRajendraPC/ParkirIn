@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'shuttle_tracking_screen.dart';
 import 'search_results_screen.dart';
 import 'ground_transport_screen.dart';
+import '../models/booking_model.dart';
+import '../services/booking_repository.dart';
+import 'booking_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -16,6 +19,29 @@ class _SearchScreenState extends State<SearchScreen> {
   DateTime checkOut = DateTime(2026, 10, 15, 18, 0);
 
   static const Color primaryBlue = Color(0xFF1E5EFF);
+  final BookingRepository _bookingRepo = BookingRepository.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _bookingRepo.addListener(_onBookingsChanged);
+  }
+
+  @override
+  void dispose() {
+    _bookingRepo.removeListener(_onBookingsChanged);
+    super.dispose();
+  }
+
+  void _onBookingsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  BookingModel? get _activeBooking {
+    final active = _bookingRepo.all.where((b) =>
+        b.status == BookingStatus.dipesan || b.status == BookingStatus.checkIn);
+    return active.isEmpty ? null : active.first;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +82,10 @@ class _SearchScreenState extends State<SearchScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeroBanner(),
+              if (_activeBooking != null) ...[
+                const SizedBox(height: 12),
+                _buildActiveBookingBanner(),
+              ],
               const SizedBox(height: 20),
               _buildTitle(),
               const SizedBox(height: 16),
@@ -80,47 +110,125 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+  Widget _buildActiveBookingBanner() {
+    final b = _activeBooking;
+    if (b == null) return const SizedBox.shrink();
+
+    final isParked = b.status == BookingStatus.checkIn;
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookingDetailScreen(booking: b),
+        ),
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [primaryBlue, primaryBlue.withOpacity(0.85)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isParked
+                    ? Icons.local_parking
+                    : Icons.confirmation_number_outlined,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isParked
+                        ? 'Kendaraan Sedang Parkir'
+                        : 'Booking Aktif Menunggu Check-in',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${b.locationName} · Slot ${b.slotCode}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.white70),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeroBanner() {
     return Container(
       height: 130,
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF9CB9E8), Color(0xFFD9E4F5)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        image: const DecorationImage(
+          image: AssetImage('assets/images/hero_banner.png'),
+          fit: BoxFit.cover,
         ),
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 16,
-            top: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: primaryBlue,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.flight_takeoff, color: Colors.white, size: 14),
-                  SizedBox(width: 4),
-                  Text(
-                    'PARK & FLY',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: [Colors.black.withOpacity(0.35), Colors.transparent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              left: 16,
+              top: 16,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: primaryBlue,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.flight_takeoff, color: Colors.white, size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      'PARK & FLY',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -161,7 +269,6 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       child: Column(
         children: [
-          // Airport selector
           InkWell(
             onTap: _showAirportPicker,
             child: Row(
@@ -206,7 +313,6 @@ class _SearchScreenState extends State<SearchScreen> {
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1),
           ),
-          // Date row
           Row(
             children: [
               Expanded(
@@ -317,7 +423,9 @@ class _SearchScreenState extends State<SearchScreen> {
                       TextSpan(
                         text: 'TERBANGAMAN',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black87),
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
                     ],
                   ),
@@ -348,7 +456,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildFeatureGrid() {
     return Row(
       children: [
-        Expanded(
+        const Expanded(
           child: _FeatureCard(
             icon: Icons.verified_user_outlined,
             iconColor: Colors.green,
@@ -357,7 +465,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(
+        const Expanded(
           child: _FeatureCard(
             icon: Icons.attach_money,
             iconColor: primaryBlue,
@@ -590,7 +698,9 @@ class _DateTile extends StatelessWidget {
                 Text(
                   _formatted,
                   style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -642,9 +752,10 @@ class _FeatureCard extends StatelessWidget {
             child: Icon(icon, color: iconColor, size: 18),
           ),
           const SizedBox(height: 10),
-          Text(title,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           const SizedBox(height: 4),
           Text(
             subtitle,

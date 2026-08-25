@@ -1,6 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '/main.dart';
 import 'otp_verification_screen.dart';
+import 'terms_privacy_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -14,6 +16,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLogin = true;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _agreedToTerms = false;
 
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -64,11 +67,14 @@ class _AuthScreenState extends State<AuthScreen> {
                 children: [
                   Icon(Icons.location_on, color: primaryBlue, size: 32),
                   SizedBox(width: 8),
-                  Text('ParkirIn',
-                      style: TextStyle(
-                          color: primaryBlue,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold)),
+                  Text(
+                    'ParkirIn',
+                    style: TextStyle(
+                      color: primaryBlue,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 32),
@@ -89,8 +95,12 @@ class _AuthScreenState extends State<AuthScreen> {
                 _buildField('Nama Lengkap', _nameCtrl, Icons.person_outline),
                 const SizedBox(height: 14),
               ],
-              _buildField('Email', _emailCtrl, Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress),
+              _buildField(
+                'Email',
+                _emailCtrl,
+                Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+              ),
               const SizedBox(height: 14),
               _buildField(
                 'Password',
@@ -99,10 +109,11 @@ class _AuthScreenState extends State<AuthScreen> {
                 obscure: _obscurePassword,
                 suffix: IconButton(
                   icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      size: 18),
+                    _obscurePassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 18,
+                  ),
                   onPressed: () =>
                       setState(() => _obscurePassword = !_obscurePassword),
                 ),
@@ -113,9 +124,59 @@ class _AuthScreenState extends State<AuthScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {},
-                    child: const Text('Lupa Password?',
-                        style: TextStyle(fontSize: 12, color: primaryBlue)),
+                    child: const Text(
+                      'Lupa Password?',
+                      style: TextStyle(fontSize: 12, color: primaryBlue),
+                    ),
                   ),
+                ),
+              ],
+              if (!_isLogin) ...[
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      value: _agreedToTerms,
+                      onChanged: (v) =>
+                          setState(() => _agreedToTerms = v ?? false),
+                      activeColor: primaryBlue,
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: RichText(
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade700,
+                            ),
+                            children: [
+                              const TextSpan(text: 'Saya menyetujui '),
+                              TextSpan(
+                                text: 'Syarat & Ketentuan',
+                                style: const TextStyle(
+                                  color: primaryBlue,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const TermsPrivacyScreen(),
+                                        ),
+                                      ),
+                              ),
+                              const TextSpan(
+                                text: ' dan Kebijakan Privasi ParkirIn.',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
               const SizedBox(height: 16),
@@ -123,21 +184,30 @@ class _AuthScreenState extends State<AuthScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
+                  onPressed: (_isLoading || (!_isLogin && !_agreedToTerms))
+                      ? null
+                      : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryBlue,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade300,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: _isLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
-                      : Text(_isLogin ? 'Masuk' : 'Daftar',
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          _isLogin ? 'Masuk' : 'Daftar',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -146,9 +216,13 @@ class _AuthScreenState extends State<AuthScreen> {
                   Expanded(child: Divider(color: Colors.grey.shade300)),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('atau',
-                        style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade500)),
+                    child: Text(
+                      'atau',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
                   ),
                   Expanded(child: Divider(color: Colors.grey.shade300)),
                 ],
@@ -167,13 +241,16 @@ class _AuthScreenState extends State<AuthScreen> {
                           TextStyle(fontSize: 12, color: Colors.grey.shade700),
                       children: [
                         TextSpan(
-                            text: _isLogin
-                                ? 'Belum punya akun? '
-                                : 'Sudah punya akun? '),
+                          text: _isLogin
+                              ? 'Belum punya akun? '
+                              : 'Sudah punya akun? ',
+                        ),
                         TextSpan(
                           text: _isLogin ? 'Daftar' : 'Masuk',
                           style: const TextStyle(
-                              color: primaryBlue, fontWeight: FontWeight.w600),
+                            color: primaryBlue,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
@@ -187,8 +264,14 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildField(String label, TextEditingController ctrl, IconData icon,
-      {bool obscure = false, Widget? suffix, TextInputType? keyboardType}) {
+  Widget _buildField(
+    String label,
+    TextEditingController ctrl,
+    IconData icon, {
+    bool obscure = false,
+    Widget? suffix,
+    TextInputType? keyboardType,
+  }) {
     return TextField(
       controller: ctrl,
       obscureText: obscure,
@@ -200,8 +283,9 @@ class _AuthScreenState extends State<AuthScreen> {
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
         contentPadding:
             const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       ),
@@ -219,8 +303,9 @@ class _AuthScreenState extends State<AuthScreen> {
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.black87,
           side: BorderSide(color: Colors.grey.shade300),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );
