@@ -1,9 +1,12 @@
+// lib/screens/search_screen.dart
 import 'package:flutter/material.dart';
 import 'shuttle_tracking_screen.dart';
 import 'search_results_screen.dart';
 import 'ground_transport_screen.dart';
 import '../models/booking_model.dart';
 import '../services/booking_repository.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 import 'booking_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -18,22 +21,23 @@ class _SearchScreenState extends State<SearchScreen> {
   DateTime checkIn = DateTime(2026, 10, 12, 8, 0);
   DateTime checkOut = DateTime(2026, 10, 15, 18, 0);
 
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final BookingRepository _bookingRepo = BookingRepository.instance;
 
   @override
   void initState() {
     super.initState();
-    _bookingRepo.addListener(_onBookingsChanged);
+    _bookingRepo.addListener(_onChanged);
+    AppSettings.instance.addListener(_onChanged);
   }
 
   @override
   void dispose() {
-    _bookingRepo.removeListener(_onBookingsChanged);
+    _bookingRepo.removeListener(_onChanged);
+    AppSettings.instance.removeListener(_onChanged);
     super.dispose();
   }
 
-  void _onBookingsChanged() {
+  void _onChanged() {
     if (mounted) setState(() {});
   }
 
@@ -52,14 +56,14 @@ class _SearchScreenState extends State<SearchScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leadingWidth: 56,
-          leading: const Padding(
-            padding: EdgeInsets.only(left: 16),
-            child: Icon(Icons.location_on_outlined, color: primaryBlue),
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Icon(Icons.location_on_outlined, color: AppColors.primary),
           ),
-          title: const Text(
-            'ParkirIn',
+          title: Text(
+            AppStrings.t('search_appbar_title'),
             style: TextStyle(
-              color: primaryBlue,
+              color: AppColors.primary,
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
@@ -128,7 +132,7 @@ class _SearchScreenState extends State<SearchScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [primaryBlue, primaryBlue.withOpacity(0.85)],
+            colors: [AppColors.primary, AppColors.primary.withOpacity(0.85)],
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -155,8 +159,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   Text(
                     isParked
-                        ? 'Kendaraan Sedang Parkir'
-                        : 'Booking Aktif Menunggu Check-in',
+                        ? AppStrings.t('search_active_booking_parked')
+                        : AppStrings.t('search_active_booking_waiting'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -165,7 +169,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${b.locationName} · Slot ${b.slotCode}',
+                    '${b.locationName} · ${AppStrings.t('bookings_slot_label')} ${b.slotCode}',
                     style: const TextStyle(color: Colors.white70, fontSize: 11),
                   ),
                 ],
@@ -207,17 +211,18 @@ class _SearchScreenState extends State<SearchScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: primaryBlue,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.flight_takeoff, color: Colors.white, size: 14),
-                    SizedBox(width: 4),
+                  children: [
+                    const Icon(Icons.flight_takeoff,
+                        color: Colors.white, size: 14),
+                    const SizedBox(width: 4),
                     Text(
-                      'PARK & FLY',
-                      style: TextStyle(
+                      AppStrings.t('search_hero_badge'),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -235,18 +240,18 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildTitle() {
     return RichText(
-      text: const TextSpan(
-        style: TextStyle(
+      text: TextSpan(
+        style: const TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           height: 1.3,
         ),
         children: [
-          TextSpan(text: 'Solusi Parkir Inap\nBandara yang '),
+          TextSpan(text: AppStrings.t('search_title_1')),
           TextSpan(
-            text: 'Aman & Mudah',
-            style: TextStyle(color: primaryBlue),
+            text: AppStrings.t('search_title_2'),
+            style: TextStyle(color: AppColors.primary),
           ),
         ],
       ),
@@ -276,10 +281,10 @@ class _SearchScreenState extends State<SearchScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.1),
+                    color: AppColors.primaryLight,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.flight, color: primaryBlue, size: 18),
+                  child: Icon(Icons.flight, color: AppColors.primary, size: 18),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -287,7 +292,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'PILIH BANDARA',
+                        AppStrings.t('search_pilih_bandara'),
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.grey.shade500,
@@ -319,7 +324,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: _DateTile(
                   icon: Icons.login,
                   iconColor: Colors.orange,
-                  label: 'MASUK',
+                  label: AppStrings.t('search_masuk'),
                   date: checkIn,
                   onTap: () => _pickDate(isCheckIn: true),
                 ),
@@ -333,8 +338,8 @@ class _SearchScreenState extends State<SearchScreen> {
               Expanded(
                 child: _DateTile(
                   icon: Icons.logout,
-                  iconColor: primaryBlue,
-                  label: 'KELUAR',
+                  iconColor: AppColors.primary,
+                  label: AppStrings.t('search_keluar'),
                   date: checkOut,
                   onTap: () => _pickDate(isCheckIn: false),
                 ),
@@ -364,9 +369,9 @@ class _SearchScreenState extends State<SearchScreen> {
           );
         },
         icon: const Icon(Icons.search),
-        label: const Text(
-          'Cari Slot Parkir',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        label: Text(
+          AppStrings.t('search_cta'),
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFF8A00),
@@ -400,9 +405,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     color: const Color(0xFF4B4FE0),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text(
-                    'PROMO PENGGUNA BARU',
-                    style: TextStyle(
+                  child: Text(
+                    AppStrings.t('search_promo_badge'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
@@ -410,17 +415,18 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Diskon 20%',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  AppStrings.t('search_promo_title'),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
                 RichText(
-                  text: const TextSpan(
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  text: TextSpan(
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
                     children: [
-                      TextSpan(text: 'Gunakan kode: '),
-                      TextSpan(
+                      TextSpan(text: AppStrings.t('search_promo_code_label')),
+                      const TextSpan(
                         text: 'TERBANGAMAN',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
@@ -439,7 +445,7 @@ class _SearchScreenState extends State<SearchScreen> {
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.local_offer_outlined, color: primaryBlue),
+            child: Icon(Icons.local_offer_outlined, color: AppColors.primary),
           ),
         ],
       ),
@@ -447,30 +453,30 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildWhyChooseUsTitle() {
-    return const Text(
-      'Kenapa Pilih ParkirIn?',
-      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+    return Text(
+      AppStrings.t('search_why_title'),
+      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
     );
   }
 
   Widget _buildFeatureGrid() {
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: _FeatureCard(
             icon: Icons.verified_user_outlined,
             iconColor: Colors.green,
-            title: 'Slot Terjamin',
-            subtitle: 'Pasti dapat tempat, fasilitas aman 24/7.',
+            title: AppStrings.t('search_feature_slot_title'),
+            subtitle: AppStrings.t('search_feature_slot_sub'),
           ),
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: _FeatureCard(
             icon: Icons.attach_money,
-            iconColor: primaryBlue,
-            title: 'Biaya Transparan',
-            subtitle: 'Tanpa biaya tersembunyi saat checkout.',
+            iconColor: AppColors.primary,
+            title: AppStrings.t('search_feature_biaya_title'),
+            subtitle: AppStrings.t('search_feature_biaya_sub'),
           ),
         ),
       ],
@@ -512,15 +518,16 @@ class _SearchScreenState extends State<SearchScreen> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'Lacak Shuttle Real-time',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    AppStrings.t('search_shuttle_title'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 13),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'Pantau posisi bus jemputan langsung dari HP anda menuju terminal.',
-                    style: TextStyle(fontSize: 11, color: Colors.black54),
+                    AppStrings.t('search_shuttle_sub'),
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
                   ),
                 ],
               ),
@@ -561,15 +568,16 @@ class _SearchScreenState extends State<SearchScreen> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'Transportasi Lanjutan',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    AppStrings.t('search_ground_transport_title'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 13),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'Taksi, bus, travel, kereta bandara, dan lainnya.',
-                    style: TextStyle(fontSize: 11, color: Colors.black54),
+                    AppStrings.t('search_ground_transport_sub'),
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
                   ),
                 ],
               ),
