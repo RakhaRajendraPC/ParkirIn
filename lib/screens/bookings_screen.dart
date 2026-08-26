@@ -1,6 +1,9 @@
+// lib/screens/bookings_screen.dart
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
 import '../services/booking_repository.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 import 'checkin_screen.dart';
 import 'checkout_screen.dart';
 import 'booking_qr_screen.dart';
@@ -16,7 +19,6 @@ class BookingsScreen extends StatefulWidget {
 
 class _BookingsScreenState extends State<BookingsScreen>
     with SingleTickerProviderStateMixin {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   late TabController _tabController;
   final BookingRepository _repo = BookingRepository.instance;
 
@@ -24,17 +26,19 @@ class _BookingsScreenState extends State<BookingsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _repo.addListener(_onRepoChanged);
+    _repo.addListener(_onChanged);
+    AppSettings.instance.addListener(_onChanged);
   }
 
   @override
   void dispose() {
-    _repo.removeListener(_onRepoChanged);
+    _repo.removeListener(_onChanged);
+    AppSettings.instance.removeListener(_onChanged);
     _tabController.dispose();
     super.dispose();
   }
 
-  void _onRepoChanged() {
+  void _onChanged() {
     if (mounted) setState(() {});
   }
 
@@ -49,9 +53,9 @@ class _BookingsScreenState extends State<BookingsScreen>
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('My Bookings',
+          title: Text(AppStrings.t('bookings_appbar_title'),
               style: TextStyle(
-                  color: primaryBlue,
+                  color: AppColors.primary,
                   fontWeight: FontWeight.bold,
                   fontSize: 18)),
           bottom: TabBar(
@@ -60,16 +64,16 @@ class _BookingsScreenState extends State<BookingsScreen>
             tabAlignment: TabAlignment.center,
             labelPadding: const EdgeInsets.symmetric(horizontal: 12),
             indicatorSize: TabBarIndicatorSize.label,
-            labelColor: primaryBlue,
+            labelColor: AppColors.primary,
             unselectedLabelColor: Colors.grey,
-            indicatorColor: primaryBlue,
+            indicatorColor: AppColors.primary,
             labelStyle:
                 const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            tabs: const [
-              Tab(text: 'Aktif'),
-              Tab(text: 'Selesai'),
-              Tab(text: 'Dibatalkan'),
-              Tab(text: 'Kedaluwarsa')
+            tabs: [
+              Tab(text: AppStrings.t('bookings_tab_aktif')),
+              Tab(text: AppStrings.t('bookings_tab_selesai')),
+              Tab(text: AppStrings.t('bookings_tab_dibatalkan')),
+              Tab(text: AppStrings.t('bookings_tab_kedaluwarsa')),
             ],
           ),
         ),
@@ -95,7 +99,7 @@ class _BookingsScreenState extends State<BookingsScreen>
             Icon(Icons.confirmation_number_outlined,
                 size: 52, color: Colors.grey.shade300),
             const SizedBox(height: 10),
-            Text('Belum ada booking',
+            Text(AppStrings.t('bookings_empty'),
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
           ],
         ),
@@ -120,7 +124,7 @@ class _BookingsScreenState extends State<BookingsScreen>
   Widget _buildBookingCard(BookingModel b) {
     final statusColor = switch (b.status) {
       BookingStatus.menungguPembayaran => Colors.orange,
-      BookingStatus.dipesan => primaryBlue,
+      BookingStatus.dipesan => AppColors.primary,
       BookingStatus.checkIn => Colors.teal,
       BookingStatus.checkOut => Colors.green,
       BookingStatus.dibatalkan => Colors.redAccent,
@@ -179,7 +183,7 @@ class _BookingsScreenState extends State<BookingsScreen>
                 Icon(Icons.local_parking,
                     size: 12, color: Colors.grey.shade500),
                 const SizedBox(width: 4),
-                Text('Slot ${b.slotCode}',
+                Text('${AppStrings.t('bookings_slot_label')} ${b.slotCode}',
                     style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey.shade600,
@@ -200,8 +204,7 @@ class _BookingsScreenState extends State<BookingsScreen>
                       size: 13, color: Colors.grey.shade600),
                   const SizedBox(width: 6),
                   Expanded(
-                      child: Text(
-                          'Dibatalkan otomatis karena tidak check-in sesuai batas waktu',
+                      child: Text(AppStrings.t('bookings_expired_note'),
                           style: TextStyle(
                               fontSize: 10, color: Colors.grey.shade600))),
                 ],
@@ -218,16 +221,16 @@ class _BookingsScreenState extends State<BookingsScreen>
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '${b.checkIn.day}/${b.checkIn.month} - ${b.checkOut.day}/${b.checkOut.month} · ${b.durationNights} malam',
+                  '${b.checkIn.day}/${b.checkIn.month} - ${b.checkOut.day}/${b.checkOut.month} · ${b.durationNights} ${AppStrings.t('search_malam')}',
                   style: const TextStyle(
                       fontSize: 12, fontWeight: FontWeight.w500),
                 ),
               ),
               Text(CurrencyFormatter.rupiah(b.total),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: primaryBlue)),
+                      color: AppColors.primary)),
             ],
           ),
           if (canCheckin || canCheckout) ...[
@@ -242,11 +245,11 @@ class _BookingsScreenState extends State<BookingsScreen>
                           MaterialPageRoute(
                               builder: (context) => CheckinScreen(booking: b))),
                       icon: const Icon(Icons.login, size: 16),
-                      label: const Text('Check-in',
-                          style: TextStyle(fontSize: 12)),
+                      label: Text(AppStrings.t('bookings_checkin_btn'),
+                          style: const TextStyle(fontSize: 12)),
                       style: OutlinedButton.styleFrom(
-                          foregroundColor: primaryBlue,
-                          side: const BorderSide(color: primaryBlue),
+                          foregroundColor: AppColors.primary,
+                          side: BorderSide(color: AppColors.primary),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10))),
                     ),
@@ -260,8 +263,8 @@ class _BookingsScreenState extends State<BookingsScreen>
                               builder: (context) =>
                                   CheckoutScreen(booking: b))),
                       icon: const Icon(Icons.logout, size: 16),
-                      label: const Text('Check-out',
-                          style: TextStyle(fontSize: 12)),
+                      label: Text(AppStrings.t('bookings_checkout_btn'),
+                          style: const TextStyle(fontSize: 12)),
                       style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.orange,
                           side: const BorderSide(color: Colors.orange),
@@ -282,8 +285,8 @@ class _BookingsScreenState extends State<BookingsScreen>
                   MaterialPageRoute(
                       builder: (context) => BookingQrScreen(booking: b))),
               icon: const Icon(Icons.qr_code, size: 16),
-              label:
-                  const Text('Lihat QR Code', style: TextStyle(fontSize: 12)),
+              label: Text(AppStrings.t('bookings_qr_btn'),
+                  style: const TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.black87,
                   side: BorderSide(color: Colors.grey.shade300),

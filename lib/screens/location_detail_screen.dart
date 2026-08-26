@@ -2,10 +2,12 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/review_model.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import 'parking_slot_map_screen.dart';
 
-class LocationDetailScreen extends StatelessWidget {
+class LocationDetailScreen extends StatefulWidget {
   final ParkingLocation location;
   final DateTime checkIn;
   final DateTime checkOut;
@@ -17,7 +19,26 @@ class LocationDetailScreen extends StatelessWidget {
     required this.checkOut,
   });
 
-  static const Color primaryBlue = Color(0xFF1E5EFF);
+  @override
+  State<LocationDetailScreen> createState() => _LocationDetailScreenState();
+}
+
+class _LocationDetailScreenState extends State<LocationDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
 
   IconData _facilityIcon(String label) {
     if (label.contains('CCTV')) return Icons.videocam_outlined;
@@ -31,13 +52,15 @@ class LocationDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final location = widget.location;
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F8FA),
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
-              backgroundColor: primaryBlue.withOpacity(0.1),
+              backgroundColor: AppColors.primary.withOpacity(0.1),
               expandedHeight: 160,
               pinned: true,
               leading: IconButton(
@@ -60,7 +83,7 @@ class LocationDetailScreen extends StatelessWidget {
                   child: Icon(
                     location.isIndoor ? Icons.warehouse : Icons.local_parking,
                     size: 72,
-                    color: primaryBlue.withOpacity(0.4),
+                    color: AppColors.primary.withOpacity(0.4),
                   ),
                 ),
               ),
@@ -109,7 +132,7 @@ class LocationDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '· ${location.distanceKm} km dari bandara',
+                          '· ${location.distanceKm} ${AppStrings.t('loc_km_from_airport')}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade600,
@@ -118,9 +141,9 @@ class LocationDetailScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      'Fasilitas Keamanan',
-                      style: TextStyle(
+                    Text(
+                      AppStrings.t('loc_facilities_title'),
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
@@ -152,7 +175,7 @@ class LocationDetailScreen extends StatelessWidget {
                                   Icon(
                                     _facilityIcon(f),
                                     size: 15,
-                                    color: primaryBlue,
+                                    color: AppColors.primary,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -177,13 +200,13 @@ class LocationDetailScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
-                          children: const [
-                            Icon(Icons.accessible, color: Colors.teal),
-                            SizedBox(width: 10),
+                          children: [
+                            const Icon(Icons.accessible, color: Colors.teal),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'Lokasi ini ramah untuk lansia & pengguna kursi roda (dekat lift/gate).',
-                                style: TextStyle(fontSize: 12),
+                                AppStrings.t('loc_accessible_note'),
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ),
                           ],
@@ -191,9 +214,9 @@ class LocationDetailScreen extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 20),
-                    const Text(
-                      'Lokasi',
-                      style: TextStyle(
+                    Text(
+                      AppStrings.t('loc_location_title'),
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
@@ -206,10 +229,10 @@ class LocationDetailScreen extends StatelessWidget {
                         color: const Color(0xFFDCE8F5),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.map_outlined,
-                          color: primaryBlue,
+                          color: AppColors.primary,
                           size: 36,
                         ),
                       ),
@@ -253,7 +276,7 @@ class LocationDetailScreen extends StatelessWidget {
                           ),
                         ),
                         TextSpan(
-                          text: ' / malam',
+                          text: AppStrings.t('loc_per_night'),
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey.shade600,
@@ -272,23 +295,23 @@ class LocationDetailScreen extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => ParkingSlotMapScreen(
                             location: location,
-                            checkIn: checkIn,
-                            checkOut: checkOut,
+                            checkIn: widget.checkIn,
+                            checkOut: widget.checkOut,
                           ),
                         ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                     ),
-                    child: const Text(
-                      'Pilih Slot Ini',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                    child: Text(
+                      AppStrings.t('loc_select_slot_btn'),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -301,7 +324,7 @@ class LocationDetailScreen extends StatelessWidget {
   }
 
   Widget _buildReviewsSection() {
-    final reviews = LocationReview.mockForLocation(location.id);
+    final reviews = LocationReview.mockForLocation(widget.location.id);
     final avgRating = reviews.isEmpty
         ? 0.0
         : reviews.map((r) => r.rating).reduce((a, b) => a + b) / reviews.length;
@@ -312,16 +335,16 @@ class LocationDetailScreen extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Ulasan Pengguna',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            Text(
+              AppStrings.t('loc_reviews_title'),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
             Row(
               children: [
                 const Icon(Icons.star, size: 16, color: Colors.amber),
                 const SizedBox(width: 4),
                 Text(
-                  '${avgRating.toStringAsFixed(1)} (${reviews.length} ulasan)',
+                  '${avgRating.toStringAsFixed(1)} (${reviews.length} ${AppStrings.t('loc_reviews_suffix')})',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -334,7 +357,7 @@ class LocationDetailScreen extends StatelessWidget {
         const SizedBox(height: 12),
         if (reviews.isEmpty)
           Text(
-            'Belum ada ulasan untuk lokasi ini.',
+            AppStrings.t('loc_no_reviews'),
             style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
           )
         else
@@ -424,14 +447,14 @@ class LocationDetailScreen extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: primaryBlue.withOpacity(0.08),
+                        color: AppColors.primary.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         t,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9,
-                          color: primaryBlue,
+                          color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

@@ -58,7 +58,7 @@ class _SearchScreenState extends State<SearchScreen> {
           leadingWidth: 56,
           leading: Padding(
             padding: const EdgeInsets.only(left: 16),
-            child: Icon(Icons.location_on_outlined, color: AppColors.primary),
+            child: Icon(Icons.airport_shuttle, color: AppColors.primary),
           ),
           title: Text(
             AppStrings.t('search_appbar_title'),

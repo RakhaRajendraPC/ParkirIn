@@ -1,6 +1,8 @@
 // lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
 import '../services/user_session.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 import 'accessibility_settings_screen.dart';
 import 'delete_account_screen.dart';
 import 'favorites_screen.dart';
@@ -17,8 +19,23 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final UserSession _session = UserSession.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
 
   Future<void> _openMyDetails() async {
     await Navigator.push(
@@ -36,10 +53,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text(
-            'Profile',
+          title: Text(
+            AppStrings.t('profile_appbar_title'),
             style: TextStyle(
-              color: primaryBlue,
+              color: AppColors.primary,
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
@@ -66,17 +83,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 24),
               _buildMenuTile(
                 icon: Icons.person_outline,
-                iconColor: primaryBlue,
-                title: 'My Details',
-                subtitle: 'Personal info, ID, password',
+                iconColor: AppColors.primary,
+                title: AppStrings.t('profile_my_details_title'),
+                subtitle: AppStrings.t('profile_my_details_sub'),
                 onTap: _openMyDetails,
               ),
               const SizedBox(height: 12),
               _buildMenuTile(
                 icon: Icons.credit_card,
-                iconColor: primaryBlue,
-                title: 'Payment Methods',
-                subtitle: 'Cards, e-wallets, bank transfer',
+                iconColor: AppColors.primary,
+                title: AppStrings.t('profile_payment_title'),
+                subtitle: AppStrings.t('profile_payment_sub'),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -88,8 +105,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildMenuTile(
                 icon: Icons.favorite_border,
                 iconColor: Colors.redAccent,
-                title: 'Favorit Saya',
-                subtitle: 'Lokasi parkir yang Anda simpan',
+                title: AppStrings.t('profile_favorites_title'),
+                subtitle: AppStrings.t('profile_favorites_sub'),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -101,8 +118,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildMenuTile(
                 icon: Icons.help_outline,
                 iconColor: Colors.teal,
-                title: 'Help Center',
-                subtitle: 'FAQs, contact support',
+                title: AppStrings.t('profile_help_title'),
+                subtitle: AppStrings.t('profile_help_sub'),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -113,9 +130,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 12),
               _buildMenuTile(
                 icon: Icons.accessibility_new_outlined,
-                iconColor: primaryBlue,
-                title: 'Aksesibilitas',
-                subtitle: 'Ukuran teks & kontras tinggi',
+                iconColor: AppColors.primary,
+                title: AppStrings.t('profile_accessibility_title'),
+                subtitle: AppStrings.t('profile_accessibility_sub'),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -126,9 +143,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 12),
               _buildMenuTile(
                 icon: Icons.language_outlined,
-                iconColor: primaryBlue,
-                title: 'Bahasa',
-                subtitle: 'Indonesia / English',
+                iconColor: AppColors.primary,
+                title: AppStrings.t('profile_language_title'),
+                subtitle: AppStrings.t('profile_language_sub'),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -140,8 +157,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildMenuTile(
                 icon: Icons.delete_outline,
                 iconColor: Colors.redAccent,
-                title: 'Hapus Akun & Data',
-                subtitle: 'Kelola atau hapus data pribadi Anda',
+                title: AppStrings.t('profile_delete_account_title'),
+                subtitle: AppStrings.t('profile_delete_account_sub'),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -214,14 +231,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: const Color(0xFFFFF4DE),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.star, size: 14, color: Colors.amber),
-                SizedBox(width: 4),
+                const Icon(Icons.star, size: 14, color: Colors.amber),
+                const SizedBox(width: 4),
                 Text(
-                  'Gold Member',
-                  style: TextStyle(
+                  AppStrings.t('profile_gold_member'),
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFFB8860B),
@@ -307,18 +324,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Logout'),
-              content: const Text('Apakah anda yakin ingin keluar?'),
+              title: Text(AppStrings.t('profile_logout_confirm_title')),
+              content: Text(AppStrings.t('profile_logout_confirm_msg')),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Batal'),
+                  child: Text(AppStrings.t('profile_cancel')),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Logout',
-                    style: TextStyle(color: Colors.red),
+                  child: Text(
+                    AppStrings.t('profile_logout'),
+                    style: const TextStyle(color: Colors.red),
                   ),
                 ),
               ],
@@ -326,9 +343,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         },
         icon: const Icon(Icons.logout, color: Colors.redAccent, size: 18),
-        label: const Text(
-          'Logout',
-          style: TextStyle(
+        label: Text(
+          AppStrings.t('profile_logout'),
+          style: const TextStyle(
             color: Colors.redAccent,
             fontWeight: FontWeight.w600,
           ),

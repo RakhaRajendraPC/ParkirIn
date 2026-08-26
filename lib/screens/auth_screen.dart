@@ -65,7 +65,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 40),
               const Row(
                 children: [
-                  Icon(Icons.location_on, color: primaryBlue, size: 32),
+                  Icon(Icons.airport_shuttle, color: primaryBlue, size: 32),
                   SizedBox(width: 8),
                   Text(
                     'ParkirIn',

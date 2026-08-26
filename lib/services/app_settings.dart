@@ -61,6 +61,17 @@ class AppStrings {
     'nav_alerts': 'Alerts',
     'nav_profile': 'Profile',
 
+    'loc_facilities_title': 'Fasilitas Keamanan',
+    'loc_accessible_note':
+        'Lokasi ini ramah untuk lansia & pengguna kursi roda (dekat lift/gate).',
+    'loc_location_title': 'Lokasi',
+    'loc_per_night': ' / malam',
+    'loc_km_from_airport': 'km dari bandara',
+    'loc_select_slot_btn': 'Pilih Slot Ini',
+    'loc_reviews_title': 'Ulasan Pengguna',
+    'loc_reviews_suffix': 'ulasan',
+    'loc_no_reviews': 'Belum ada ulasan untuk lokasi ini.',
+
     // Search screen
     'search_appbar_title': 'ParkirIn',
     'search_hero_badge': 'PARK & FLY',
@@ -155,6 +166,10 @@ class AppStrings {
         'Update booking, shuttle, dan penerbangan Anda\nakan muncul di sini.',
     'notif_mark_read_btn': 'Tandai Dibaca',
     'notif_delete_btn': 'Hapus',
+    'notif_appbar_title': 'Alerts',
+    'notif_new_badge_suffix': 'baru',
+    'notif_booking_code_label': 'Kode booking: ',
+    'notif_phase2_badge': 'Fase 2',
   };
 
   static const _en = {
@@ -249,5 +264,19 @@ class AppStrings {
         'Updates on your bookings, shuttle, and flight\nwill appear here.',
     'notif_mark_read_btn': 'Mark as Read',
     'notif_delete_btn': 'Delete',
+    'notif_appbar_title': 'Alerts',
+    'notif_new_badge_suffix': 'new',
+    'notif_booking_code_label': 'Booking code: ',
+    'notif_phase2_badge': 'Phase 2',
+    'loc_facilities_title': 'Security Facilities',
+    'loc_accessible_note':
+        'This location is elderly & wheelchair friendly (near lift/gate).',
+    'loc_location_title': 'Location',
+    'loc_per_night': ' / night',
+    'loc_km_from_airport': 'km from airport',
+    'loc_select_slot_btn': 'Select This Slot',
+    'loc_reviews_title': 'User Reviews',
+    'loc_reviews_suffix': 'reviews',
+    'loc_no_reviews': 'No reviews yet for this location.',
   };
 }

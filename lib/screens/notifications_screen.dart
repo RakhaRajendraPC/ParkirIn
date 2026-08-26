@@ -4,6 +4,8 @@ import '../models/notification_model.dart';
 import '../services/notification_repository.dart';
 //import '../services/notification_preferences.dart';
 import '../services/booking_repository.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 import 'booking_detail_screen.dart';
 import 'shuttle_tracking_screen.dart';
 
@@ -15,8 +17,6 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
-
   final NotificationRepository _repo = NotificationRepository.instance;
   AlertCategory _selected = AlertCategory.all;
   bool _selectionMode = false;
@@ -26,11 +26,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     _repo.addListener(_onChanged);
+    AppSettings.instance.addListener(_onChanged);
   }
 
   @override
   void dispose() {
     _repo.removeListener(_onChanged);
+    AppSettings.instance.removeListener(_onChanged);
     super.dispose();
   }
 
@@ -44,7 +46,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return base.where((n) => n.type.category == _selected).toList();
   }
 
-  /// Kelompokkan notifikasi ke bucket tanggal: Hari Ini, Kemarin, Minggu Ini, Lebih Lama.
+  /// Kelompokkan notifikasi ke bucket tanggal. Kunci di sini SENGAJA
+  /// tetap dalam identifier bahasa Inggris tidak berubah (today/yesterday/
+  /// week/older), supaya logika grouping stabil terlepas dari bahasa
+  /// yang aktif. Label yang ditampilkan diterjemahkan lewat _groupLabel().
   Map<String, List<AppNotification>> get _grouped {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -52,26 +57,39 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final weekAgo = today.subtract(const Duration(days: 7));
 
     final Map<String, List<AppNotification>> groups = {
-      'Hari Ini': [],
-      'Kemarin': [],
-      'Minggu Ini': [],
-      'Lebih Lama': [],
+      'today': [],
+      'yesterday': [],
+      'week': [],
+      'older': [],
     };
 
     for (final n in _filtered) {
       final d = DateTime(n.timestamp.year, n.timestamp.month, n.timestamp.day);
       if (d == today) {
-        groups['Hari Ini']!.add(n);
+        groups['today']!.add(n);
       } else if (d == yesterday) {
-        groups['Kemarin']!.add(n);
+        groups['yesterday']!.add(n);
       } else if (d.isAfter(weekAgo)) {
-        groups['Minggu Ini']!.add(n);
+        groups['week']!.add(n);
       } else {
-        groups['Lebih Lama']!.add(n);
+        groups['older']!.add(n);
       }
     }
     groups.removeWhere((key, value) => value.isEmpty);
     return groups;
+  }
+
+  String _groupLabel(String key) {
+    switch (key) {
+      case 'today':
+        return AppStrings.t('notif_group_today');
+      case 'yesterday':
+        return AppStrings.t('notif_group_yesterday');
+      case 'week':
+        return AppStrings.t('notif_group_week');
+      default:
+        return AppStrings.t('notif_group_older');
+    }
   }
 
   void _toggleSelectionMode() {
@@ -178,7 +196,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                          child: Text(entry.key,
+                          child: Text(_groupLabel(entry.key),
                               style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -230,11 +248,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           onPressed: _bulkMarkRead,
                           icon: const Icon(Icons.mark_email_read_outlined,
                               size: 16),
-                          label: Text('Tandai Dibaca (${_selectedIds.length})',
+                          label: Text(
+                              '${AppStrings.t('notif_mark_read_btn')} (${_selectedIds.length})',
                               style: const TextStyle(fontSize: 12)),
                           style: OutlinedButton.styleFrom(
-                              foregroundColor: primaryBlue,
-                              side: const BorderSide(color: primaryBlue)),
+                              foregroundColor: AppColors.primary,
+                              side: BorderSide(color: AppColors.primary)),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -242,7 +261,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _bulkDelete,
                           icon: const Icon(Icons.delete_outline, size: 16),
-                          label: Text('Hapus (${_selectedIds.length})',
+                          label: Text(
+                              '${AppStrings.t('notif_delete_btn')} (${_selectedIds.length})',
                               style: const TextStyle(fontSize: 12)),
                           style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.redAccent,
@@ -263,12 +283,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
-          children: const [
-            Icon(Icons.location_on_outlined, color: primaryBlue),
-            SizedBox(width: 6),
-            Text('ParkirIn',
+          children: [
+            Icon(Icons.notifications_none, color: AppColors.primary),
+            const SizedBox(width: 6),
+            Text(AppStrings.t('notif_appbar_title'),
                 style: TextStyle(
-                    color: primaryBlue,
+                    color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 18)),
           ],
@@ -276,7 +296,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         TextButton.icon(
           onPressed: _toggleSelectionMode,
           icon: Icon(_selectionMode ? Icons.close : Icons.checklist, size: 16),
-          label: Text(_selectionMode ? 'Batal' : 'Pilih',
+          label: Text(
+              _selectionMode
+                  ? AppStrings.t('notif_batal')
+                  : AppStrings.t('notif_pilih'),
               style: const TextStyle(fontSize: 12)),
         ),
       ],
@@ -297,9 +320,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 spacing: 8,
                 runSpacing: 4,
                 children: [
-                  const Text(
-                    'Notifications',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  Text(
+                    AppStrings.t('notif_title'),
+                    style: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   if (unread > 0)
                     Container(
@@ -308,7 +332,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       decoration: BoxDecoration(
                           color: Colors.redAccent,
                           borderRadius: BorderRadius.circular(20)),
-                      child: Text('$unread baru',
+                      child: Text(
+                          '$unread ${AppStrings.t('notif_new_badge_suffix')}',
                           style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -317,9 +342,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ],
               ),
               const SizedBox(height: 4),
-              const Text(
-                  'Stay updated on your upcoming trips and shuttle status.',
-                  style: TextStyle(fontSize: 13, color: Colors.black54)),
+              Text(AppStrings.t('notif_subtitle'),
+                  style: const TextStyle(fontSize: 13, color: Colors.black54)),
             ],
           ),
         ),
@@ -328,11 +352,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             onPressed: () => _repo.markAllAsRead(),
             style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 4)),
-            child: const Text(
-              'Tandai semua dibaca',
+            child: Text(
+              AppStrings.t('notif_mark_all_read'),
               style: TextStyle(
                   fontSize: 11,
-                  color: primaryBlue,
+                  color: AppColors.primary,
                   fontWeight: FontWeight.w600),
               textAlign: TextAlign.end,
             ),
@@ -350,7 +374,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           label: Text(label),
           selected: selected,
           onSelected: (_) => setState(() => _selected = value),
-          selectedColor: primaryBlue,
+          selectedColor: AppColors.primary,
           backgroundColor: Colors.white,
           labelStyle: TextStyle(
               color: selected ? Colors.white : Colors.black87,
@@ -359,7 +383,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: BorderSide(
-                  color: selected ? primaryBlue : Colors.grey.shade300)),
+                  color: selected ? AppColors.primary : Colors.grey.shade300)),
           showCheckmark: false,
         ),
       );
@@ -369,11 +393,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          chip('Semua', AlertCategory.all),
-          chip('Reminder', AlertCategory.reminder),
-          chip('Shuttle', AlertCategory.shuttle),
-          chip('Booking', AlertCategory.booking),
-          chip('Penerbangan', AlertCategory.flight),
+          chip(AppStrings.t('notif_filter_semua'), AlertCategory.all),
+          chip(AppStrings.t('notif_filter_reminder'), AlertCategory.reminder),
+          chip(AppStrings.t('notif_filter_shuttle'), AlertCategory.shuttle),
+          chip(AppStrings.t('notif_filter_booking'), AlertCategory.booking),
+          chip(AppStrings.t('notif_filter_flight'), AlertCategory.flight),
         ],
       ),
     );
@@ -389,14 +413,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Icon(Icons.notifications_off_outlined,
                 size: 56, color: Colors.grey.shade300),
             const SizedBox(height: 12),
-            Text('Belum ada notifikasi',
+            Text(AppStrings.t('notif_empty_title'),
                 style: TextStyle(
                     color: Colors.grey.shade500,
                     fontSize: 14,
                     fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),
-            Text(
-                'Update booking, shuttle, dan penerbangan Anda\nakan muncul di sini.',
+            Text(AppStrings.t('notif_empty_sub'),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
           ],
@@ -435,13 +458,11 @@ class _NotificationCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFF1E5EFF).withOpacity(0.06)
-              : Colors.white,
+          color: selected ? AppColors.primary.withOpacity(0.06) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: highlight
               ? Border(left: BorderSide(color: type.color, width: 4))
-              : (selected ? Border.all(color: const Color(0xFF1E5EFF)) : null),
+              : (selected ? Border.all(color: AppColors.primary) : null),
           boxShadow: [
             BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -456,7 +477,7 @@ class _NotificationCard extends StatelessWidget {
               Checkbox(
                   value: selected,
                   onChanged: (_) => onTap(),
-                  activeColor: const Color(0xFF1E5EFF)),
+                  activeColor: AppColors.primary),
               const SizedBox(width: 4),
             ],
             Container(
@@ -486,7 +507,7 @@ class _NotificationCard extends StatelessWidget {
                           decoration: BoxDecoration(
                               color: Colors.grey.shade200,
                               borderRadius: BorderRadius.circular(4)),
-                          child: Text('Fase 2',
+                          child: Text(AppStrings.t('notif_phase2_badge'),
                               style: TextStyle(
                                   fontSize: 8, color: Colors.grey.shade600)),
                         ),
@@ -517,7 +538,8 @@ class _NotificationCard extends StatelessWidget {
                           fontSize: 12, color: Colors.black54, height: 1.4)),
                   if (item.bookingCode != null) ...[
                     const SizedBox(height: 6),
-                    Text('Kode booking: ${item.bookingCode}',
+                    Text(
+                        '${AppStrings.t('notif_booking_code_label')}${item.bookingCode}',
                         style: TextStyle(
                             fontSize: 10, color: Colors.grey.shade500)),
                   ],
@@ -528,8 +550,8 @@ class _NotificationCard extends StatelessWidget {
                       child: OutlinedButton(
                         onPressed: onActionTap,
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF1E5EFF)),
-                          foregroundColor: const Color(0xFF1E5EFF),
+                          side: BorderSide(color: AppColors.primary),
+                          foregroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(horizontal: 14),
