@@ -57,6 +57,9 @@ class _BookingsScreenState extends State<BookingsScreen>
           bottom: TabBar(
             controller: _tabController,
             isScrollable: true,
+            tabAlignment: TabAlignment.center,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+            indicatorSize: TabBarIndicatorSize.label,
             labelColor: primaryBlue,
             unselectedLabelColor: Colors.grey,
             indicatorColor: primaryBlue,

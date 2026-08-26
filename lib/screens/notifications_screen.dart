@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
 import '../services/notification_repository.dart';
-import '../services/notification_preferences.dart';
+//import '../services/notification_preferences.dart';
 import '../services/booking_repository.dart';
 import 'booking_detail_screen.dart';
 import 'shuttle_tracking_screen.dart';
@@ -292,13 +292,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
                 children: [
-                  const Text('Notifications',
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                  if (unread > 0) ...[
-                    const SizedBox(width: 8),
+                  const Text(
+                    'Notifications',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  if (unread > 0)
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
@@ -311,7 +314,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               fontSize: 10,
                               fontWeight: FontWeight.w600)),
                     ),
-                  ],
                 ],
               ),
               const SizedBox(height: 4),
@@ -324,11 +326,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         if (unread > 0)
           TextButton(
             onPressed: () => _repo.markAllAsRead(),
-            child: const Text('Tandai semua dibaca',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: primaryBlue,
-                    fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4)),
+            child: const Text(
+              'Tandai semua dibaca',
+              style: TextStyle(
+                  fontSize: 11,
+                  color: primaryBlue,
+                  fontWeight: FontWeight.w600),
+              textAlign: TextAlign.end,
+            ),
           ),
       ],
     );

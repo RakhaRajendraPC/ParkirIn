@@ -8,7 +8,6 @@ import 'help_center_screen.dart';
 import 'language_settings_screen.dart';
 import 'my_details_screen.dart';
 import 'payment_methods_screen.dart';
-import 'theme_settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -108,19 +107,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const HelpCenterScreen(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildMenuTile(
-                icon: Icons.dark_mode_outlined,
-                iconColor: primaryBlue,
-                title: 'Tampilan',
-                subtitle: 'Mode terang, gelap, atau ikuti sistem',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ThemeSettingsScreen(),
                   ),
                 ),
               ),

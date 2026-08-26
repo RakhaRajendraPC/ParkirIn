@@ -5,15 +5,11 @@ import 'screens/notifications_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/bookings_screen.dart';
 import 'screens/splash_onboarding_screen.dart';
-import 'services/app_settings.dart'; // Sudah mencakup AppSettings dan AppStrings
-import 'services/notification_repository.dart';
-import 'services/notification_preferences.dart';
-import 'widgets/floating_notification_banner.dart';
+import 'services/app_settings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSettings.instance.load();
-  await NotificationPreferences.instance.load();
   runApp(const ParkirInApp());
 }
 
@@ -44,33 +40,18 @@ class _ParkirInAppState extends State<ParkirInApp> {
     final settings = AppSettings.instance;
     final highContrast = settings.highContrast;
 
-    final lightScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1E5EFF),
-      primary: highContrast ? const Color(0xFF0033CC) : const Color(0xFF1E5EFF),
-    );
-    final darkScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1E5EFF),
-      brightness: Brightness.dark,
-      primary: highContrast ? const Color(0xFF6E9BFF) : const Color(0xFF5C8DFF),
-    );
-
     return MaterialApp(
-      navigatorKey: NotificationBannerHost.navigatorKey,
       title: 'ParkirIn',
       debugShowCheckedModeBanner: false,
-      themeMode: settings.themeMode,
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'Roboto',
         scaffoldBackgroundColor: const Color(0xFFF7F8FA),
-        colorScheme: lightScheme,
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        colorScheme: darkScheme,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1E5EFF),
+          primary:
+              highContrast ? const Color(0xFF0033CC) : const Color(0xFF1E5EFF),
+        ),
       ),
       builder: (context, child) {
         return MediaQuery(
@@ -96,23 +77,6 @@ class RootShell extends StatefulWidget {
 
 class _RootShellState extends State<RootShell> {
   int _currentIndex = 0;
-  final NotificationRepository _notifRepo = NotificationRepository.instance;
-
-  @override
-  void initState() {
-    super.initState();
-    _notifRepo.addListener(_onNotifChanged);
-  }
-
-  @override
-  void dispose() {
-    _notifRepo.removeListener(_onNotifChanged);
-    super.dispose();
-  }
-
-  void _onNotifChanged() {
-    if (mounted) setState(() {});
-  }
 
   final List<Widget> _pages = const [
     SearchScreen(),
@@ -140,9 +104,7 @@ class _RootShellState extends State<RootShell> {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1E1E1E)
-                : Colors.white,
+            color: Colors.white,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.06),
@@ -166,26 +128,7 @@ class _RootShellState extends State<RootShell> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Icon(item.icon, color: color, size: 24),
-                          if (item.labelKey == 'nav_alerts' &&
-                              _notifRepo.unreadCount > 0)
-                            Positioned(
-                              right: -2,
-                              top: -2,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.redAccent,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                      Icon(item.icon, color: color, size: 24),
                       const SizedBox(height: 4),
                       Text(
                         AppStrings.t(item.labelKey),
@@ -212,8 +155,5 @@ class _NavItem {
   final IconData icon;
   final String labelKey;
 
-  const _NavItem({
-    required this.icon,
-    required this.labelKey,
-  });
+  const _NavItem({required this.icon, required this.labelKey});
 }
