@@ -17,7 +17,7 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  String selectedAirport = 'CGK - Soekarno Hatta';
+  static const String airportName = 'CGK - Soekarno Hatta';
   DateTime checkIn = DateTime(2026, 10, 12, 8, 0);
   DateTime checkOut = DateTime(2026, 10, 15, 18, 0);
 
@@ -217,7 +217,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.flight_takeoff,
+                    const Icon(Icons.local_parking,
                         color: Colors.white, size: 14),
                     const SizedBox(width: 4),
                     Text(
@@ -274,8 +274,9 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       child: Column(
         children: [
-          InkWell(
-            onTap: _showAirportPicker,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
               children: [
                 Container(
@@ -284,7 +285,11 @@ class _SearchScreenState extends State<SearchScreen> {
                     color: AppColors.primaryLight,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.flight, color: AppColors.primary, size: 18),
+                  child: Icon(
+                    Icons.local_parking,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -292,7 +297,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppStrings.t('search_pilih_bandara'),
+                        'Lokasi Parkir',
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.grey.shade500,
@@ -300,9 +305,9 @@ class _SearchScreenState extends State<SearchScreen> {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        selectedAirport,
-                        style: const TextStyle(
+                      const Text(
+                        'CGK - Soekarno Hatta',
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                         ),
@@ -310,7 +315,11 @@ class _SearchScreenState extends State<SearchScreen> {
                     ],
                   ),
                 ),
-                const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                Icon(
+                  Icons.verified,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
               ],
             ),
           ),
@@ -361,7 +370,7 @@ class _SearchScreenState extends State<SearchScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => SearchResultsScreen(
-                airportName: selectedAirport,
+                airportName: airportName,
                 checkIn: checkIn,
                 checkOut: checkOut,
               ),
@@ -586,37 +595,6 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  void _showAirportPicker() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        final airports = [
-          'CGK - Soekarno Hatta',
-          'HLP - Halim Perdanakusuma',
-          'SUB - Juanda Surabaya',
-          'DPS - Ngurah Rai Bali',
-        ];
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: airports
-                .map((a) => ListTile(
-                      title: Text(a),
-                      onTap: () {
-                        setState(() => selectedAirport = a);
-                        Navigator.pop(context);
-                      },
-                    ))
-                .toList(),
-          ),
-        );
-      },
     );
   }
 

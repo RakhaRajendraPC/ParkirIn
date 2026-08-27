@@ -62,13 +62,13 @@ class _BookingsScreenState extends State<BookingsScreen>
             controller: _tabController,
             isScrollable: true,
             tabAlignment: TabAlignment.center,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 18),
             indicatorSize: TabBarIndicatorSize.label,
             labelColor: AppColors.primary,
             unselectedLabelColor: Colors.grey,
             indicatorColor: AppColors.primary,
             labelStyle:
-                const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
             tabs: [
               Tab(text: AppStrings.t('bookings_tab_aktif')),
               Tab(text: AppStrings.t('bookings_tab_selesai')),

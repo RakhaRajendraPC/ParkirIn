@@ -6,6 +6,8 @@ import '../models/notification_model.dart';
 import '../services/slot_lock_service.dart';
 import '../services/booking_repository.dart';
 import '../services/notification_repository.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 import 'booking_confirmation_screen.dart';
 import '../utils/currency_formatter.dart';
 
@@ -38,9 +40,24 @@ class BookingSummaryScreen extends StatefulWidget {
 }
 
 class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   String _selectedPayment = 'QRIS';
   bool _isProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
 
   int get _nights {
     final n = widget.checkOut.difference(widget.checkIn).inHours / 24;
@@ -104,11 +121,11 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     NotificationRepository.instance.add(AppNotification(
       id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
       type: NotificationType.bookingConfirmation,
-      title: 'Booking Berhasil Dikonfirmasi',
+      title: AppStrings.t('summary_notif_title'),
       description:
-          'Slot ${widget.selectedSlot?.code ?? '-'} di ${widget.location.name} telah dikonfirmasi.',
+          '${AppStrings.t('summary_notif_desc_prefix')} ${widget.selectedSlot?.code ?? '-'} di ${widget.location.name} ${AppStrings.t('summary_notif_desc_suffix')}',
       timestamp: DateTime.now(),
-      actionLabel: 'Lihat QR Code',
+      actionLabel: AppStrings.t('summary_notif_action'),
       bookingCode: bookingCode,
     ));
 
@@ -134,9 +151,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text(
-            'Ringkasan & Pembayaran',
-            style: TextStyle(
+          title: Text(
+            AppStrings.t('summary_appbar_title'),
+            style: const TextStyle(
               color: Colors.black87,
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -176,9 +193,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     text: TextSpan(
                       style: const TextStyle(color: Colors.black87),
                       children: [
-                        const TextSpan(
-                          text: 'Total  ',
-                          style: TextStyle(
+                        TextSpan(
+                          text: AppStrings.t('summary_total_label'),
+                          style: const TextStyle(
                             fontSize: 11,
                             color: Colors.black54,
                           ),
@@ -215,9 +232,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
-                            'Bayar Sekarang',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                        : Text(
+                            AppStrings.t('summary_bayar_sekarang'),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                   ),
                 ),
@@ -265,7 +282,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'MASUK',
+                      AppStrings.t('summary_masuk'),
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade500,
@@ -287,7 +304,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'KELUAR',
+                      AppStrings.t('summary_keluar'),
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade500,
@@ -307,10 +324,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '$_nights malam',
+            '$_nights ${AppStrings.t('summary_malam')}',
             style: TextStyle(
               fontSize: 11,
-              color: primaryBlue,
+              color: AppColors.primary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -325,7 +342,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Slot ${widget.selectedSlot!.code} · ${widget.selectedSlot!.tierLabel}',
+                  '${AppStrings.t('summary_slot_prefix')} ${widget.selectedSlot!.code} · ${widget.selectedSlot!.tierLabel}',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -394,21 +411,21 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Rincian Biaya',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          Text(
+            AppStrings.t('summary_rincian_biaya'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 8),
           row(
-            'Tarif dasar (${CurrencyFormatter.rupiah(_pricePerNight)} × $_nights malam)',
+            '${AppStrings.t('summary_tarif_dasar')} (${CurrencyFormatter.rupiah(_pricePerNight)} × $_nights ${AppStrings.t('summary_malam')})',
             _subtotal,
           ),
-          row('Biaya layanan', _serviceFee),
+          row(AppStrings.t('summary_biaya_layanan'), _serviceFee),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 6),
             child: Divider(height: 1),
           ),
-          row('Total', _total, isTotal: true),
+          row(AppStrings.t('summary_total'), _total, isTotal: true),
         ],
       ),
     );
@@ -435,9 +452,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Metode Pembayaran',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          Text(
+            AppStrings.t('summary_metode_pembayaran'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 8),
           ...methods.map((m) {
@@ -446,14 +463,14 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
               value: m.$1,
               groupValue: _selectedPayment,
               onChanged: (v) => setState(() => _selectedPayment = v!),
-              activeColor: primaryBlue,
+              activeColor: AppColors.primary,
               contentPadding: EdgeInsets.zero,
               title: Row(
                 children: [
                   Icon(
                     m.$2,
                     size: 18,
-                    color: selected ? primaryBlue : Colors.grey.shade500,
+                    color: selected ? AppColors.primary : Colors.grey.shade500,
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -476,7 +493,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        'Opsional',
+                        AppStrings.t('summary_opsional_badge'),
                         style: TextStyle(
                           fontSize: 8,
                           color: Colors.grey.shade600,
@@ -504,10 +521,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
         children: [
           const Icon(Icons.info_outline, color: Colors.orange, size: 18),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Biaya tambahan (overstay fee) akan dikenakan otomatis jika Anda melebihi durasi yang dipesan. Anda akan mendapat notifikasi sebelum batas waktu habis.',
-              style: TextStyle(
+              AppStrings.t('summary_overstay_notice'),
+              style: const TextStyle(
                 fontSize: 11,
                 color: Colors.black87,
                 height: 1.4,

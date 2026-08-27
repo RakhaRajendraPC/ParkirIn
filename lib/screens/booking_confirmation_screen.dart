@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/parking_location_model.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
+import '../utils/currency_formatter.dart';
 import 'bookings_screen.dart';
 
-class BookingConfirmationScreen extends StatelessWidget {
+class BookingConfirmationScreen extends StatefulWidget {
   final String bookingCode;
   final ParkingLocation location;
   final DateTime checkIn;
@@ -19,7 +22,27 @@ class BookingConfirmationScreen extends StatelessWidget {
     required this.total,
   });
 
-  static const Color primaryBlue = Color(0xFF1E5EFF);
+  @override
+  State<BookingConfirmationScreen> createState() =>
+      _BookingConfirmationScreenState();
+}
+
+class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
 
   String _fmtDate(DateTime d) {
     const months = [
@@ -60,11 +83,12 @@ class BookingConfirmationScreen extends StatelessWidget {
                   const Icon(Icons.check_circle, color: Colors.green, size: 40),
             ),
             const SizedBox(height: 16),
-            const Text('Booking Berhasil!',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(AppStrings.t('confirm_title'),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text(
-              'Konfirmasi & QR Code telah dikirim untuk booking Anda.',
+              AppStrings.t('confirm_subtitle'),
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 24),
@@ -82,19 +106,19 @@ class BookingConfirmationScreen extends StatelessWidget {
               child: Column(
                 children: [
                   QrImageView(
-                    data: bookingCode,
+                    data: widget.bookingCode,
                     version: QrVersions.auto,
                     size: 180,
                     backgroundColor: Colors.white,
                   ),
                   const SizedBox(height: 12),
-                  Text(bookingCode,
+                  Text(widget.bookingCode,
                       style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2)),
                   const SizedBox(height: 4),
-                  Text('Tunjukkan QR Code ini saat check-in & check-out',
+                  Text(AppStrings.t('confirm_qr_note'),
                       style:
                           TextStyle(fontSize: 11, color: Colors.grey.shade600),
                       textAlign: TextAlign.center),
@@ -115,21 +139,24 @@ class BookingConfirmationScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(location.name,
+                  Text(widget.location.name,
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 14)),
                   const SizedBox(height: 2),
-                  Text(location.address,
+                  Text(widget.location.address,
                       style:
                           TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                   const Padding(
                       padding: EdgeInsets.symmetric(vertical: 10),
                       child: Divider(height: 1)),
-                  _infoRow('Masuk', _fmtDate(checkIn)),
+                  _infoRow(
+                      AppStrings.t('confirm_masuk'), _fmtDate(widget.checkIn)),
                   const SizedBox(height: 6),
-                  _infoRow('Keluar', _fmtDate(checkOut)),
+                  _infoRow(AppStrings.t('confirm_keluar'),
+                      _fmtDate(widget.checkOut)),
                   const SizedBox(height: 6),
-                  _infoRow('Total Dibayar', 'Rp ${total.toStringAsFixed(0)}',
+                  _infoRow(AppStrings.t('confirm_total_dibayar'),
+                      CurrencyFormatter.rupiah(widget.total),
                       highlight: true),
                 ],
               ),
@@ -138,17 +165,17 @@ class BookingConfirmationScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                  color: primaryBlue.withOpacity(0.08),
+                  color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(12)),
               child: Row(
                 children: [
-                  const Icon(Icons.notifications_active_outlined,
-                      color: primaryBlue, size: 18),
+                  Icon(Icons.notifications_active_outlined,
+                      color: AppColors.primary, size: 18),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Kami akan mengirim reminder 1 hari sebelum jadwal check-in Anda.',
-                      style: TextStyle(fontSize: 11),
+                      AppStrings.t('confirm_reminder_note'),
+                      style: const TextStyle(fontSize: 11),
                     ),
                   ),
                 ],
@@ -168,13 +195,13 @@ class BookingConfirmationScreen extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryBlue,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Lihat Booking Saya',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(AppStrings.t('confirm_lihat_booking_btn'),
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
             const SizedBox(height: 8),
@@ -190,7 +217,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Kembali ke Beranda'),
+                child: Text(AppStrings.t('confirm_kembali_beranda_btn')),
               ),
             ),
           ],
@@ -209,7 +236,7 @@ class BookingConfirmationScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: highlight ? 14 : 12,
               fontWeight: FontWeight.w700,
-              color: highlight ? primaryBlue : Colors.black87,
+              color: highlight ? AppColors.primary : Colors.black87,
             )),
       ],
     );

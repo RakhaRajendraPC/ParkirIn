@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/parking_slot_model.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import 'select_vehicle_screen.dart';
 
@@ -22,8 +24,6 @@ class ParkingSlotMapScreen extends StatefulWidget {
 }
 
 class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
-
   late final List<ParkingRow> _rows;
   ParkingSlot? _selected;
 
@@ -32,6 +32,17 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
     super.initState();
     _rows =
         ParkingSlotGenerator.generate(basePrice: widget.location.pricePerNight);
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
   }
 
   void _selectSlot(ParkingSlot slot) {
@@ -65,8 +76,8 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Pilih Slot Parkir',
-                  style: TextStyle(
+              Text(AppStrings.t('slot_map_title'),
+                  style: const TextStyle(
                       color: Colors.black87,
                       fontWeight: FontWeight.bold,
                       fontSize: 15)),
@@ -108,7 +119,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
               child: ElevatedButton(
                 onPressed: _selected == null ? null : _continue,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryBlue,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: Colors.grey.shade300,
                   shape: RoundedRectangleBorder(
@@ -116,8 +127,8 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
                 ),
                 child: Text(
                   _selected == null
-                      ? 'Pilih Slot Terlebih Dahulu'
-                      : 'Lanjutkan dengan Slot ${_selected!.code}',
+                      ? AppStrings.t('slot_select_first')
+                      : '${AppStrings.t('slot_continue_with')} ${_selected!.code}',
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -152,10 +163,10 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
         spacing: 16,
         runSpacing: 6,
         children: [
-          dot(const Color(0xFFFFB800), 'Premium (dekat pintu masuk)'),
-          dot(primaryBlue, 'Standar'),
-          dot(const Color(0xFF2FAE60), 'Ekonomis (jauh)'),
-          dot(Colors.grey.shade400, 'Terisi'),
+          dot(const Color(0xFFFFB800), AppStrings.t('slot_legend_premium')),
+          dot(AppColors.primary, AppStrings.t('slot_legend_standard')),
+          dot(const Color(0xFF2FAE60), AppStrings.t('slot_legend_economy')),
+          dot(Colors.grey.shade400, AppStrings.t('slot_legend_occupied')),
         ],
       ),
     );
@@ -276,7 +287,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
           const SizedBox(width: 32),
           Expanded(
             child: Center(
-              child: Text('Akses Jalan',
+              child: Text(AppStrings.t('slot_akses_jalan'),
                   style: TextStyle(
                       fontSize: 11,
                       color: Colors.grey.shade600,
@@ -294,7 +305,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
       child: Center(
         child: RotatedBox(
           quarterTurns: 3,
-          child: Text('Akses Jalan',
+          child: Text(AppStrings.t('slot_akses_jalan'),
               style: TextStyle(
                   fontSize: 11,
                   color: Colors.grey.shade600,
@@ -352,13 +363,14 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
                   ],
                 ),
                 Text(
-                    'Baris ${slot.rowLabel} · ± ${slot.distanceFromEntrance.toStringAsFixed(0)} m dari pintu masuk',
+                    '${AppStrings.t('slot_baris_label')} ${slot.rowLabel} · ± ${slot.distanceFromEntrance.toStringAsFixed(0)} ${AppStrings.t('slot_dari_pintu_masuk')}',
                     style:
                         TextStyle(fontSize: 11, color: Colors.grey.shade600)),
               ],
             ),
           ),
-          Text('${CurrencyFormatter.rupiah(slot.price)}/malam',
+          Text(
+              '${CurrencyFormatter.rupiah(slot.price)}${AppStrings.t('slot_per_malam')}',
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,

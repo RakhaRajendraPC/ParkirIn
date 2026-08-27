@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/parking_slot_model.dart';
 import '../services/user_session.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
+import '../utils/currency_formatter.dart';
 import '../widgets/slot_lock_banner.dart';
 import 'booking_summary_screen.dart';
 import 'vehicles_screen.dart';
@@ -26,7 +29,6 @@ class SelectVehicleScreen extends StatefulWidget {
 }
 
 class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final UserSession _session = UserSession.instance;
   SavedVehicle? _selectedVehicle;
 
@@ -34,6 +36,17 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
   void initState() {
     super.initState();
     _selectedVehicle = _session.defaultVehicle;
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _goToVehiclesScreen() async {
@@ -76,9 +89,9 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text(
-            'Pilih Kendaraan',
-            style: TextStyle(
+          title: Text(
+            AppStrings.t('vehicle_appbar_title'),
+            style: const TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.bold,
               fontSize: 16,
@@ -97,18 +110,16 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    title: const Text('Waktu Habis'),
-                    content: const Text(
-                      'Slot yang Anda pilih telah dilepas karena waktu penguncian habis. Silakan pilih slot kembali.',
-                    ),
+                    title: Text(AppStrings.t('vehicle_lock_expired_title')),
+                    content: Text(AppStrings.t('vehicle_lock_expired_msg')),
                     actions: [
                       FilledButton(
                         onPressed: () =>
                             Navigator.popUntil(context, (r) => r.isFirst),
                         style: FilledButton.styleFrom(
-                          backgroundColor: primaryBlue,
+                          backgroundColor: AppColors.primary,
                         ),
-                        child: const Text('Kembali ke Beranda'),
+                        child: Text(AppStrings.t('vehicle_back_home_btn')),
                       ),
                     ],
                   ),
@@ -128,7 +139,7 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Slot ${slot.code} · ${slot.tierLabel} · Rp ${slot.price.toStringAsFixed(0)}/malam',
+                      '${AppStrings.t('vehicle_slot_prefix')} ${slot.code} · ${slot.tierLabel} · ${CurrencyFormatter.rupiah(slot.price)}${AppStrings.t('vehicle_per_malam')}',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -187,10 +198,10 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
             const SizedBox(height: 20),
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Pilih Kendaraan',
-                    style: TextStyle(
+                    AppStrings.t('vehicle_pilih_title'),
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -199,7 +210,8 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
                 TextButton.icon(
                   onPressed: _goToVehiclesScreen,
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Tambah', style: TextStyle(fontSize: 12)),
+                  label: Text(AppStrings.t('vehicle_tambah_btn'),
+                      style: const TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -220,16 +232,16 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
               child: ElevatedButton(
                 onPressed: _selectedVehicle == null ? null : _continue,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryBlue,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: Colors.grey.shade300,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Lanjutkan ke Ringkasan',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                child: Text(
+                  AppStrings.t('vehicle_lanjut_btn'),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -250,7 +262,7 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? primaryBlue : Colors.grey.shade200,
+            color: selected ? AppColors.primary : Colors.grey.shade200,
             width: selected ? 2 : 1,
           ),
           boxShadow: [
@@ -266,17 +278,17 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
               value: v.id,
               groupValue: _selectedVehicle?.id,
               onChanged: (_) => setState(() => _selectedVehicle = v),
-              activeColor: primaryBlue,
+              activeColor: AppColors.primary,
             ),
             Container(
               padding: const EdgeInsets.all(9),
               decoration: BoxDecoration(
-                color: primaryBlue.withOpacity(0.1),
+                color: AppColors.primaryLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.directions_car_filled,
-                color: primaryBlue,
+                color: AppColors.primary,
                 size: 18,
               ),
             ),
@@ -302,12 +314,12 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
                             vertical: 1,
                           ),
                           decoration: BoxDecoration(
-                            color: primaryBlue,
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
-                            'UTAMA',
-                            style: TextStyle(
+                          child: Text(
+                            AppStrings.t('vehicle_utama_badge'),
+                            style: const TextStyle(
                               fontSize: 8,
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -350,18 +362,18 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            'Belum ada kendaraan tersimpan',
+            AppStrings.t('vehicle_empty_title'),
             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 10),
           OutlinedButton(
             onPressed: _goToVehiclesScreen,
             style: OutlinedButton.styleFrom(
-              foregroundColor: primaryBlue,
-              side: const BorderSide(color: primaryBlue),
+              foregroundColor: AppColors.primary,
+              side: BorderSide(color: AppColors.primary),
             ),
-            child:
-                const Text('Tambah Kendaraan', style: TextStyle(fontSize: 12)),
+            child: Text(AppStrings.t('vehicle_empty_btn'),
+                style: const TextStyle(fontSize: 12)),
           ),
         ],
       ),
