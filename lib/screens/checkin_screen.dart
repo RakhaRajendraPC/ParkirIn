@@ -5,6 +5,8 @@ import '../models/booking_model.dart';
 import '../models/notification_model.dart';
 import '../services/booking_repository.dart';
 import '../services/notification_repository.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 import 'shuttle_tracking_screen.dart';
 
 enum _GateStatus { waiting, validated }
@@ -19,17 +21,23 @@ class CheckinScreen extends StatefulWidget {
 }
 
 class _CheckinScreenState extends State<CheckinScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
-
   _GateStatus _gateStatus = _GateStatus.waiting;
   Timer? _pollTimer;
   final List<bool> _photosTaken = [false, false, false, false];
   bool _showPhotoStep = false;
-  final List<String> _photoLabels = ['Depan', 'Belakang', 'Kiri', 'Kanan'];
+
+  List<String> get _photoLabels => [
+        AppStrings.t('checkin_photo_depan'),
+        AppStrings.t('checkin_photo_belakang'),
+        AppStrings.t('checkin_photo_kiri'),
+        AppStrings.t('checkin_photo_kanan'),
+      ];
 
   @override
   void initState() {
     super.initState();
+    AppSettings.instance.addListener(_onChanged);
+
     // Simulasi polling status dari backend: staf/kiosk gerbang men-scan QR
     // milik user, lalu backend mengubah status booking menjadi CHECK_IN.
     // Production: ganti dengan listener realtime (websocket/polling API
@@ -44,11 +52,11 @@ class _CheckinScreenState extends State<CheckinScreen> {
       NotificationRepository.instance.add(AppNotification(
         id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
         type: NotificationType.checkinConfirmation,
-        title: 'Check-in Berhasil',
+        title: AppStrings.t('checkin_notif_title'),
         description:
-            'Kendaraan ${widget.booking.vehiclePlate} tercatat aman di slot ${widget.booking.slotCode}.',
+            '${AppStrings.t('checkin_notif_desc_prefix')} ${widget.booking.vehiclePlate} ${AppStrings.t('checkin_notif_desc_middle')} ${widget.booking.slotCode}.',
         timestamp: DateTime.now(),
-        actionLabel: 'Lihat Booking',
+        actionLabel: AppStrings.t('checkin_notif_action'),
         bookingCode: widget.booking.bookingCode,
       ));
 
@@ -60,7 +68,12 @@ class _CheckinScreenState extends State<CheckinScreen> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    AppSettings.instance.removeListener(_onChanged);
     super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
   }
 
   void _goToShuttle() {
@@ -86,9 +99,9 @@ class _CheckinScreenState extends State<CheckinScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text(
-            'Check-in',
-            style: TextStyle(
+          title: Text(
+            AppStrings.t('checkin_appbar_title'),
+            style: const TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.bold,
               fontSize: 17,
@@ -105,8 +118,8 @@ class _CheckinScreenState extends State<CheckinScreen> {
                 children: [
                   Text(
                     _gateStatus == _GateStatus.waiting
-                        ? 'Tunjukkan QR ini di gerbang masuk'
-                        : 'Check-in Berhasil',
+                        ? AppStrings.t('checkin_waiting_title')
+                        : AppStrings.t('checkin_success_title'),
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -115,8 +128,8 @@ class _CheckinScreenState extends State<CheckinScreen> {
                   const SizedBox(height: 4),
                   Text(
                     _gateStatus == _GateStatus.waiting
-                        ? 'Petugas atau kiosk akan memindai QR Code ini'
-                        : 'Kendaraan Anda tercatat aman di area parkir',
+                        ? AppStrings.t('checkin_waiting_sub')
+                        : AppStrings.t('checkin_success_sub'),
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                   ),
@@ -136,15 +149,15 @@ class _CheckinScreenState extends State<CheckinScreen> {
                   _showPhotoStep ? Icons.expand_less : Icons.expand_more,
                   size: 18,
                 ),
-                label: const Text(
-                  'Opsional: Dokumentasikan Kondisi Kendaraan',
-                  style: TextStyle(fontSize: 12),
+                label: Text(
+                  AppStrings.t('checkin_photo_toggle'),
+                  style: const TextStyle(fontSize: 12),
                 ),
               ),
               if (_showPhotoStep) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Untuk membantu klaim jika terjadi kerusakan selama parkir.',
+                  AppStrings.t('checkin_photo_note'),
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 10),
@@ -176,15 +189,15 @@ class _CheckinScreenState extends State<CheckinScreen> {
                     child: ElevatedButton(
                       onPressed: _goToShuttle,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryBlue,
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Lacak Shuttle',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                      child: Text(
+                        AppStrings.t('checkin_lacak_shuttle_btn'),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -213,10 +226,10 @@ class _CheckinScreenState extends State<CheckinScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.1),
+              color: AppColors.primaryLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.directions_car_filled, color: primaryBlue),
+            child: Icon(Icons.directions_car_filled, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -287,17 +300,17 @@ class _CheckinScreenState extends State<CheckinScreen> {
             ),
             if (_gateStatus == _GateStatus.waiting) ...[
               const SizedBox(height: 14),
-              const SizedBox(
+              SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: primaryBlue,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Menunggu validasi gerbang...',
+                AppStrings.t('checkin_waiting_qr_status'),
                 style: TextStyle(
                   fontSize: 11,
                   color: Colors.grey.shade600,
@@ -317,14 +330,14 @@ class _CheckinScreenState extends State<CheckinScreen> {
         color: Colors.green.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.check_circle, color: Colors.green),
-          SizedBox(width: 10),
+          const Icon(Icons.check_circle, color: Colors.green),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'QR berhasil divalidasi oleh gerbang masuk',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              AppStrings.t('checkin_success_banner'),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ),
         ],
