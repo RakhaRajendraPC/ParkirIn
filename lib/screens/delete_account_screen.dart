@@ -1,5 +1,8 @@
 // lib/screens/delete_account_screen.dart
 import 'package:flutter/material.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_sheet.dart';
+import '../widgets/app_toast.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
   const DeleteAccountScreen({super.key});
@@ -9,7 +12,6 @@ class DeleteAccountScreen extends StatefulWidget {
 }
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final Set<String> _selectedReasons = {};
   final _feedbackCtrl = TextEditingController();
   bool _confirmChecked = false;
@@ -24,56 +26,42 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
   void _requestDeletion() {
     if (!_confirmChecked) return;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Konfirmasi Terakhir'),
-        content: const Text(
+    showAppSheet(
+      context,
+      severity: AppSeverity.destructive,
+      icon: Icons.delete_forever_outlined,
+      title: 'Konfirmasi Terakhir',
+      body:
           'Akun dan seluruh data pribadi Anda (riwayat booking, kendaraan, metode pembayaran) akan dihapus permanen dalam 30 hari. Tindakan ini tidak dapat dibatalkan setelah masa tenggang berakhir.',
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal')),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showRequestSubmitted();
-            },
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Ajukan Penghapusan'),
-          ),
-        ],
-      ),
+      primaryLabel: 'Ajukan Penghapusan',
+      onPrimary: () {
+        Navigator.pop(context);
+        _showRequestSubmitted();
+      },
+      secondaryLabel: 'Batal',
+      onSecondary: () => Navigator.pop(context),
     );
   }
 
   void _showRequestSubmitted() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Permintaan Diajukan'),
-        content: const Text(
-            'Kami telah menerima permintaan penghapusan akun Anda. Konfirmasi akan dikirim ke email terdaftar dalam 1x24 jam.'),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.popUntil(context, (r) => r.isFirst),
-            style: FilledButton.styleFrom(backgroundColor: primaryBlue),
-            child: const Text('Selesai'),
-          ),
-        ],
-      ),
+    // Transient confirmation, not a decision — a toast instead of a
+    // blocking dialog, so the "back to home" navigation now fires
+    // immediately alongside the toast rather than waiting on a button tap.
+    showAppToast(
+      context,
+      severity: AppSeverity.success,
+      message:
+          'Permintaan diajukan. Konfirmasi akan dikirim ke email terdaftar dalam 1x24 jam.',
     );
+    Navigator.popUntil(context, (r) => r.isFirst);
   }
 
   void _requestDataExport() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text(
-              'Permintaan ekspor data dikirim. Anda akan menerima email berisi salinan data dalam 1x24 jam.')),
+    showAppToast(
+      context,
+      severity: AppSeverity.success,
+      message:
+          'Permintaan ekspor data dikirim. Anda akan menerima email berisi salinan data dalam 1x24 jam.',
     );
   }
 
@@ -101,7 +89,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   ]),
               child: Row(
                 children: [
-                  const Icon(Icons.download_outlined, color: primaryBlue),
+                  Icon(Icons.download_outlined, color: AppColors.primary),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Column(
@@ -156,15 +144,16 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   selected: selected,
                   onSelected: (v) => setState(() =>
                       v ? _selectedReasons.add(r) : _selectedReasons.remove(r)),
-                  selectedColor: primaryBlue.withOpacity(0.15),
-                  checkmarkColor: primaryBlue,
-                  labelStyle:
-                      TextStyle(color: selected ? primaryBlue : Colors.black87),
+                  selectedColor: AppColors.primary.withOpacity(0.15),
+                  checkmarkColor: AppColors.primary,
+                  labelStyle: TextStyle(
+                      color: selected ? AppColors.primary : Colors.black87),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                          color:
-                              selected ? primaryBlue : Colors.grey.shade300)),
+                          color: selected
+                              ? AppColors.primary
+                              : Colors.grey.shade300)),
                 );
               }).toList(),
             ),

@@ -1,5 +1,7 @@
 // lib/screens/report_issue_screen.dart
 import 'package:flutter/material.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_toast.dart';
 
 class ReportIssueScreen extends StatefulWidget {
   final String? bookingCode;
@@ -11,7 +13,6 @@ class ReportIssueScreen extends StatefulWidget {
 }
 
 class _ReportIssueScreenState extends State<ReportIssueScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final _descCtrl = TextEditingController();
   String? _category;
   final List<bool> _attachedPhotos = [false, false, false];
@@ -28,8 +29,11 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
 
   Future<void> _submit() async {
     if (_category == null || _descCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Lengkapi kategori dan deskripsi masalah')));
+      showAppToast(
+        context,
+        severity: AppSeverity.warning,
+        message: 'Lengkapi kategori dan deskripsi masalah',
+      );
       return;
     }
     setState(() => _isSubmitting = true);
@@ -37,25 +41,16 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     if (!mounted) return;
     setState(() => _isSubmitting = false);
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Laporan Terkirim'),
-        content: const Text(
-            'Tim kami akan meninjau laporan Anda dan menghubungi dalam 1x24 jam.'),
-        actions: [
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            style: FilledButton.styleFrom(backgroundColor: primaryBlue),
-            child: const Text('Selesai'),
-          ),
-        ],
-      ),
+    // Transient confirmation, not a decision — toast instead of a blocking
+    // dialog, so returning to Help Center now happens immediately rather
+    // than waiting on a button tap.
+    showAppToast(
+      context,
+      severity: AppSeverity.success,
+      message:
+          'Laporan terkirim. Tim kami akan menghubungi dalam 1x24 jam.',
     );
+    Navigator.pop(context);
   }
 
   @override
@@ -79,12 +74,12 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.06),
+                    color: AppColors.primary.withOpacity(0.06),
                     borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
-                    const Icon(Icons.confirmation_number_outlined,
-                        size: 16, color: primaryBlue),
+                    Icon(Icons.confirmation_number_outlined,
+                        size: 16, color: AppColors.primary),
                     const SizedBox(width: 8),
                     Text('Terkait booking: ${widget.bookingCode}',
                         style: const TextStyle(
@@ -106,14 +101,15 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   label: Text(c, style: const TextStyle(fontSize: 11)),
                   selected: selected,
                   onSelected: (_) => setState(() => _category = c),
-                  selectedColor: primaryBlue,
+                  selectedColor: AppColors.primary,
                   labelStyle: TextStyle(
                       color: selected ? Colors.white : Colors.black87),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                          color:
-                              selected ? primaryBlue : Colors.grey.shade300)),
+                          color: selected
+                              ? AppColors.primary
+                              : Colors.grey.shade300)),
                 );
               }).toList(),
             ),
@@ -173,7 +169,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),

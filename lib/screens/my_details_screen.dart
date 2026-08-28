@@ -1,6 +1,8 @@
 // lib/screens/my_details_screen.dart
 import 'package:flutter/material.dart';
 import '../services/user_session.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_toast.dart';
 
 class MyDetailsScreen extends StatefulWidget {
   const MyDetailsScreen({super.key});
@@ -10,7 +12,6 @@ class MyDetailsScreen extends StatefulWidget {
 }
 
 class _MyDetailsScreenState extends State<MyDetailsScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final UserSession _session = UserSession.instance;
 
   late final TextEditingController _nameCtrl;
@@ -47,8 +48,10 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
     _session.phone = _phoneCtrl.text.trim();
 
     setState(() => _isSaving = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Data berhasil disimpan')),
+    showAppToast(
+      context,
+      severity: AppSeverity.success,
+      message: 'Data berhasil disimpan',
     );
   }
 
@@ -81,8 +84,8 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
                     bottom: 0,
                     child: Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                          color: primaryBlue, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                          color: AppColors.primary, shape: BoxShape.circle),
                       child: const Icon(Icons.camera_alt,
                           color: Colors.white, size: 14),
                     ),
@@ -106,7 +109,7 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
             _buildSection('Keamanan', [
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.lock_outline, color: primaryBlue),
+                leading: Icon(Icons.lock_outline, color: AppColors.primary),
                 title: const Text('Ubah Password',
                     style:
                         TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -122,7 +125,7 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _save,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
@@ -222,7 +225,7 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),

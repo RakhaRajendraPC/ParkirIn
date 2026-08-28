@@ -6,6 +6,7 @@ import '../services/notification_repository.dart';
 import '../services/booking_repository.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
+import '../widgets/app_toast.dart';
 import 'booking_detail_screen.dart';
 import 'shuttle_tracking_screen.dart';
 
@@ -152,8 +153,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           MaterialPageRoute(
               builder: (context) => BookingDetailScreen(booking: booking)));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Booking terkait tidak ditemukan')));
+      showAppToast(
+        context,
+        severity: AppSeverity.warning,
+        message: 'Booking terkait tidak ditemukan',
+      );
     }
   }
 

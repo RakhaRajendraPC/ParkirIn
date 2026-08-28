@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/user_session.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
+import '../widgets/app_sheet.dart';
 import 'accessibility_settings_screen.dart';
 import 'delete_account_screen.dart';
 import 'favorites_screen.dart';
@@ -321,25 +322,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       height: 50,
       child: OutlinedButton.icon(
         onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text(AppStrings.t('profile_logout_confirm_title')),
-              content: Text(AppStrings.t('profile_logout_confirm_msg')),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(AppStrings.t('profile_cancel')),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    AppStrings.t('profile_logout'),
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ),
-              ],
-            ),
+          showAppSheet(
+            context,
+            severity: AppSeverity.neutral,
+            icon: Icons.logout,
+            title: AppStrings.t('profile_logout_confirm_title'),
+            body: AppStrings.t('profile_logout_confirm_msg'),
+            primaryLabel: AppStrings.t('profile_logout'),
+            onPrimary: () => Navigator.pop(context),
+            secondaryLabel: AppStrings.t('profile_cancel'),
+            onSecondary: () => Navigator.pop(context),
           );
         },
         icon: const Icon(Icons.logout, color: Colors.redAccent, size: 18),

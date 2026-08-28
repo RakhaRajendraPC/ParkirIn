@@ -2,10 +2,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/slot_lock_service.dart';
+import '../utils/app_colors.dart';
 
 /// Banner countdown yang ditampilkan di halaman Pilih Kendaraan dan
 /// Ringkasan & Pembayaran, mengingatkan user berapa lama slot masih
 /// dikunci untuknya. Memanggil [onExpired] sekali saat waktu habis.
+///
+/// Uses the shared severity colors: warning while there's still time,
+/// escalating to danger under 2 minutes remaining.
 class SlotLockBanner extends StatefulWidget {
   final VoidCallback onExpired;
 
@@ -16,7 +20,6 @@ class SlotLockBanner extends StatefulWidget {
 }
 
 class _SlotLockBannerState extends State<SlotLockBanner> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   late StreamSubscription<Duration> _sub;
   Duration _remaining = SlotLockService.instance.remaining;
   bool _hasExpired = false;
@@ -43,6 +46,7 @@ class _SlotLockBannerState extends State<SlotLockBanner> {
   @override
   Widget build(BuildContext context) {
     final isUrgent = _remaining.inMinutes < 2;
+    final color = isUrgent ? AppColors.danger : AppColors.warningOrange;
     final m = _remaining.inMinutes;
     final s = _remaining.inSeconds % 60;
 
@@ -51,15 +55,12 @@ class _SlotLockBannerState extends State<SlotLockBanner> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isUrgent
-            ? Colors.red.withOpacity(0.08)
-            : primaryBlue.withOpacity(0.06),
+        color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(Icons.timer_outlined,
-              size: 18, color: isUrgent ? Colors.redAccent : primaryBlue),
+          Icon(Icons.timer_outlined, size: 18, color: color),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -67,7 +68,7 @@ class _SlotLockBannerState extends State<SlotLockBanner> {
               style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: isUrgent ? Colors.redAccent : Colors.black87),
+                  color: isUrgent ? color : Colors.black87),
             ),
           ),
         ],

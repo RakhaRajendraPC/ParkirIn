@@ -1,11 +1,11 @@
 // lib/screens/invoice_history_screen.dart
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_toast.dart';
 
 class InvoiceHistoryScreen extends StatelessWidget {
   const InvoiceHistoryScreen({super.key});
-
-  static const Color primaryBlue = Color(0xFF1E5EFF);
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +54,10 @@ class InvoiceHistoryScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: primaryBlue.withOpacity(0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.receipt_long_outlined, color: primaryBlue),
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle),
+            child:
+                Icon(Icons.receipt_long_outlined, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -82,18 +84,21 @@ class InvoiceHistoryScreen extends StatelessWidget {
               const SizedBox(height: 4),
               InkWell(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Mengunduh invoice PDF...')));
+                  showAppToast(
+                    context,
+                    severity: AppSeverity.neutral,
+                    message: 'Mengunduh invoice PDF...',
+                  );
                 },
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.download, size: 12, color: primaryBlue),
-                    SizedBox(width: 3),
+                    Icon(Icons.download, size: 12, color: AppColors.primary),
+                    const SizedBox(width: 3),
                     Text('Unduh',
                         style: TextStyle(
                             fontSize: 10,
-                            color: primaryBlue,
+                            color: AppColors.primary,
                             fontWeight: FontWeight.w600)),
                   ],
                 ),

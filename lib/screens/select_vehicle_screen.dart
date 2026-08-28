@@ -7,6 +7,7 @@ import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/slot_lock_banner.dart';
+import '../widgets/app_sheet.dart';
 import 'booking_summary_screen.dart';
 import 'vehicles_screen.dart';
 
@@ -103,26 +104,16 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
           children: [
             SlotLockBanner(
               onExpired: () {
-                showDialog(
-                  context: context,
+                showAppSheet(
+                  context,
+                  severity: AppSeverity.warning,
+                  icon: Icons.timer_off_outlined,
+                  title: AppStrings.t('vehicle_lock_expired_title'),
+                  body: AppStrings.t('vehicle_lock_expired_msg'),
                   barrierDismissible: false,
-                  builder: (context) => AlertDialog(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    title: Text(AppStrings.t('vehicle_lock_expired_title')),
-                    content: Text(AppStrings.t('vehicle_lock_expired_msg')),
-                    actions: [
-                      FilledButton(
-                        onPressed: () =>
-                            Navigator.popUntil(context, (r) => r.isFirst),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                        ),
-                        child: Text(AppStrings.t('vehicle_back_home_btn')),
-                      ),
-                    ],
-                  ),
+                  primaryLabel: AppStrings.t('vehicle_back_home_btn'),
+                  onPrimary: () =>
+                      Navigator.popUntil(context, (r) => r.isFirst),
                 );
               },
             ),

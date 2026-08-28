@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_toast.dart';
 
 enum PaymentMethodType { card, ewallet, virtualAccount }
 
@@ -12,7 +14,6 @@ class AddPaymentMethodScreen extends StatefulWidget {
 }
 
 class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final _formKey = GlobalKey<FormState>();
 
   final _cardNumberCtrl = TextEditingController();
@@ -43,8 +44,11 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
     if (!mounted) return;
     setState(() => _isSaving = false);
     Navigator.pop(context, true);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Metode pembayaran berhasil ditambahkan')));
+    showAppToast(
+      context,
+      severity: AppSeverity.success,
+      message: 'Metode pembayaran berhasil ditambahkan',
+    );
   }
 
   @override
@@ -75,13 +79,14 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.06),
+                    color: AppColors.primary.withOpacity(0.06),
                     borderRadius: BorderRadius.circular(12)),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.lock_outline, size: 16, color: primaryBlue),
-                    SizedBox(width: 8),
-                    Expanded(
+                    Icon(Icons.lock_outline,
+                        size: 16, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    const Expanded(
                         child: Text(
                             'Data pembayaran Anda terenkripsi dan disimpan secara aman.',
                             style: TextStyle(fontSize: 11))),
@@ -95,7 +100,7 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
                 child: ElevatedButton(
                   onPressed: _isSaving ? null : _save,
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12))),
@@ -164,13 +169,14 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
             label: Text(b, style: const TextStyle(fontSize: 12)),
             selected: selected,
             onSelected: (_) => setState(() => _selectedBank = b),
-            selectedColor: primaryBlue,
+            selectedColor: AppColors.primary,
             labelStyle:
                 TextStyle(color: selected ? Colors.white : Colors.black87),
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
                 side: BorderSide(
-                    color: selected ? primaryBlue : Colors.grey.shade300)),
+                    color:
+                        selected ? AppColors.primary : Colors.grey.shade300)),
           );
         }).toList(),
       ),

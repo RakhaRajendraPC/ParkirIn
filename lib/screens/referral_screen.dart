@@ -1,10 +1,11 @@
 // lib/screens/referral_screen.dart
 import 'package:flutter/material.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_toast.dart';
 
 class ReferralScreen extends StatelessWidget {
   const ReferralScreen({super.key});
 
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   static const String referralCode = 'BUDI2026';
 
   @override
@@ -26,7 +27,7 @@ class ReferralScreen extends StatelessWidget {
           children: [
             Center(
               child: Icon(Icons.card_giftcard,
-                  size: 64, color: primaryBlue.withOpacity(0.7)),
+                  size: 64, color: AppColors.primary.withOpacity(0.7)),
             ),
             const SizedBox(height: 16),
             const Text('Ajak Teman, Dapatkan Rp 25.000',
@@ -45,8 +46,8 @@ class ReferralScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border:
-                    Border.all(color: primaryBlue, style: BorderStyle.solid),
+                border: Border.all(
+                    color: AppColors.primary, style: BorderStyle.solid),
               ),
               child: Row(
                 children: [
@@ -59,10 +60,13 @@ class ReferralScreen extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('Kode referral disalin')));
+                      showAppToast(
+                        context,
+                        severity: AppSeverity.success,
+                        message: 'Kode referral disalin',
+                      );
                     },
-                    icon: const Icon(Icons.copy, color: primaryBlue),
+                    icon: Icon(Icons.copy, color: AppColors.primary),
                   ),
                 ],
               ),
@@ -77,7 +81,7 @@ class ReferralScreen extends StatelessWidget {
                 label: const Text('Bagikan Kode',
                     style: TextStyle(fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
@@ -105,7 +109,7 @@ class ReferralScreen extends StatelessWidget {
         children: [
           CircleAvatar(
               radius: 12,
-              backgroundColor: primaryBlue,
+              backgroundColor: AppColors.primary,
               child: Text(number,
                   style: const TextStyle(
                       color: Colors.white,

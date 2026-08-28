@@ -2,13 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/ground_transport_model.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_toast.dart';
 
 class TransportCategoryDetailScreen extends StatelessWidget {
   final GroundTransportInfo info;
 
   const TransportCategoryDetailScreen({super.key, required this.info});
-
-  static const Color primaryBlue = Color(0xFF1E5EFF);
 
   Future<void> _openOperatorApp(
       BuildContext context, TransportOperator op) async {
@@ -21,8 +21,10 @@ class TransportCategoryDetailScreen extends StatelessWidget {
       await launchUrl(Uri.parse(op.webFallback!),
           mode: LaunchMode.externalApplication);
     } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${op.name} belum terpasang di perangkat Anda')),
+      showAppToast(
+        context,
+        severity: AppSeverity.warning,
+        message: '${op.name} belum terpasang di perangkat Anda',
       );
     }
   }

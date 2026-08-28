@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/notification_model.dart';
 import '../services/notification_repository.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_toast.dart';
 
 enum ShuttleUnitStatus { berangkat, standby }
 
@@ -187,8 +189,11 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tidak dapat membuka aplikasi peta')));
+      showAppToast(
+        context,
+        severity: AppSeverity.warning,
+        message: 'Tidak dapat membuka aplikasi peta',
+      );
     }
   }
 

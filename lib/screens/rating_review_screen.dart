@@ -1,6 +1,8 @@
 // lib/screens/rating_review_screen.dart
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_toast.dart';
 
 class RatingReviewScreen extends StatefulWidget {
   final BookingModel booking;
@@ -12,7 +14,6 @@ class RatingReviewScreen extends StatefulWidget {
 }
 
 class _RatingReviewScreenState extends State<RatingReviewScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   int _rating = 0;
   final _reviewCtrl = TextEditingController();
   bool _isSubmitting = false;
@@ -28,8 +29,11 @@ class _RatingReviewScreenState extends State<RatingReviewScreen> {
 
   Future<void> _submit() async {
     if (_rating == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Pilih rating bintang terlebih dahulu')));
+      showAppToast(
+        context,
+        severity: AppSeverity.warning,
+        message: 'Pilih rating bintang terlebih dahulu',
+      );
       return;
     }
     setState(() => _isSubmitting = true);
@@ -37,8 +41,11 @@ class _RatingReviewScreenState extends State<RatingReviewScreen> {
     if (!mounted) return;
     setState(() => _isSubmitting = false);
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terima kasih atas ulasan Anda!')));
+    showAppToast(
+      context,
+      severity: AppSeverity.success,
+      message: 'Terima kasih atas ulasan Anda!',
+    );
   }
 
   @override
@@ -91,10 +98,10 @@ class _RatingReviewScreenState extends State<RatingReviewScreen> {
                         'Baik',
                         'Sangat Baik'
                       ][_rating],
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: primaryBlue),
+                          color: AppColors.primary),
                     ),
                 ],
               ),
@@ -113,17 +120,18 @@ class _RatingReviewScreenState extends State<RatingReviewScreen> {
                   selected: selected,
                   onSelected: (v) => setState(
                       () => v ? _selectedTags.add(t) : _selectedTags.remove(t)),
-                  selectedColor: primaryBlue.withOpacity(0.15),
-                  checkmarkColor: primaryBlue,
+                  selectedColor: AppColors.primary.withOpacity(0.15),
+                  checkmarkColor: AppColors.primary,
                   labelStyle: TextStyle(
-                      color: selected ? primaryBlue : Colors.black87,
+                      color: selected ? AppColors.primary : Colors.black87,
                       fontWeight:
                           selected ? FontWeight.w600 : FontWeight.normal),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                          color:
-                              selected ? primaryBlue : Colors.grey.shade300)),
+                          color: selected
+                              ? AppColors.primary
+                              : Colors.grey.shade300)),
                 );
               }).toList(),
             ),
@@ -150,7 +158,7 @@ class _RatingReviewScreenState extends State<RatingReviewScreen> {
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),

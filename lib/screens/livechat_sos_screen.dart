@@ -1,5 +1,8 @@
 // lib/screens/livechat_sos_screen.dart
 import 'package:flutter/material.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_sheet.dart';
+import '../widgets/app_toast.dart';
 
 class ChatMessage {
   final String text;
@@ -18,7 +21,6 @@ class LiveChatSosScreen extends StatefulWidget {
 }
 
 class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final _msgCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
 
@@ -53,37 +55,24 @@ class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
   }
 
   void _triggerSos() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-            SizedBox(width: 8),
-            Text('Panggilan Darurat (SOS)')
-          ],
-        ),
-        content: const Text(
-            'Ini akan menghubungkan Anda langsung dengan petugas keamanan/hotline darurat di lokasi parkir. Lanjutkan?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal')),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    backgroundColor: Colors.redAccent,
-                    content: Text('Menghubungkan ke petugas darurat...')),
-              );
-            },
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Ya, Hubungi Sekarang'),
-          ),
-        ],
-      ),
+    showAppSheet(
+      context,
+      severity: AppSeverity.destructive,
+      icon: Icons.warning_amber_rounded,
+      title: 'Panggilan Darurat (SOS)',
+      body:
+          'Ini akan menghubungkan Anda langsung dengan petugas keamanan/hotline darurat di lokasi parkir. Lanjutkan?',
+      primaryLabel: 'Ya, Hubungi Sekarang',
+      onPrimary: () {
+        Navigator.pop(context);
+        showAppToast(
+          context,
+          severity: AppSeverity.destructive,
+          message: 'Menghubungkan ke petugas darurat...',
+        );
+      },
+      secondaryLabel: 'Batal',
+      onSecondary: () => Navigator.pop(context),
     );
   }
 
@@ -97,9 +86,9 @@ class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
           elevation: 0,
           title: Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                   radius: 16,
-                  backgroundColor: primaryBlue,
+                  backgroundColor: AppColors.primary,
                   child:
                       Icon(Icons.support_agent, color: Colors.white, size: 18)),
               const SizedBox(width: 10),
@@ -174,7 +163,7 @@ class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
                     ),
                     const SizedBox(width: 8),
                     CircleAvatar(
-                      backgroundColor: primaryBlue,
+                      backgroundColor: AppColors.primary,
                       child: IconButton(
                           icon: const Icon(Icons.send,
                               color: Colors.white, size: 18),
@@ -199,7 +188,7 @@ class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
         constraints:
             BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
         decoration: BoxDecoration(
-          color: m.isFromUser ? primaryBlue : Colors.white,
+          color: m.isFromUser ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4)
