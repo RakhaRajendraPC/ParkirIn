@@ -1,5 +1,6 @@
-// lib/screens/payment_methods_screen.dart
 import 'package:flutter/material.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 import 'add_payment_method_screen.dart';
 
 class SavedPaymentMethod {
@@ -25,26 +26,41 @@ class PaymentMethodsScreen extends StatefulWidget {
 }
 
 class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
+  late final List<SavedPaymentMethod> _methods;
 
-  final List<SavedPaymentMethod> _methods = [
-    SavedPaymentMethod(
-        label: 'BCA Debit •••• 4821',
-        subtitle: 'Kartu Debit',
-        icon: Icons.credit_card,
-        color: primaryBlue,
-        isDefault: true),
-    SavedPaymentMethod(
-        label: 'GoPay',
-        subtitle: 'E-Wallet · 0812-3456-7890',
-        icon: Icons.account_balance_wallet_outlined,
-        color: Colors.teal),
-    SavedPaymentMethod(
-        label: 'QRIS',
-        subtitle: 'Bayar via aplikasi bank/e-wallet apapun',
-        icon: Icons.qr_code,
-        color: Colors.orange),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _methods = [
+      SavedPaymentMethod(
+          label: 'BCA Debit •••• 4821',
+          subtitle: 'Kartu Debit',
+          icon: Icons.credit_card,
+          color: AppColors.primary,
+          isDefault: true),
+      SavedPaymentMethod(
+          label: 'GoPay',
+          subtitle: 'E-Wallet · 0812-3456-7890',
+          icon: Icons.account_balance_wallet_outlined,
+          color: Colors.teal),
+      SavedPaymentMethod(
+          label: 'QRIS',
+          subtitle: 'Bayar via aplikasi bank/e-wallet apapun',
+          icon: Icons.qr_code,
+          color: Colors.orange),
+    ];
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
 
   void _setDefault(int index) {
     setState(() {
@@ -66,8 +82,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Payment Methods',
-              style: TextStyle(
+          title: Text(AppStrings.t('payment_appbar_title'),
+              style: const TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.bold,
                   fontSize: 17)),
@@ -86,10 +102,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               child: OutlinedButton.icon(
                 onPressed: () => _showAddSheet(context),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Tambah Metode Pembayaran'),
+                label: Text(AppStrings.t('payment_tambah_btn')),
                 style: OutlinedButton.styleFrom(
-                    foregroundColor: primaryBlue,
-                    side: const BorderSide(color: primaryBlue),
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
               ),
@@ -106,7 +122,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: m.isDefault ? Border.all(color: primaryBlue) : null,
+        border: m.isDefault ? Border.all(color: AppColors.primary) : null,
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
         ],
@@ -135,10 +151,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                            color: primaryBlue,
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(4)),
-                        child: const Text('UTAMA',
-                            style: TextStyle(
+                        child: Text(AppStrings.t('payment_utama_badge'),
+                            style: const TextStyle(
                                 fontSize: 8,
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold)),
@@ -161,14 +177,15 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             },
             itemBuilder: (context) => [
               if (!m.isDefault)
-                const PopupMenuItem(
+                PopupMenuItem(
                     value: 'default',
-                    child:
-                        Text('Jadikan Utama', style: TextStyle(fontSize: 13))),
-              const PopupMenuItem(
+                    child: Text(AppStrings.t('payment_jadikan_utama'),
+                        style: const TextStyle(fontSize: 13))),
+              PopupMenuItem(
                   value: 'remove',
-                  child: Text('Hapus',
-                      style: TextStyle(fontSize: 13, color: Colors.redAccent))),
+                  child: Text(AppStrings.t('payment_hapus'),
+                      style: const TextStyle(
+                          fontSize: 13, color: Colors.redAccent))),
             ],
           ),
         ],
@@ -184,19 +201,19 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       builder: (context) {
         final options = <(String, IconData, Color, PaymentMethodType)>[
           (
-            'Kartu Debit/Kredit',
+            AppStrings.t('payment_kartu'),
             Icons.credit_card,
-            primaryBlue,
+            AppColors.primary,
             PaymentMethodType.card
           ),
           (
-            'E-Wallet (GoPay/OVO/Dana)',
+            AppStrings.t('payment_ewallet'),
             Icons.account_balance_wallet_outlined,
             Colors.teal,
             PaymentMethodType.ewallet
           ),
           (
-            'Virtual Account',
+            AppStrings.t('payment_va'),
             Icons.account_balance_outlined,
             Colors.purple,
             PaymentMethodType.virtualAccount
@@ -210,18 +227,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       leading: Icon(o.$2, color: o.$3),
                       title: Text(o.$1, style: const TextStyle(fontSize: 13)),
                       onTap: () async {
-                        Navigator.pop(context); // tutup bottom sheet dulu
-                        final saved = await Navigator.push<bool>(
+                        Navigator.pop(context);
+                        await Navigator.push<bool>(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                AddPaymentMethodScreen(type: o.$4),
-                          ),
+                              builder: (context) =>
+                                  AddPaymentMethodScreen(type: o.$4)),
                         );
-                        if (saved == true && mounted) {
-                          // Metode pembayaran baru berhasil disimpan (mock).
-                          // Di production: refresh dari API/backend di sini.
-                        }
                       },
                     ))
                 .toList(),

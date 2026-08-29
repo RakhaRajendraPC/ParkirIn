@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import '../services/user_session.dart';
-
-class VehiclesScreen extends StatefulWidget {
-  const VehiclesScreen({super.key});
-
-  @override
-  State<VehiclesScreen> createState() => _VehiclesScreenState();
-}
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 
 class _VehiclesScreenState extends State<VehiclesScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final UserSession _session = UserSession.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
 
   void _setDefault(String id) => setState(() => _session.setDefaultVehicle(id));
   void _remove(String id) => setState(() => _session.removeVehicle(id));
@@ -36,21 +46,22 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Tambah Kendaraan',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppStrings.t('vehicles_dialog_title'),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             TextField(
                 controller: plateCtrl,
                 textCapitalization: TextCapitalization.characters,
                 decoration: InputDecoration(
-                    labelText: 'Plat Nomor',
+                    labelText: AppStrings.t('vehicles_plat_nomor'),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10)))),
             const SizedBox(height: 12),
             TextField(
                 controller: brandCtrl,
                 decoration: InputDecoration(
-                    labelText: 'Merek & Model',
+                    labelText: AppStrings.t('vehicles_merek_model'),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10)))),
             const SizedBox(height: 12),
@@ -60,7 +71,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                     child: TextField(
                         controller: typeCtrl,
                         decoration: InputDecoration(
-                            labelText: 'Tipe (SUV/MPV)',
+                            labelText: AppStrings.t('vehicles_tipe'),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10))))),
                 const SizedBox(width: 12),
@@ -68,7 +79,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                     child: TextField(
                         controller: colorCtrl,
                         decoration: InputDecoration(
-                            labelText: 'Warna',
+                            labelText: AppStrings.t('vehicles_warna'),
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10))))),
               ],
@@ -92,11 +103,11 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
-                child: const Text('Simpan Kendaraan'),
+                child: Text(AppStrings.t('vehicles_simpan_btn')),
               ),
             ),
           ],
@@ -113,8 +124,8 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Kendaraan Saya',
-              style: TextStyle(
+          title: Text(AppStrings.t('vehicles_appbar_title'),
+              style: const TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.bold,
                   fontSize: 17)),
@@ -132,10 +143,10 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
               child: OutlinedButton.icon(
                 onPressed: _showAddDialog,
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Tambah Kendaraan'),
+                label: Text(AppStrings.t('vehicles_tambah_btn')),
                 style: OutlinedButton.styleFrom(
-                    foregroundColor: primaryBlue,
-                    side: const BorderSide(color: primaryBlue),
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
               ),
@@ -152,7 +163,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: v.isDefault ? Border.all(color: primaryBlue) : null,
+        border: v.isDefault ? Border.all(color: AppColors.primary) : null,
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
         ],
@@ -162,8 +173,8 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: primaryBlue.withOpacity(0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.directions_car_filled, color: primaryBlue),
+                color: AppColors.primaryLight, shape: BoxShape.circle),
+            child: Icon(Icons.directions_car_filled, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -181,10 +192,10 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                            color: primaryBlue,
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(4)),
-                        child: const Text('UTAMA',
-                            style: TextStyle(
+                        child: Text(AppStrings.t('vehicles_utama_badge'),
+                            style: const TextStyle(
                                 fontSize: 8,
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold)),
@@ -210,18 +221,26 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
             },
             itemBuilder: (context) => [
               if (!v.isDefault)
-                const PopupMenuItem(
+                PopupMenuItem(
                     value: 'default',
-                    child:
-                        Text('Jadikan Utama', style: TextStyle(fontSize: 13))),
-              const PopupMenuItem(
+                    child: Text(AppStrings.t('vehicles_jadikan_utama'),
+                        style: const TextStyle(fontSize: 13))),
+              PopupMenuItem(
                   value: 'remove',
-                  child: Text('Hapus',
-                      style: TextStyle(fontSize: 13, color: Colors.redAccent))),
+                  child: Text(AppStrings.t('vehicles_hapus'),
+                      style: const TextStyle(
+                          fontSize: 13, color: Colors.redAccent))),
             ],
           ),
         ],
       ),
     );
   }
+}
+
+class VehiclesScreen extends StatefulWidget {
+  const VehiclesScreen({super.key});
+
+  @override
+  State<VehiclesScreen> createState() => _VehiclesScreenState();
 }

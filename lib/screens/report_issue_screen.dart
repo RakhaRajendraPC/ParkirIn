@@ -1,5 +1,6 @@
-// lib/screens/report_issue_screen.dart
 import 'package:flutter/material.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 
 class ReportIssueScreen extends StatefulWidget {
   final String? bookingCode;
@@ -11,25 +12,40 @@ class ReportIssueScreen extends StatefulWidget {
 }
 
 class _ReportIssueScreenState extends State<ReportIssueScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final _descCtrl = TextEditingController();
   String? _category;
   final List<bool> _attachedPhotos = [false, false, false];
   bool _isSubmitting = false;
 
-  final List<String> _categories = [
-    'Kendaraan Rusak/Tergores',
-    'Biaya Tidak Sesuai',
-    'Shuttle Tidak Datang',
-    'Petugas Tidak Ramah',
-    'Masalah Pembayaran',
-    'Lainnya',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  List<String> get _categories => [
+        AppStrings.t('report_kategori_1'),
+        AppStrings.t('report_kategori_2'),
+        AppStrings.t('report_kategori_3'),
+        AppStrings.t('report_kategori_4'),
+        AppStrings.t('report_kategori_5'),
+        AppStrings.t('report_kategori_6'),
+      ];
 
   Future<void> _submit() async {
     if (_category == null || _descCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Lengkapi kategori dan deskripsi masalah')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.t('report_validation_snackbar'))));
       return;
     }
     setState(() => _isSubmitting = true);
@@ -41,17 +57,16 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Laporan Terkirim'),
-        content: const Text(
-            'Tim kami akan meninjau laporan Anda dan menghubungi dalam 1x24 jam.'),
+        title: Text(AppStrings.t('report_success_title')),
+        content: Text(AppStrings.t('report_success_msg')),
         actions: [
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            style: FilledButton.styleFrom(backgroundColor: primaryBlue),
-            child: const Text('Selesai'),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+            child: Text(AppStrings.t('report_selesai_btn')),
           ),
         ],
       ),
@@ -66,8 +81,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Lapor Masalah',
-              style: TextStyle(
+          title: Text(AppStrings.t('report_appbar_title'),
+              style: const TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.bold,
                   fontSize: 17)),
@@ -79,14 +94,15 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.06),
+                    color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
-                    const Icon(Icons.confirmation_number_outlined,
-                        size: 16, color: primaryBlue),
+                    Icon(Icons.confirmation_number_outlined,
+                        size: 16, color: AppColors.primary),
                     const SizedBox(width: 8),
-                    Text('Terkait booking: ${widget.bookingCode}',
+                    Text(
+                        '${AppStrings.t('report_booking_terkait')} ${widget.bookingCode}',
                         style: const TextStyle(
                             fontSize: 12, fontWeight: FontWeight.w600)),
                   ],
@@ -94,8 +110,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            const Text('Kategori Masalah',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            Text(AppStrings.t('report_kategori_title'),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -106,26 +123,28 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   label: Text(c, style: const TextStyle(fontSize: 11)),
                   selected: selected,
                   onSelected: (_) => setState(() => _category = c),
-                  selectedColor: primaryBlue,
+                  selectedColor: AppColors.primary,
                   labelStyle: TextStyle(
                       color: selected ? Colors.white : Colors.black87),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                          color:
-                              selected ? primaryBlue : Colors.grey.shade300)),
+                          color: selected
+                              ? AppColors.primary
+                              : Colors.grey.shade300)),
                 );
               }).toList(),
             ),
             const SizedBox(height: 20),
-            const Text('Deskripsi Masalah',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            Text(AppStrings.t('report_deskripsi_title'),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             TextField(
               controller: _descCtrl,
               maxLines: 5,
               decoration: InputDecoration(
-                hintText: 'Jelaskan masalah yang Anda alami secara detail...',
+                hintText: AppStrings.t('report_deskripsi_hint'),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -134,8 +153,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Lampirkan Foto Bukti (opsional)',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            Text(AppStrings.t('report_lampiran_title'),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             Row(
               children: List.generate(_attachedPhotos.length, (i) {
@@ -173,7 +193,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
@@ -183,8 +203,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                         height: 18,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : const Text('Kirim Laporan',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    : Text(AppStrings.t('report_kirim_btn'),
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
           ],

@@ -1,6 +1,7 @@
-// lib/screens/my_details_screen.dart
 import 'package:flutter/material.dart';
 import '../services/user_session.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 
 class MyDetailsScreen extends StatefulWidget {
   const MyDetailsScreen({super.key});
@@ -10,7 +11,6 @@ class MyDetailsScreen extends StatefulWidget {
 }
 
 class _MyDetailsScreenState extends State<MyDetailsScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final UserSession _session = UserSession.instance;
 
   late final TextEditingController _nameCtrl;
@@ -25,6 +25,7 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
     _nameCtrl = TextEditingController(text: _session.name);
     _emailCtrl = TextEditingController(text: _session.email);
     _phoneCtrl = TextEditingController(text: _session.phone);
+    AppSettings.instance.addListener(_onChanged);
   }
 
   @override
@@ -33,7 +34,12 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
     _idCtrl.dispose();
+    AppSettings.instance.removeListener(_onChanged);
     super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _save() async {
@@ -41,14 +47,13 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
     await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
 
-    // Tulis balik ke UserSession — otomatis sinkron ke Profile & alur booking.
     _session.name = _nameCtrl.text.trim();
     _session.email = _emailCtrl.text.trim();
     _session.phone = _phoneCtrl.text.trim();
 
     setState(() => _isSaving = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Data berhasil disimpan')),
+      SnackBar(content: Text(AppStrings.t('mydetails_saved_snackbar'))),
     );
   }
 
@@ -60,8 +65,8 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('My Details',
-              style: TextStyle(
+          title: Text(AppStrings.t('mydetails_appbar_title'),
+              style: const TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.bold,
                   fontSize: 17)),
@@ -81,8 +86,8 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
                     bottom: 0,
                     child: Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                          color: primaryBlue, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                          color: AppColors.primary, shape: BoxShape.circle),
                       child: const Icon(Icons.camera_alt,
                           color: Colors.white, size: 14),
                     ),
@@ -91,25 +96,29 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            _buildSection('Informasi Personal', [
-              _field('Nama Lengkap', _nameCtrl, Icons.person_outline),
-              _field('Email', _emailCtrl, Icons.email_outlined,
+            _buildSection(AppStrings.t('mydetails_section_personal'), [
+              _field(AppStrings.t('mydetails_nama'), _nameCtrl,
+                  Icons.person_outline),
+              _field(AppStrings.t('mydetails_email'), _emailCtrl,
+                  Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress),
-              _field('Nomor Telepon', _phoneCtrl, Icons.phone_outlined,
+              _field(AppStrings.t('mydetails_telepon'), _phoneCtrl,
+                  Icons.phone_outlined,
                   keyboardType: TextInputType.phone),
             ]),
             const SizedBox(height: 16),
-            _buildSection('Identitas (KTP/SIM)', [
-              _field('Nomor Identitas', _idCtrl, Icons.badge_outlined),
+            _buildSection(AppStrings.t('mydetails_section_identitas'), [
+              _field(AppStrings.t('mydetails_nomor_identitas'), _idCtrl,
+                  Icons.badge_outlined),
             ]),
             const SizedBox(height: 16),
-            _buildSection('Keamanan', [
+            _buildSection(AppStrings.t('mydetails_section_keamanan'), [
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.lock_outline, color: primaryBlue),
-                title: const Text('Ubah Password',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                leading: Icon(Icons.lock_outline, color: AppColors.primary),
+                title: Text(AppStrings.t('mydetails_ubah_password'),
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600)),
                 trailing:
                     const Icon(Icons.chevron_right, color: Colors.black26),
                 onTap: () => _showChangePasswordSheet(context),
@@ -122,7 +131,7 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _save,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
@@ -132,8 +141,8 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
                         height: 18,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : const Text('Simpan Perubahan',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    : Text(AppStrings.t('mydetails_simpan_btn'),
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
           ],
@@ -199,20 +208,21 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Ubah Password',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppStrings.t('mydetails_ubah_password'),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             TextField(
                 obscureText: true,
                 decoration: InputDecoration(
-                    labelText: 'Password Lama',
+                    labelText: AppStrings.t('mydetails_password_lama'),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10)))),
             const SizedBox(height: 12),
             TextField(
                 obscureText: true,
                 decoration: InputDecoration(
-                    labelText: 'Password Baru',
+                    labelText: AppStrings.t('mydetails_password_baru'),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10)))),
             const SizedBox(height: 20),
@@ -222,11 +232,11 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
-                child: const Text('Simpan Password Baru'),
+                child: Text(AppStrings.t('mydetails_simpan_password_btn')),
               ),
             ),
           ],

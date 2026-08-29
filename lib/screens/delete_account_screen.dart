@@ -1,5 +1,6 @@
-// lib/screens/delete_account_screen.dart
 import 'package:flutter/material.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
   const DeleteAccountScreen({super.key});
@@ -9,18 +10,34 @@ class DeleteAccountScreen extends StatefulWidget {
 }
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final Set<String> _selectedReasons = {};
   final _feedbackCtrl = TextEditingController();
   bool _confirmChecked = false;
 
-  final List<String> _reasons = [
-    'Tidak lagi membutuhkan layanan',
-    'Menemukan alternatif lain',
-    'Masalah privasi/keamanan',
-    'Sulit digunakan',
-    'Lainnya',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    _feedbackCtrl.dispose();
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  List<String> get _reasons => [
+        AppStrings.t('delete_reason_1'),
+        AppStrings.t('delete_reason_2'),
+        AppStrings.t('delete_reason_3'),
+        AppStrings.t('delete_reason_4'),
+        AppStrings.t('delete_reason_5'),
+      ];
 
   void _requestDeletion() {
     if (!_confirmChecked) return;
@@ -28,21 +45,19 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Konfirmasi Terakhir'),
-        content: const Text(
-          'Akun dan seluruh data pribadi Anda (riwayat booking, kendaraan, metode pembayaran) akan dihapus permanen dalam 30 hari. Tindakan ini tidak dapat dibatalkan setelah masa tenggang berakhir.',
-        ),
+        title: Text(AppStrings.t('delete_final_title')),
+        content: Text(AppStrings.t('delete_final_msg')),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Batal')),
+              child: Text(AppStrings.t('delete_batal'))),
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
               _showRequestSubmitted();
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Ajukan Penghapusan'),
+            child: Text(AppStrings.t('delete_ajukan_btn')),
           ),
         ],
       ),
@@ -55,14 +70,13 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Permintaan Diajukan'),
-        content: const Text(
-            'Kami telah menerima permintaan penghapusan akun Anda. Konfirmasi akan dikirim ke email terdaftar dalam 1x24 jam.'),
+        title: Text(AppStrings.t('delete_submitted_title')),
+        content: Text(AppStrings.t('delete_submitted_msg')),
         actions: [
           FilledButton(
             onPressed: () => Navigator.popUntil(context, (r) => r.isFirst),
-            style: FilledButton.styleFrom(backgroundColor: primaryBlue),
-            child: const Text('Selesai'),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+            child: Text(AppStrings.t('delete_selesai_btn')),
           ),
         ],
       ),
@@ -71,9 +85,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
   void _requestDataExport() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text(
-              'Permintaan ekspor data dikirim. Anda akan menerima email berisi salinan data dalam 1x24 jam.')),
+      SnackBar(content: Text(AppStrings.t('delete_export_snackbar'))),
     );
   }
 
@@ -84,8 +96,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Hapus Akun & Data',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          title: Text(AppStrings.t('delete_appbar_title'),
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         ),
         body: ListView(
           padding: const EdgeInsets.all(16),
@@ -101,25 +114,25 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   ]),
               child: Row(
                 children: [
-                  const Icon(Icons.download_outlined, color: primaryBlue),
+                  Icon(Icons.download_outlined, color: AppColors.primary),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Unduh Data Saya',
-                            style: TextStyle(
+                        Text(AppStrings.t('delete_unduh_data_title'),
+                            style: const TextStyle(
                                 fontWeight: FontWeight.w600, fontSize: 13)),
-                        Text('Dapatkan salinan seluruh data pribadi Anda',
-                            style:
-                                TextStyle(fontSize: 11, color: Colors.black54)),
+                        Text(AppStrings.t('delete_unduh_data_sub'),
+                            style: const TextStyle(
+                                fontSize: 11, color: Colors.black54)),
                       ],
                     ),
                   ),
                   TextButton(
                       onPressed: _requestDataExport,
-                      child:
-                          const Text('Minta', style: TextStyle(fontSize: 12))),
+                      child: Text(AppStrings.t('delete_minta_btn'),
+                          style: const TextStyle(fontSize: 12))),
                 ],
               ),
             ),
@@ -129,22 +142,21 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               decoration: BoxDecoration(
                   color: Colors.red.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(14)),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-                  SizedBox(width: 10),
+                  const Icon(Icons.warning_amber_rounded,
+                      color: Colors.redAccent),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      'Menghapus akun akan menghilangkan seluruh riwayat booking, poin loyalty, saldo wallet, dan data kendaraan Anda secara permanen.',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
+                      child: Text(AppStrings.t('delete_warning'),
+                          style: const TextStyle(fontSize: 12))),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Mengapa Anda ingin menghapus akun?',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            Text(AppStrings.t('delete_reason_title'),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -156,15 +168,16 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   selected: selected,
                   onSelected: (v) => setState(() =>
                       v ? _selectedReasons.add(r) : _selectedReasons.remove(r)),
-                  selectedColor: primaryBlue.withOpacity(0.15),
-                  checkmarkColor: primaryBlue,
-                  labelStyle:
-                      TextStyle(color: selected ? primaryBlue : Colors.black87),
+                  selectedColor: AppColors.primaryLight,
+                  checkmarkColor: AppColors.primary,
+                  labelStyle: TextStyle(
+                      color: selected ? AppColors.primary : Colors.black87),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                          color:
-                              selected ? primaryBlue : Colors.grey.shade300)),
+                          color: selected
+                              ? AppColors.primary
+                              : Colors.grey.shade300)),
                 );
               }).toList(),
             ),
@@ -173,7 +186,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               controller: _feedbackCtrl,
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: 'Masukan tambahan (opsional)',
+                hintText: AppStrings.t('delete_feedback_hint'),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -188,9 +201,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               activeColor: Colors.redAccent,
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
-              title: const Text(
-                  'Saya memahami tindakan ini permanen dan tidak dapat dibatalkan',
-                  style: TextStyle(fontSize: 12)),
+              title: Text(AppStrings.t('delete_confirm_checkbox'),
+                  style: const TextStyle(fontSize: 12)),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -205,8 +217,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Hapus Akun Saya',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(AppStrings.t('delete_hapus_btn'),
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
           ],
