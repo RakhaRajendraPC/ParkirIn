@@ -4,6 +4,8 @@ import '/main.dart';
 import 'otp_verification_screen.dart';
 import 'terms_privacy_screen.dart';
 
+enum _RegisterMethod { email, phone }
+
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
@@ -17,15 +19,18 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _agreedToTerms = false;
+  _RegisterMethod _registerMethod = _RegisterMethod.email;
 
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
   }
@@ -37,10 +42,17 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = false);
 
     if (!_isLogin) {
+      // Baik daftar via email maupun nomor HP, keduanya wajib verifikasi OTP
+      // sebelum akun aktif. Kontak yang dikirim ke OTP menyesuaikan metode
+      // yang dipilih user.
+      final contact = _registerMethod == _RegisterMethod.email
+          ? _emailCtrl.text.trim()
+          : _phoneCtrl.text.trim();
+
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => OtpVerificationScreen(contact: _emailCtrl.text),
+          builder: (context) => OtpVerificationScreen(contact: contact),
         ),
       );
     } else {
@@ -94,13 +106,24 @@ class _AuthScreenState extends State<AuthScreen> {
               if (!_isLogin) ...[
                 _buildField('Nama Lengkap', _nameCtrl, Icons.person_outline),
                 const SizedBox(height: 14),
+                _buildRegisterMethodToggle(),
+                const SizedBox(height: 14),
               ],
-              _buildField(
-                'Email',
-                _emailCtrl,
-                Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-              ),
+              if (_isLogin || _registerMethod == _RegisterMethod.email)
+                _buildField(
+                  'Email',
+                  _emailCtrl,
+                  Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                )
+              else
+                _buildField(
+                  'Nomor HP',
+                  _phoneCtrl,
+                  Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  hint: '08xxxxxxxxxx',
+                ),
               const SizedBox(height: 14),
               _buildField(
                 'Password',
@@ -264,6 +287,53 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  Widget _buildRegisterMethodToggle() {
+    Widget chip(String label, IconData icon, _RegisterMethod method) {
+      final selected = _registerMethod == method;
+      return Expanded(
+        child: InkWell(
+          onTap: () => setState(() => _registerMethod = method),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: selected ? primaryBlue : Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: selected ? primaryBlue : Colors.grey.shade300,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon,
+                    size: 16,
+                    color: selected ? Colors.white : Colors.grey.shade600),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white : Colors.grey.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        chip('Email', Icons.email_outlined, _RegisterMethod.email),
+        const SizedBox(width: 10),
+        chip('Nomor HP', Icons.phone_outlined, _RegisterMethod.phone),
+      ],
+    );
+  }
+
   Widget _buildField(
     String label,
     TextEditingController ctrl,
@@ -271,6 +341,7 @@ class _AuthScreenState extends State<AuthScreen> {
     bool obscure = false,
     Widget? suffix,
     TextInputType? keyboardType,
+    String? hint,
   }) {
     return TextField(
       controller: ctrl,
@@ -278,6 +349,7 @@ class _AuthScreenState extends State<AuthScreen> {
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
+        hintText: hint,
         prefixIcon: Icon(icon, size: 20),
         suffixIcon: suffix,
         filled: true,

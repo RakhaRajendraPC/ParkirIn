@@ -25,6 +25,7 @@ class ParkingSlotMapScreen extends StatefulWidget {
 
 class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
   late final List<ParkingRow> _rows;
+  late final List<List<ParkingRow>> _rowGroups;
   ParkingSlot? _selected;
 
   @override
@@ -32,6 +33,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
     super.initState();
     _rows =
         ParkingSlotGenerator.generate(basePrice: widget.location.pricePerNight);
+    _rowGroups = ParkingSlotGenerator.groupRows(_rows);
     AppSettings.instance.addListener(_onChanged);
   }
 
@@ -91,7 +93,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
             _buildLegend(),
             Expanded(
               child: InteractiveViewer(
-                minScale: 0.6,
+                minScale: 0.5,
                 maxScale: 2.5,
                 boundaryMargin: const EdgeInsets.all(80),
                 constrained: false,
@@ -174,18 +176,27 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
 
   Widget _buildParkingLot() {
     return SizedBox(
-      width: 720,
+      width: 1080,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: List.generate(_rows.length * 2 - 1, (i) {
+        children: List.generate(_rowGroups.length * 2 - 1, (i) {
           if (i.isEven) {
-            final row = _rows[i ~/ 2];
-            return _buildParkingRow(row);
+            final group = _rowGroups[i ~/ 2];
+            return _buildRowGroup(group);
           } else {
             return _buildHorizontalAksesJalan();
           }
         }),
       ),
+    );
+  }
+
+  /// Render 1 baris tunggal (edge row) atau 2 baris yang dempet
+  /// saling membelakangi (tanpa Akses Jalan di antaranya).
+  Widget _buildRowGroup(List<ParkingRow> group) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: group.map((row) => _buildParkingRow(row)).toList(),
     );
   }
 
@@ -204,9 +215,10 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
                       color: Colors.black87)),
             ),
           ),
-          Expanded(flex: 2, child: _buildSlotBlock(row.leftBlock)),
-          _buildVerticalAksesJalan(),
-          Expanded(flex: 1, child: _buildSlotBlock(row.rightBlock)),
+          for (int b = 0; b < row.blocks.length; b++) ...[
+            Expanded(child: _buildSlotBlock(row.blocks[b])),
+            if (b < row.blocks.length - 1) _buildVerticalAksesJalan(),
+          ],
         ],
       ),
     );
