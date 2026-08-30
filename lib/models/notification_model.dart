@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 enum NotificationType {
   bookingConfirmation,
   checkinReminder,
-  checkinConfirmation, // ⬅️ baru
+  checkinConfirmation,
   shuttleArriving,
   checkoutConfirmation,
   overstayWarning,
@@ -118,4 +118,30 @@ class AppNotification {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     return '${diff.inDays}d ago';
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type.name,
+        'title': title,
+        'description': description,
+        'timestamp': timestamp.toIso8601String(),
+        'actionLabel': actionLabel,
+        'bookingCode': bookingCode,
+        'isRead': isRead,
+      };
+
+  factory AppNotification.fromJson(Map<String, dynamic> json) =>
+      AppNotification(
+        id: json['id'] as String,
+        type: NotificationType.values.firstWhere(
+          (e) => e.name == json['type'],
+          orElse: () => NotificationType.bookingConfirmation,
+        ),
+        title: json['title'] as String,
+        description: json['description'] as String,
+        timestamp: DateTime.parse(json['timestamp'] as String),
+        actionLabel: json['actionLabel'] as String?,
+        bookingCode: json['bookingCode'] as String?,
+        isRead: json['isRead'] as bool? ?? false,
+      );
 }

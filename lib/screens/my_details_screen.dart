@@ -50,6 +50,7 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
     _session.name = _nameCtrl.text.trim();
     _session.email = _emailCtrl.text.trim();
     _session.phone = _phoneCtrl.text.trim();
+    _session.save();
 
     setState(() => _isSaving = false);
     ScaffoldMessenger.of(context).showSnackBar(

@@ -165,17 +165,39 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F8FA),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leadingWidth: 56,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Icon(Icons.location_on_outlined, color: AppColors.primary),
+          ),
+          title: Text(
+            AppStrings.t('search_appbar_title'),
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          centerTitle: true,
+          actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: Color(0xFFEDEDED),
+                child: Icon(Icons.person, color: Colors.grey, size: 18),
+              ),
+            ),
+          ],
+        ),
         body: RefreshIndicator(
           onRefresh: () async =>
               await Future.delayed(const Duration(milliseconds: 400)),
           child: CustomScrollView(
             slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: _buildTopBar(),
-                ),
-              ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
@@ -278,34 +300,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildTopBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.notifications_none, color: AppColors.primary),
-            const SizedBox(width: 6),
-            Text(AppStrings.t('notif_appbar_title'),
-                style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18)),
-          ],
-        ),
-        TextButton.icon(
-          onPressed: _toggleSelectionMode,
-          icon: Icon(_selectionMode ? Icons.close : Icons.checklist, size: 16),
-          label: Text(
-              _selectionMode
-                  ? AppStrings.t('notif_batal')
-                  : AppStrings.t('notif_pilih'),
-              style: const TextStyle(fontSize: 12)),
-        ),
-      ],
-    );
-  }
-
   Widget _buildHeader() {
     final unread = _repo.unreadCount;
     return Row(
@@ -347,20 +341,38 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ],
           ),
         ),
-        if (unread > 0)
-          TextButton(
-            onPressed: () => _repo.markAllAsRead(),
-            style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 4)),
-            child: Text(
-              AppStrings.t('notif_mark_all_read'),
-              style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600),
-              textAlign: TextAlign.end,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            TextButton.icon(
+              onPressed: _toggleSelectionMode,
+              style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  minimumSize: Size.zero),
+              icon: Icon(_selectionMode ? Icons.close : Icons.checklist,
+                  size: 14),
+              label: Text(
+                  _selectionMode
+                      ? AppStrings.t('notif_batal')
+                      : AppStrings.t('notif_pilih'),
+                  style: const TextStyle(fontSize: 11)),
             ),
-          ),
+            if (unread > 0)
+              TextButton(
+                onPressed: () => _repo.markAllAsRead(),
+                style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    minimumSize: Size.zero),
+                child: Text(
+                  AppStrings.t('notif_mark_all_read'),
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600),
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }
