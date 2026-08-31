@@ -1,4 +1,3 @@
-// lib/services/app_settings.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -55,12 +54,10 @@ class AppStrings {
   }
 
   static const _id = {
-    // Bottom nav
     'nav_search': 'Search',
     'nav_bookings': 'Bookings',
     'nav_alerts': 'Alerts',
     'nav_profile': 'Profile',
-
     'loc_facilities_title': 'Fasilitas Keamanan',
     'loc_accessible_note':
         'Lokasi ini ramah untuk lansia & pengguna kursi roda (dekat lift/gate).',
@@ -71,8 +68,6 @@ class AppStrings {
     'loc_reviews_title': 'Ulasan Pengguna',
     'loc_reviews_suffix': 'ulasan',
     'loc_no_reviews': 'Belum ada ulasan untuk lokasi ini.',
-
-    // Search screen
     'search_appbar_title': 'ParkirIn',
     'search_hero_badge': 'PARK & FLY',
     'search_title_1': 'Solusi Parkir Inap\nBandara yang ',
@@ -98,8 +93,6 @@ class AppStrings {
     'search_active_booking_parked': 'Kendaraan Sedang Parkir',
     'search_active_booking_waiting': 'Booking Aktif Menunggu Check-in',
     'search_malam': 'malam',
-
-    // Bookings screen
     'bookings_appbar_title': 'My Bookings',
     'bookings_tab_aktif': 'Aktif',
     'bookings_tab_selesai': 'Selesai',
@@ -112,8 +105,6 @@ class AppStrings {
     'bookings_qr_btn': 'Lihat QR Code',
     'bookings_expired_note':
         'Dibatalkan otomatis karena tidak check-in sesuai batas waktu',
-
-    // Profile screen
     'profile_appbar_title': 'Profile',
     'profile_gold_member': 'Gold Member',
     'profile_my_details_title': 'My Details',
@@ -145,8 +136,6 @@ class AppStrings {
     'profile_logout_confirm_title': 'Logout',
     'profile_logout_confirm_msg': 'Apakah anda yakin ingin keluar?',
     'profile_cancel': 'Batal',
-
-    // Notifications screen
     'notif_title': 'Notifications',
     'notif_subtitle': 'Stay updated on your upcoming trips and shuttle status.',
     'notif_mark_all_read': 'Tandai semua dibaca',
@@ -312,7 +301,6 @@ class AppStrings {
     'mydetails_password_lama': 'Password Lama',
     'mydetails_password_baru': 'Password Baru',
     'mydetails_simpan_password_btn': 'Simpan Password Baru',
-
     'payment_appbar_title': 'Payment Methods',
     'payment_utama_badge': 'UTAMA',
     'payment_jadikan_utama': 'Jadikan Utama',
@@ -321,7 +309,6 @@ class AppStrings {
     'payment_kartu': 'Kartu Debit/Kredit',
     'payment_ewallet': 'E-Wallet (GoPay/OVO/Dana)',
     'payment_va': 'Virtual Account',
-
     'addpayment_title_card': 'Tambah Kartu Debit/Kredit',
     'addpayment_title_ewallet': 'Tambah E-Wallet',
     'addpayment_title_va': 'Tambah Virtual Account',
@@ -341,12 +328,10 @@ class AppStrings {
     'addpayment_simpan_btn': 'Simpan',
     'addpayment_wajib_diisi': 'Wajib diisi',
     'addpayment_success_snackbar': 'Metode pembayaran berhasil ditambahkan',
-
     'fav_appbar_title': 'Favorit Saya',
     'fav_empty_title': 'Belum ada lokasi favorit',
     'fav_empty_sub': 'Tap ikon hati di hasil pencarian untuk menyimpan lokasi.',
     'fav_per_malam': '/malam',
-
     'vehicles_appbar_title': 'Kendaraan Saya',
     'vehicles_utama_badge': 'UTAMA',
     'vehicles_jadikan_utama': 'Jadikan Utama',
@@ -358,7 +343,6 @@ class AppStrings {
     'vehicles_tipe': 'Tipe (SUV/MPV)',
     'vehicles_warna': 'Warna',
     'vehicles_simpan_btn': 'Simpan Kendaraan',
-
     'help_appbar_title': 'Help Center',
     'help_search_hint': 'Cari pertanyaan...',
     'help_faq_title': 'Pertanyaan yang Sering Diajukan',
@@ -382,7 +366,6 @@ class AppStrings {
     'help_faq_q5': 'Bagaimana cara melacak shuttle?',
     'help_faq_a5':
         'Buka detail booking aktif Anda, lalu tekan tombol "Lacak Shuttle" untuk melihat posisi dan estimasi waktu kedatangan secara real-time.',
-
     'chat_appbar_online': 'Online 24 Jam',
     'chat_sos_btn': 'SOS',
     'chat_sos_dialog_title': 'Panggilan Darurat (SOS)',
@@ -396,7 +379,6 @@ class AppStrings {
         'Halo Budi! Ada yang bisa kami bantu terkait booking parkir Anda?',
     'chat_autoresponse':
         'Terima kasih atas pesannya. Tim kami akan segera membantu Anda.',
-
     'report_appbar_title': 'Lapor Masalah',
     'report_booking_terkait': 'Terkait booking:',
     'report_kategori_title': 'Kategori Masalah',
@@ -416,18 +398,15 @@ class AppStrings {
     'report_kategori_4': 'Petugas Tidak Ramah',
     'report_kategori_5': 'Masalah Pembayaran',
     'report_kategori_6': 'Lainnya',
-
     'accessibility_appbar_title': 'Aksesibilitas',
     'accessibility_ukuran_teks': 'Ukuran Teks',
     'accessibility_contoh_teks': 'Contoh teks pada ukuran ini',
     'accessibility_kontras_tinggi': 'Kontras Tinggi',
     'accessibility_kontras_sub':
         'Mempertajam warna utama agar lebih mudah dibaca',
-
     'language_appbar_title': 'Bahasa',
     'language_note':
         'Saat ini terjemahan mencakup navigasi utama dan sebagian besar halaman aplikasi.',
-
     'delete_appbar_title': 'Hapus Akun & Data',
     'delete_unduh_data_title': 'Unduh Data Saya',
     'delete_unduh_data_sub': 'Dapatkan salinan seluruh data pribadi Anda',
@@ -466,14 +445,12 @@ class AppStrings {
     'forgot_kirim_kode_btn': 'Kirim Kode Verifikasi',
     'forgot_kembali_login': 'Kembali ke Halaman Masuk',
     'forgot_not_found_error': 'Akun dengan kontak ini tidak ditemukan',
-
     'resetotp_title': 'Verifikasi Kode',
     'resetotp_subtitle_prefix': 'Kode verifikasi telah dikirim ke',
     'resetotp_verify_btn': 'Verifikasi',
     'resetotp_resend_prefix': 'Kirim ulang kode dalam',
     'resetotp_resend_btn': 'Kirim Ulang Kode',
     'resetotp_error': 'Masukkan 6 digit kode OTP',
-
     'newpass_title': 'Buat Password Baru',
     'newpass_subtitle':
         'Password baru harus berbeda dari password sebelumnya dan minimal 8 karakter.',

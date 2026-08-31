@@ -1,4 +1,3 @@
-// lib/models/review_model.dart
 class LocationReview {
   final String userName;
   final String userAvatarSeed;

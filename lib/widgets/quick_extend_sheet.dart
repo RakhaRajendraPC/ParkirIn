@@ -1,10 +1,6 @@
-// lib/widgets/quick_extend_sheet.dart
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
 
-/// Bottom sheet ringan untuk menambah durasi booking aktif tanpa masuk
-/// ke alur reschedule lengkap (tanggal baru, dsb) — cukup pilih tambahan
-/// malam, sistem hitung biaya tambahan, konfirmasi sekali tap.
 class QuickExtendSheet extends StatefulWidget {
   final BookingModel booking;
 

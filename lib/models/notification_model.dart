@@ -1,4 +1,3 @@
-// lib/models/notification_model.dart
 import 'package:flutter/material.dart';
 
 enum NotificationType {

@@ -1,4 +1,3 @@
-// lib/screens/notification_permission_screen.dart
 import 'package:flutter/material.dart';
 
 class NotificationPermissionScreen extends StatelessWidget {
@@ -50,8 +49,6 @@ class NotificationPermissionScreen extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Production: panggil permission_handler / firebase_messaging
-                    // requestPermission() di sini sebelum lanjut.
                     onContinue();
                   },
                   style: ElevatedButton.styleFrom(

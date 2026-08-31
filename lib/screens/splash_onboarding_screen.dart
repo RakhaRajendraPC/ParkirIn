@@ -1,4 +1,3 @@
-// lib/screens/splash_onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'auth_screen.dart';
 import 'notification_permission_screen.dart';

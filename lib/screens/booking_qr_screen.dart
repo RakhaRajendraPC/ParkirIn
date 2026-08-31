@@ -1,12 +1,8 @@
-// lib/screens/booking_qr_screen.dart
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/booking_model.dart';
 import '../services/receipt_generator.dart';
 
-/// Bisa dibuka kapan saja dari Riwayat Booking / Detail Booking, supaya
-/// user yang lupa menyimpan QR saat konfirmasi booking tetap bisa
-/// mengaksesnya kembali dengan mudah.
 class BookingQrScreen extends StatefulWidget {
   final BookingModel booking;
 

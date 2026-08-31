@@ -38,8 +38,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final now = DateTime.now();
     if (now.isAfter(widget.booking.checkOut)) {
       final extraHours = now.difference(widget.booking.checkOut).inHours;
-      final extraBlocks =
-          (extraHours / 1).ceil(); // per jam, sesuai kebijakan bandara §6.2
+      final extraBlocks = (extraHours / 1).ceil();
       return extraBlocks * 15000.0;
     }
     return 0;
@@ -50,10 +49,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     AppSettings.instance.addListener(_onChanged);
 
-    // Simulasi: kalau ada biaya tambahan tertunggak, portal keluar tidak
-    // akan divalidasi otomatis sampai user "melunasi" (di sini otomatis
-    // dianggap lunas setelah delay, karena pembayaran real terjadi di
-    // BookingSummaryScreen/payment gateway pada kasus nyata).
     _pollTimer = Timer(const Duration(seconds: 6), () {
       if (!mounted) return;
       setState(() {

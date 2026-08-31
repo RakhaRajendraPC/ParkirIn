@@ -101,8 +101,6 @@ class UserSession extends ChangeNotifier {
     await prefs.setString(_prefsKey, raw);
   }
 
-  /// Panggil setelah mengubah name/email/phone secara langsung
-  /// (mis. dari MyDetailsScreen) supaya perubahan tersimpan.
   void save() {
     notifyListeners();
     _persist();

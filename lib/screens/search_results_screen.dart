@@ -1,4 +1,3 @@
-// lib/screens/search_results_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../services/favorites_service.dart';

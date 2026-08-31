@@ -1,4 +1,3 @@
-// lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
 import '../services/user_session.dart';
 import '../services/app_settings.dart';
@@ -42,7 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context,
       MaterialPageRoute(builder: (context) => const MyDetailsScreen()),
     );
-    setState(() {}); // refresh tampilan setelah kembali jika ada perubahan data
+    setState(() {});
   }
 
   @override
@@ -56,7 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           leadingWidth: 56,
           leading: Padding(
             padding: const EdgeInsets.only(left: 16),
-            child: Icon(Icons.location_on_outlined, color: AppColors.primary),
+            child: Icon(Icons.airport_shuttle, color: AppColors.primary),
           ),
           title: Text(
             AppStrings.t('search_appbar_title'),

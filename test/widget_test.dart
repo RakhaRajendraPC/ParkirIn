@@ -1,4 +1,3 @@
-//import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:parkirin_cgk/main.dart';
@@ -6,7 +5,6 @@ import 'package:parkirin_cgk/main.dart';
 void main() {
   testWidgets('App launches and shows the Search tab by default',
       (WidgetTester tester) async {
-    // Build our app and trigger a frame.
     await tester.pumpWidget(const ParkirInApp());
     await tester.pumpAndSettle();
 
@@ -25,11 +23,9 @@ void main() {
     await tester.pumpWidget(const ParkirInApp());
     await tester.pumpAndSettle();
 
-    // Tap the "Alerts" item in the bottom nav.
     await tester.tap(find.text('Alerts'));
     await tester.pumpAndSettle();
 
-    // Notifications screen heading should now be visible.
     expect(find.text('Notifications'), findsOneWidget);
     expect(find.text('Shuttle Arriving Soon'), findsOneWidget);
   });
@@ -47,7 +43,6 @@ void main() {
     await tester.tap(find.text('Shuttle'));
     await tester.pumpAndSettle();
 
-    // Only shuttle notifications should remain.
     expect(find.text('Shuttle Arriving Soon'), findsOneWidget);
     expect(find.text('Booking Berhasil Dikonfirmasi'), findsNothing);
   });
@@ -60,7 +55,6 @@ void main() {
     await tester.tap(find.text('Alerts'));
     await tester.pumpAndSettle();
 
-    // Tap the unread "Shuttle Arriving Soon" card.
     await tester.tap(find.text('Shuttle Arriving Soon'));
     await tester.pumpAndSettle();
 

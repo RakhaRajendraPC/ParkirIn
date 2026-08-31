@@ -79,7 +79,6 @@ class BookingModel {
   double get subtotal => basePrice * durationNights;
   double get total => subtotal + serviceFee + shuttleFee + overstayFee;
 
-  /// Konversi ke Map untuk disimpan sebagai JSON string di SharedPreferences.
   Map<String, dynamic> toJson() => {
         'bookingCode': bookingCode,
         'locationName': locationName,

@@ -38,10 +38,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
     super.initState();
     AppSettings.instance.addListener(_onChanged);
 
-    // Simulasi polling status dari backend: staf/kiosk gerbang men-scan QR
-    // milik user, lalu backend mengubah status booking menjadi CHECK_IN.
-    // Production: ganti dengan listener realtime (websocket/polling API
-    // GET /bookings/{id}/status) ke backend, bukan Timer statis.
     _pollTimer = Timer(const Duration(seconds: 6), () {
       if (!mounted) return;
       setState(() {
@@ -60,8 +56,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
         bookingCode: widget.booking.bookingCode,
       ));
 
-      BookingRepository.instance
-          .refresh(); // beritahu BookingsScreen untuk rebuild
+      BookingRepository.instance.refresh();
     });
   }
 

@@ -1,4 +1,3 @@
-// lib/screens/parking_slot_map_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/parking_slot_model.dart';
@@ -191,8 +190,6 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
     );
   }
 
-  /// Render 1 baris tunggal (edge row) atau 2 baris yang dempet
-  /// saling membelakangi (tanpa Akses Jalan di antaranya).
   Widget _buildRowGroup(List<ParkingRow> group) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,7 +390,6 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
   }
 }
 
-/// Garis putus-putus abu-abu tebal, meniru marka batas parkir pada referensi.
 class _DashedLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {

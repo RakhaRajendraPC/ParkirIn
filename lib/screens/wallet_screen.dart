@@ -1,9 +1,8 @@
-// lib/screens/wallet_screen.dart
 import 'package:flutter/material.dart';
 
 class WalletTransaction {
   final String title;
-  final double amount; // positif = masuk, negatif = keluar
+  final double amount;
   final DateTime date;
 
   const WalletTransaction(

@@ -43,9 +43,6 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = false);
 
     if (!_isLogin) {
-      // Baik daftar via email maupun nomor HP, keduanya wajib verifikasi OTP
-      // sebelum akun aktif. Kontak yang dikirim ke OTP menyesuaikan metode
-      // yang dipilih user.
       final contact = _registerMethod == _RegisterMethod.email
           ? _emailCtrl.text.trim()
           : _phoneCtrl.text.trim();

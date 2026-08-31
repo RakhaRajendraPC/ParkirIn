@@ -1,9 +1,5 @@
-// lib/widgets/network_error_view.dart
 import 'package:flutter/material.dart';
 
-/// Widget reusable untuk ditampilkan saat request gagal karena koneksi
-/// (mis. hasil pencarian gagal load, riwayat booking gagal fetch, dsb).
-/// Pakai di dalam body Scaffold mana pun yang butuh retry state.
 class NetworkErrorView extends StatelessWidget {
   final VoidCallback onRetry;
   final String? message;

@@ -1,4 +1,3 @@
-// lib/screens/promo_code_screen.dart
 import 'package:flutter/material.dart';
 
 class PromoVoucher {
@@ -7,7 +6,7 @@ class PromoVoucher {
   final String description;
   final String expiry;
   final bool isPercentage;
-  final double value; // persen atau nominal rupiah
+  final double value;
 
   const PromoVoucher({
     required this.code,
@@ -19,8 +18,6 @@ class PromoVoucher {
   });
 }
 
-/// Halaman daftar voucher milik pelanggan. Bisa dibuka dari Profile atau
-/// dari BookingSummaryScreen untuk menerapkan kode saat checkout (§6.3, Fase 2).
 class PromoCodeScreen extends StatefulWidget {
   const PromoCodeScreen({super.key});
 

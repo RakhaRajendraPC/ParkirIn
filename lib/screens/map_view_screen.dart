@@ -1,11 +1,7 @@
-// lib/screens/map_view_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import 'location_detail_screen.dart';
 
-/// Alternatif tampilan hasil pencarian dalam bentuk peta interaktif.
-/// Ganti mock canvas ini dengan GoogleMap() dari google_maps_flutter
-/// di production, dengan marker mengambil koordinat asli tiap lokasi.
 class MapViewScreen extends StatefulWidget {
   final DateTime checkIn;
   final DateTime checkOut;
@@ -22,7 +18,6 @@ class _MapViewScreenState extends State<MapViewScreen> {
   ParkingLocation? _selected;
   final List<ParkingLocation> _locations = ParkingLocation.mockList();
 
-  // Posisi mock marker di kanvas (persentase dari lebar/tinggi peta)
   final List<Offset> _positions = const [
     Offset(0.3, 0.4),
     Offset(0.6, 0.55),

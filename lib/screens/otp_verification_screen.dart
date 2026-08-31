@@ -1,10 +1,9 @@
-// lib/screens/otp_verification_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '/main.dart' show RootShell; // sesuaikan import ke lib/main.dart
+import '/main.dart' show RootShell;
 
 class OtpVerificationScreen extends StatefulWidget {
-  final String contact; // email atau nomor HP tujuan OTP
+  final String contact;
 
   const OtpVerificationScreen({super.key, required this.contact});
 
@@ -64,8 +63,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       _isVerifying = true;
       _error = null;
     });
-    await Future.delayed(
-        const Duration(seconds: 1)); // simulasi verifikasi ke backend
+    await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
     setState(() => _isVerifying = false);
 

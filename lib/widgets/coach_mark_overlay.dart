@@ -1,4 +1,4 @@
-// lib/widgets/coach_mark_overlay.dart
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,9 +11,9 @@ class CoachMarkStep {
       {required this.title, required this.description, required this.icon});
 }
 
-/// Overlay tutorial ringan yang tampil sekali saja per fitur (disimpan
-/// via SharedPreferences dengan [featureKey] unik). Panggil
-/// [CoachMarkOverlay.showIfFirstTime] di initState layar target.
+
+[featureKey] unik).
+ [CoachMarkOverlay.showIfFirstTime] 
 class CoachMarkOverlay {
   static Future<void> showIfFirstTime(BuildContext context, String featureKey,
       List<CoachMarkStep> steps) async {

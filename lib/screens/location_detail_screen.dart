@@ -1,4 +1,3 @@
-// lib/screens/location_detail_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/review_model.dart';

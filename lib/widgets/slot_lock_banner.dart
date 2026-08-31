@@ -1,11 +1,7 @@
-// lib/widgets/slot_lock_banner.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/slot_lock_service.dart';
 
-/// Banner countdown yang ditampilkan di halaman Pilih Kendaraan dan
-/// Ringkasan & Pembayaran, mengingatkan user berapa lama slot masih
-/// dikunci untuknya. Memanggil [onExpired] sekali saat waktu habis.
 class SlotLockBanner extends StatefulWidget {
   final VoidCallback onExpired;
 

@@ -1,9 +1,3 @@
-// lib/screens/shuttle_tracking_screen.dart
-//
-// Lacak Shuttle — menampilkan rute shuttle (titik halte & titik terminal),
-// status armada (berangkat/standby), dan arah jalan kaki dari slot parkir
-// customer menuju halte terdekat. Tidak ada fitur kontak supir.
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,7 +10,7 @@ enum ShuttleUnitStatus { berangkat, standby }
 
 class ShuttleStop {
   final String name;
-  final bool isHalte; // true = halte/titik jemput, false = terminal
+  final bool isHalte;
 
   const ShuttleStop({required this.name, required this.isHalte});
 }
@@ -161,7 +155,7 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
     final rowLetter = widget.userSlotCode.isNotEmpty
         ? widget.userSlotCode[0].toUpperCase()
         : 'A';
-    final index = rowLetter.codeUnitAt(0) - 65; // A=0, B=1, C=2, ...
+    final index = rowLetter.codeUnitAt(0) - 65;
     return index <= 1 ? _stops[0] : _stops[1];
   }
 
@@ -635,8 +629,6 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
   }
 }
 
-/// Diagram sederhana garis putus-putus dari ikon mobil (slot parkir) menuju
-/// ikon bendera (halte terdekat), meniru peta arah jalan kaki singkat.
 class _WalkingPathPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -662,11 +654,9 @@ class _WalkingPathPainter extends CustomPainter {
       }
     }
 
-    // Marker start (slot parkir)
     final startPaint = Paint()..color = Colors.redAccent;
     canvas.drawCircle(Offset(24, size.height - 20), 8, startPaint);
 
-    // Marker end (halte)
     final endPaint = Paint()..color = Colors.orange;
     canvas.drawCircle(Offset(size.width - 24, size.height - 20), 8, endPaint);
   }

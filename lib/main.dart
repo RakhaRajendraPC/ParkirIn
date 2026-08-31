@@ -1,4 +1,3 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
 import 'screens/search_screen.dart';
 import 'screens/notifications_screen.dart';
@@ -74,8 +73,6 @@ class _ParkirInAppState extends State<ParkirInApp> {
   }
 }
 
-/// RootShell holds the bottom navigation and swaps between the 4 tabs:
-/// Search, Bookings, Alerts (Notifications), Profile.
 class RootShell extends StatefulWidget {
   const RootShell({super.key});
 

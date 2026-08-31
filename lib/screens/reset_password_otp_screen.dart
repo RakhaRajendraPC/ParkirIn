@@ -70,8 +70,7 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
       _isVerifying = true;
       _error = null;
     });
-    await Future.delayed(
-        const Duration(seconds: 1)); // simulasi verifikasi ke backend
+    await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
     setState(() => _isVerifying = false);
 

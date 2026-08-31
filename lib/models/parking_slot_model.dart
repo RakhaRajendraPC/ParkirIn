@@ -1,4 +1,3 @@
-// lib/models/parking_slot_model.dart
 import 'package:flutter/material.dart';
 
 enum SlotAvailability { available, occupied }
@@ -6,7 +5,7 @@ enum SlotAvailability { available, occupied }
 enum SlotTier { premium, standard, economy }
 
 class ParkingSlot {
-  final String code; // contoh: A1, A2, B15, dst
+  final String code;
   final String rowLabel;
   final int col;
   final double distanceFromEntrance;
@@ -51,23 +50,13 @@ class ParkingSlot {
   }
 }
 
-/// Satu baris parkir, terdiri dari beberapa blok slot (mis. 3 blok)
-/// yang dipisah "Akses Jalan" vertikal di dalam baris itu sendiri —
-/// sesuai denah lahan parkir sungguhan yang lebar.
 class ParkingRow {
-  final String label; // A, B, C, D, ...
+  final String label;
   final List<List<ParkingSlot>> blocks;
 
   const ParkingRow({required this.label, required this.blocks});
 }
 
-/// Generator layout parkir sesuai denah asli:
-/// - Tiap baris terdiri dari beberapa blok (dipisah Akses Jalan vertikal).
-/// - Baris disusun berkelompok: baris pertama berdiri sendiri (menempel
-///   tembok/batas atas), lalu 2 baris berikutnya saling membelakangi
-///   tanpa jarak (dempet), diulang seterusnya — pola [1, 2, 2, 1, 2, 2, ...].
-/// - "Akses Jalan" horizontal hanya muncul di ANTARA kelompok baris,
-///   bukan di antara 2 baris yang saling membelakangi.
 class ParkingSlotGenerator {
   static List<ParkingRow> generate({
     required double basePrice,
@@ -120,9 +109,6 @@ class ParkingSlotGenerator {
     return rows;
   }
 
-  /// Mengelompokkan baris sesuai pola denah asli: [1, 2, 2, 1, 2, 2, ...].
-  /// Baris pertama tiap siklus berdiri sendiri, dua baris berikutnya
-  /// dipasangkan saling membelakangi (dempet, tanpa Akses Jalan di antaranya).
   static List<List<ParkingRow>> groupRows(List<ParkingRow> rows) {
     final List<List<ParkingRow>> groups = [];
     int i = 0;

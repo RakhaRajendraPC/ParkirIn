@@ -56,7 +56,7 @@ class _BookingsScreenState extends State<BookingsScreen>
           leadingWidth: 56,
           leading: Padding(
             padding: const EdgeInsets.only(left: 16),
-            child: Icon(Icons.location_on_outlined, color: AppColors.primary),
+            child: Icon(Icons.airport_shuttle, color: AppColors.primary),
           ),
           title: Text(
             AppStrings.t('search_appbar_title'),
@@ -81,7 +81,7 @@ class _BookingsScreenState extends State<BookingsScreen>
             controller: _tabController,
             isScrollable: true,
             tabAlignment: TabAlignment.center,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 18),
             indicatorSize: TabBarIndicatorSize.label,
             labelColor: AppColors.primary,
             unselectedLabelColor: Colors.grey,

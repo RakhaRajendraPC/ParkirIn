@@ -1,11 +1,8 @@
-// lib/widgets/floating_notification_banner.dart
 import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
 import '../services/notification_repository.dart';
 import '../screens/notifications_screen.dart';
 
-/// Host global untuk menampilkan banner notifikasi melayang di atas layar
-/// mana pun sedang dibuka. Dipasang lewat navigatorKey di MaterialApp.
 class NotificationBannerHost {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();

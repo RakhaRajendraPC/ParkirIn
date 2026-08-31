@@ -49,8 +49,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _isLoading = true;
       _error = null;
     });
-    await Future.delayed(
-        const Duration(seconds: 1)); // simulasi kirim OTP ke backend
+    await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
     setState(() => _isLoading = false);
 

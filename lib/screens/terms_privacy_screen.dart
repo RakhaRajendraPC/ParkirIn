@@ -1,4 +1,3 @@
-// lib/screens/terms_privacy_screen.dart
 import 'package:flutter/material.dart';
 
 class TermsPrivacyScreen extends StatefulWidget {

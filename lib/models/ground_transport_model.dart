@@ -1,4 +1,3 @@
-// lib/models/ground_transport_model.dart
 import 'package:flutter/material.dart';
 
 enum TransportCategory {
@@ -12,8 +11,8 @@ enum TransportCategory {
 
 class TransportOperator {
   final String name;
-  final String? appScheme; // deep link scheme, khusus onlineTransport
-  final String? webFallback; // url website/pencarian sebagai fallback
+  final String? appScheme;
+  final String? webFallback;
 
   const TransportOperator(
       {required this.name, this.appScheme, this.webFallback});
@@ -47,9 +46,6 @@ class GroundTransportInfo {
   });
 }
 
-/// Data moda transportasi lanjutan dari Bandara Soekarno-Hatta.
-/// Di production: pindahkan ke backend/CMS supaya harga & operator bisa
-/// diperbarui tanpa rilis ulang aplikasi.
 class GroundTransportData {
   static const List<GroundTransportInfo> all = [
     GroundTransportInfo(
