@@ -1,16 +1,19 @@
 // lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
+import '../services/auth_api_service.dart';
 import '../services/user_session.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_sheet.dart';
 import 'accessibility_settings_screen.dart';
+import 'auth_screen.dart';
 import 'delete_account_screen.dart';
 import 'favorites_screen.dart';
 import 'help_center_screen.dart';
 import 'language_settings_screen.dart';
 import 'my_details_screen.dart';
 import 'payment_methods_screen.dart';
+import 'vehicles_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -88,6 +91,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: AppStrings.t('profile_my_details_title'),
                 subtitle: AppStrings.t('profile_my_details_sub'),
                 onTap: _openMyDetails,
+              ),
+              const SizedBox(height: 12),
+              _buildMenuTile(
+                icon: Icons.directions_car_filled,
+                iconColor: AppColors.primary,
+                title: AppStrings.t('profile_vehicles_title'),
+                subtitle: AppStrings.t('profile_vehicles_sub'),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const VehiclesScreen(),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               _buildMenuTile(
@@ -329,7 +345,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: AppStrings.t('profile_logout_confirm_title'),
             body: AppStrings.t('profile_logout_confirm_msg'),
             primaryLabel: AppStrings.t('profile_logout'),
-            onPrimary: () => Navigator.pop(context),
+            onPrimary: () {
+              Navigator.pop(context);
+              _performLogout(context);
+            },
             secondaryLabel: AppStrings.t('profile_cancel'),
             onSecondary: () => Navigator.pop(context),
           );
@@ -350,6 +369,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _performLogout(BuildContext context) async {
+    await AuthApiService().logout();
+    if (!context.mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const AuthScreen()),
+      (route) => false,
     );
   }
 }

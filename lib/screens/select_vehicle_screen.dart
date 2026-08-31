@@ -2,12 +2,15 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/parking_slot_model.dart';
+import '../services/api_exception.dart';
 import '../services/user_session.dart';
+import '../services/vehicles_api_service.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/slot_lock_banner.dart';
 import '../widgets/app_sheet.dart';
+import '../widgets/app_toast.dart';
 import 'booking_summary_screen.dart';
 import 'vehicles_screen.dart';
 
@@ -31,12 +34,16 @@ class SelectVehicleScreen extends StatefulWidget {
 
 class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
   final UserSession _session = UserSession.instance;
+  final _vehiclesApiService = VehiclesApiService();
+
+  List<SavedVehicle> _vehicles = [];
+  bool _isLoading = true;
   SavedVehicle? _selectedVehicle;
 
   @override
   void initState() {
     super.initState();
-    _selectedVehicle = _session.defaultVehicle;
+    _loadVehicles();
     AppSettings.instance.addListener(_onChanged);
   }
 
@@ -50,14 +57,41 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
     if (mounted) setState(() {});
   }
 
+  SavedVehicle? _defaultOf(List<SavedVehicle> vehicles) {
+    if (vehicles.isEmpty) return null;
+    return vehicles
+        .firstWhere((v) => v.isDefault, orElse: () => vehicles.first);
+  }
+
+  Future<void> _loadVehicles() async {
+    setState(() => _isLoading = true);
+    try {
+      final vehicles = await _vehiclesApiService.getVehicles();
+      if (!mounted) return;
+      setState(() {
+        _vehicles = vehicles;
+        _isLoading = false;
+        // Keep the current selection if it still exists, otherwise fall
+        // back to the default vehicle.
+        final stillExists =
+            vehicles.any((v) => v.id == _selectedVehicle?.id);
+        _selectedVehicle =
+            stillExists ? _selectedVehicle : _defaultOf(vehicles);
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    }
+  }
+
   Future<void> _goToVehiclesScreen() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const VehiclesScreen()),
     );
-    setState(() {
-      _selectedVehicle ??= _session.defaultVehicle;
-    });
+    if (!mounted) return;
+    await _loadVehicles();
   }
 
   void _continue() {
@@ -207,10 +241,15 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            if (_session.vehicles.isEmpty)
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_vehicles.isEmpty)
               _buildEmptyVehicleState()
             else
-              ..._session.vehicles.map(
+              ..._vehicles.map(
                 (v) => Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: _buildVehicleTile(v),

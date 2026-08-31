@@ -1,6 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '/main.dart';
+import '../services/auth_api_service.dart';
+import '../utils/app_colors.dart';
+import '../widgets/app_toast.dart';
 import 'otp_verification_screen.dart';
 import 'terms_privacy_screen.dart';
 
@@ -20,35 +23,60 @@ class _AuthScreenState extends State<AuthScreen> {
 
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _authApiService = AuthApiService();
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (!_isLogin) {
-      Navigator.push(
+    try {
+      if (!_isLogin) {
+        final phone = _phoneCtrl.text.trim();
+        await _authApiService.register(
+          name: _nameCtrl.text.trim(),
+          email: _emailCtrl.text.trim(),
+          phone: phone,
+          password: _passwordCtrl.text,
+        );
+        // Trigger the actual OTP send so a code exists to verify next.
+        await _authApiService.sendOtp(phone);
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationScreen(contact: phone),
+          ),
+        );
+      } else {
+        await _authApiService.login(
+          email: _emailCtrl.text.trim(),
+          password: _passwordCtrl.text,
+        );
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const RootShell()),
+          (route) => false,
+        );
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showAppToast(
         context,
-        MaterialPageRoute(
-          builder: (context) => OtpVerificationScreen(contact: _emailCtrl.text),
-        ),
+        severity: AppSeverity.destructive,
+        message: e.message,
       );
-    } else {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const RootShell()),
-        (route) => false,
-      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -102,6 +130,15 @@ class _AuthScreenState extends State<AuthScreen> {
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 14),
+              if (!_isLogin) ...[
+                _buildField(
+                  'Nomor HP',
+                  _phoneCtrl,
+                  Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 14),
+              ],
               _buildField(
                 'Password',
                 _passwordCtrl,

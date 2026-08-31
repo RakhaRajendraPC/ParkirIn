@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '/main.dart' show RootShell; // sesuaikan import ke lib/main.dart
+import '../services/auth_api_service.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String contact; // email atau nomor HP tujuan OTP
@@ -21,7 +22,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   int _secondsLeft = 60;
   Timer? _timer;
   bool _isVerifying = false;
+  bool _isResending = false;
   String? _error;
+  final _authApiService = AuthApiService();
 
   @override
   void initState() {
@@ -64,15 +67,36 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       _isVerifying = true;
       _error = null;
     });
-    await Future.delayed(
-        const Duration(seconds: 1)); // simulasi verifikasi ke backend
-    if (!mounted) return;
-    setState(() => _isVerifying = false);
+    try {
+      await _authApiService.verifyOtp(widget.contact, _otpCode);
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const RootShell()),
+          (route) => false);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _isVerifying = false);
+    }
+  }
 
-    Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const RootShell()),
-        (route) => false);
+  Future<void> _resendOtp() async {
+    setState(() {
+      _isResending = true;
+      _error = null;
+    });
+    try {
+      await _authApiService.sendOtp(widget.contact);
+      if (!mounted) return;
+      _startTimer();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _isResending = false);
+    }
   }
 
   void _onChanged(int index, String value) {
@@ -139,6 +163,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               counterText: '',
                               filled: true,
                               fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 8),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide:
@@ -166,9 +192,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey.shade600))
                     : TextButton(
-                        onPressed: _startTimer,
-                        child: const Text('Kirim Ulang Kode',
-                            style: TextStyle(
+                        onPressed: _isResending ? null : _resendOtp,
+                        child: Text(
+                            _isResending
+                                ? 'Mengirim ulang...'
+                                : 'Kirim Ulang Kode',
+                            style: const TextStyle(
                                 fontSize: 12,
                                 color: primaryBlue,
                                 fontWeight: FontWeight.w600)),
