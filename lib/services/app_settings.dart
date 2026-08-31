@@ -455,6 +455,37 @@ class AppStrings {
     'delete_reason_3': 'Masalah privasi/keamanan',
     'delete_reason_4': 'Sulit digunakan',
     'delete_reason_5': 'Lainnya',
+    'forgot_title': 'Lupa Password',
+    'forgot_subtitle':
+        'Masukkan email atau nomor HP yang terdaftar. Kami akan mengirimkan kode verifikasi untuk mengatur ulang password Anda.',
+    'forgot_toggle_email': 'Email',
+    'forgot_toggle_phone': 'Nomor HP',
+    'forgot_email_label': 'Email',
+    'forgot_phone_label': 'Nomor HP',
+    'forgot_phone_hint': '08xxxxxxxxxx',
+    'forgot_kirim_kode_btn': 'Kirim Kode Verifikasi',
+    'forgot_kembali_login': 'Kembali ke Halaman Masuk',
+    'forgot_not_found_error': 'Akun dengan kontak ini tidak ditemukan',
+
+    'resetotp_title': 'Verifikasi Kode',
+    'resetotp_subtitle_prefix': 'Kode verifikasi telah dikirim ke',
+    'resetotp_verify_btn': 'Verifikasi',
+    'resetotp_resend_prefix': 'Kirim ulang kode dalam',
+    'resetotp_resend_btn': 'Kirim Ulang Kode',
+    'resetotp_error': 'Masukkan 6 digit kode OTP',
+
+    'newpass_title': 'Buat Password Baru',
+    'newpass_subtitle':
+        'Password baru harus berbeda dari password sebelumnya dan minimal 8 karakter.',
+    'newpass_field1': 'Password Baru',
+    'newpass_field2': 'Konfirmasi Password Baru',
+    'newpass_simpan_btn': 'Simpan Password Baru',
+    'newpass_error_short': 'Password minimal 8 karakter',
+    'newpass_error_mismatch': 'Konfirmasi password tidak cocok',
+    'newpass_success_title': 'Password Berhasil Diubah',
+    'newpass_success_msg':
+        'Silakan masuk kembali menggunakan password baru Anda.',
+    'newpass_success_btn': 'Masuk Sekarang',
   };
 
   static const _en = {
@@ -835,5 +866,33 @@ class AppStrings {
     'delete_reason_3': 'Privacy/security concerns',
     'delete_reason_4': 'Difficult to use',
     'delete_reason_5': 'Other',
+    'forgot_title': 'Forgot Password',
+    'forgot_subtitle':
+        "Enter your registered email or phone number. We'll send a verification code to reset your password.",
+    'forgot_toggle_email': 'Email',
+    'forgot_toggle_phone': 'Phone Number',
+    'forgot_email_label': 'Email',
+    'forgot_phone_label': 'Phone Number',
+    'forgot_phone_hint': '08xxxxxxxxxx',
+    'forgot_kirim_kode_btn': 'Send Verification Code',
+    'forgot_kembali_login': 'Back to Sign In',
+    'forgot_not_found_error': 'No account found with this contact',
+    'resetotp_title': 'Verify Code',
+    'resetotp_subtitle_prefix': 'A verification code has been sent to',
+    'resetotp_verify_btn': 'Verify',
+    'resetotp_resend_prefix': 'Resend code in',
+    'resetotp_resend_btn': 'Resend Code',
+    'resetotp_error': 'Enter the 6-digit OTP code',
+    'newpass_title': 'Create New Password',
+    'newpass_subtitle':
+        'Your new password must be different from your previous password and at least 8 characters.',
+    'newpass_field1': 'New Password',
+    'newpass_field2': 'Confirm New Password',
+    'newpass_simpan_btn': 'Save New Password',
+    'newpass_error_short': 'Password must be at least 8 characters',
+    'newpass_error_mismatch': "Password confirmation doesn't match",
+    'newpass_success_title': 'Password Changed Successfully',
+    'newpass_success_msg': 'Please sign in again using your new password.',
+    'newpass_success_btn': 'Sign In Now',
   };
 }

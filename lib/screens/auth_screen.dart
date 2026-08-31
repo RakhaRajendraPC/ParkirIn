@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '/main.dart';
 import 'otp_verification_screen.dart';
 import 'terms_privacy_screen.dart';
+import 'forgot_password_screen.dart';
 
 enum _RegisterMethod { email, phone }
 
@@ -146,7 +147,11 @@ class _AuthScreenState extends State<AuthScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen()),
+                    ),
                     child: const Text(
                       'Lupa Password?',
                       style: TextStyle(fontSize: 12, color: primaryBlue),
