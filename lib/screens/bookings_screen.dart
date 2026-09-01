@@ -53,11 +53,30 @@ class _BookingsScreenState extends State<BookingsScreen>
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: Text(AppStrings.t('bookings_appbar_title'),
-              style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18)),
+          leadingWidth: 56,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Icon(Icons.airport_shuttle, color: AppColors.primary),
+          ),
+          title: Text(
+            AppStrings.t('search_appbar_title'),
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          centerTitle: true,
+          actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: Color(0xFFEDEDED),
+                child: Icon(Icons.person, color: Colors.grey, size: 18),
+              ),
+            ),
+          ],
           bottom: TabBar(
             controller: _tabController,
             isScrollable: true,
@@ -68,7 +87,7 @@ class _BookingsScreenState extends State<BookingsScreen>
             unselectedLabelColor: Colors.grey,
             indicatorColor: AppColors.primary,
             labelStyle:
-                const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+                const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             tabs: [
               Tab(text: AppStrings.t('bookings_tab_aktif')),
               Tab(text: AppStrings.t('bookings_tab_selesai')),

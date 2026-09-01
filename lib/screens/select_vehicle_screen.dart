@@ -1,4 +1,3 @@
-// lib/screens/select_vehicle_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/parking_slot_model.dart';

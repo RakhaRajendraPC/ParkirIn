@@ -1,19 +1,18 @@
-// lib/services/notification_repository.dart
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/notification_model.dart';
 import 'notification_preferences.dart';
 import '../widgets/floating_notification_banner.dart';
 
-/// Sumber data tunggal untuk seluruh notifikasi. Menggantikan pola lama
-/// (NotificationService.getMockNotifications() statis) — sekarang layar
-/// lain (booking, check-in, check-out, shuttle) bisa memanggil add() dan
-/// notifikasi baru langsung muncul di NotificationsScreen + badge +
-/// banner melayang, tanpa perlu buka tab Alerts manual.
 class NotificationRepository extends ChangeNotifier {
   NotificationRepository._();
   static final NotificationRepository instance = NotificationRepository._();
 
-  final List<AppNotification> _notifications = _seedMockData();
+  static const _prefsKey = 'notifications_data_v1';
+
+  List<AppNotification> _notifications = [];
+  bool _isLoaded = false;
 
   List<AppNotification> get all {
     final list = List<AppNotification>.from(_notifications);
@@ -21,8 +20,6 @@ class NotificationRepository extends ChangeNotifier {
     return list;
   }
 
-  /// Notifikasi yang boleh ditampilkan, sudah difilter sesuai toggle
-  /// preferensi user di NotificationSettingsScreen.
   List<AppNotification> get visible {
     final prefs = NotificationPreferences.instance;
     return all.where((n) => prefs.isCategoryEnabled(n.type.category)).toList();
@@ -30,9 +27,38 @@ class NotificationRepository extends ChangeNotifier {
 
   int get unreadCount => visible.where((n) => !n.isRead).length;
 
+  Future<void> load() async {
+    if (_isLoaded) return;
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+
+    if (raw == null) {
+      _notifications = _seedMockData();
+      await _persist();
+    } else {
+      try {
+        final List<dynamic> list = jsonDecode(raw);
+        _notifications = list
+            .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } catch (_) {
+        _notifications = _seedMockData();
+      }
+    }
+    _isLoaded = true;
+    notifyListeners();
+  }
+
+  Future<void> _persist() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = jsonEncode(_notifications.map((n) => n.toJson()).toList());
+    await prefs.setString(_prefsKey, raw);
+  }
+
   void add(AppNotification notification) {
     _notifications.add(notification);
     notifyListeners();
+    _persist();
 
     final prefs = NotificationPreferences.instance;
     final allowed = prefs.pushEnabled &&
@@ -47,6 +73,7 @@ class NotificationRepository extends ChangeNotifier {
     if (n.isEmpty) return;
     n.first.isRead = true;
     notifyListeners();
+    _persist();
   }
 
   void markAllAsRead() {
@@ -54,6 +81,7 @@ class NotificationRepository extends ChangeNotifier {
       n.isRead = true;
     }
     notifyListeners();
+    _persist();
   }
 
   void markMultipleAsRead(Set<String> ids) {
@@ -61,16 +89,19 @@ class NotificationRepository extends ChangeNotifier {
       if (ids.contains(n.id)) n.isRead = true;
     }
     notifyListeners();
+    _persist();
   }
 
   void remove(String id) {
     _notifications.removeWhere((e) => e.id == id);
     notifyListeners();
+    _persist();
   }
 
   void removeMultiple(Set<String> ids) {
     _notifications.removeWhere((e) => ids.contains(e.id));
     notifyListeners();
+    _persist();
   }
 
   static List<AppNotification> _seedMockData() {

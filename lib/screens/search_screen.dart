@@ -1,4 +1,3 @@
-// lib/screens/search_screen.dart
 import 'package:flutter/material.dart';
 import 'shuttle_tracking_screen.dart';
 import 'search_results_screen.dart';

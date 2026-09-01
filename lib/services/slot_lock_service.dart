@@ -1,10 +1,5 @@
-// lib/services/slot_lock_service.dart
 import 'dart:async';
 
-/// Mengunci sementara slot yang dipilih user selama proses booking
-/// berlangsung, supaya tidak "direbut" user lain di saat bersamaan.
-/// Production: ganti dengan lock berbasis backend (mis. Redis TTL key
-/// per slot+lokasi+tanggal), bukan in-memory seperti mock ini.
 class SlotLockService {
   SlotLockService._();
   static final SlotLockService instance = SlotLockService._();

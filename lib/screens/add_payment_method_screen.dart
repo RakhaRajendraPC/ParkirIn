@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_toast.dart';
 
@@ -26,14 +27,30 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
 
   final List<String> _banks = ['BCA', 'Mandiri', 'BNI', 'BRI', 'CIMB Niaga'];
 
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
   String get _title {
     switch (widget.type) {
       case PaymentMethodType.card:
-        return 'Tambah Kartu Debit/Kredit';
+        return AppStrings.t('addpayment_title_card');
       case PaymentMethodType.ewallet:
-        return 'Tambah E-Wallet';
+        return AppStrings.t('addpayment_title_ewallet');
       case PaymentMethodType.virtualAccount:
-        return 'Tambah Virtual Account';
+        return AppStrings.t('addpayment_title_va');
     }
   }
 
@@ -47,7 +64,7 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
     showAppToast(
       context,
       severity: AppSeverity.success,
-      message: 'Metode pembayaran berhasil ditambahkan',
+      message: AppStrings.t('addpayment_success_snackbar'),
     );
   }
 
@@ -79,17 +96,16 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.06),
+                    color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
                     Icon(Icons.lock_outline,
                         size: 16, color: AppColors.primary),
                     const SizedBox(width: 8),
-                    const Expanded(
-                        child: Text(
-                            'Data pembayaran Anda terenkripsi dan disimpan secara aman.',
-                            style: TextStyle(fontSize: 11))),
+                    Expanded(
+                        child: Text(AppStrings.t('addpayment_security_note'),
+                            style: const TextStyle(fontSize: 11))),
                   ],
                 ),
               ),
@@ -110,8 +126,8 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
                           height: 18,
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2))
-                      : const Text('Simpan',
-                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      : Text(AppStrings.t('addpayment_simpan_btn'),
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -123,19 +139,21 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
 
   List<Widget> _buildCardFields() {
     return [
-      _field('Nomor Kartu', _cardNumberCtrl,
+      _field(AppStrings.t('addpayment_nomor_kartu'), _cardNumberCtrl,
           hint: '1234 5678 9012 3456',
           keyboardType: TextInputType.number,
           maxLength: 19),
-      _field('Nama Pemegang Kartu', _cardNameCtrl, hint: 'Sesuai kartu'),
+      _field(AppStrings.t('addpayment_nama_pemegang'), _cardNameCtrl,
+          hint: AppStrings.t('addpayment_nama_hint')),
       Row(
         children: [
           Expanded(
-              child: _field('MM/YY', _expiryCtrl,
+              child: _field(
+                  AppStrings.t('addpayment_masa_berlaku'), _expiryCtrl,
                   hint: '12/28', keyboardType: TextInputType.number)),
           const SizedBox(width: 12),
           Expanded(
-              child: _field('CVV', _cvvCtrl,
+              child: _field(AppStrings.t('addpayment_cvv'), _cvvCtrl,
                   hint: '123',
                   keyboardType: TextInputType.number,
                   obscure: true,
@@ -147,18 +165,18 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
 
   List<Widget> _buildEwalletFields() {
     return [
-      _field('Nomor HP Terdaftar', _phoneCtrl,
+      _field(AppStrings.t('addpayment_nomor_hp'), _phoneCtrl,
           hint: '0812xxxxxxxx', keyboardType: TextInputType.phone),
       const SizedBox(height: 4),
-      Text('Anda akan diarahkan ke aplikasi e-wallet untuk verifikasi.',
+      Text(AppStrings.t('addpayment_ewallet_note'),
           style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
     ];
   }
 
   List<Widget> _buildVaFields() {
     return [
-      const Text('Pilih Bank',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+      Text(AppStrings.t('addpayment_pilih_bank'),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),
       Wrap(
         spacing: 8,
@@ -181,7 +199,7 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
         }).toList(),
       ),
       const SizedBox(height: 12),
-      Text('Nomor VA akan digenerate otomatis setelah konfirmasi.',
+      Text(AppStrings.t('addpayment_va_note'),
           style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
     ];
   }
@@ -198,8 +216,9 @@ class _AddPaymentMethodScreenState extends State<AddPaymentMethodScreen> {
         keyboardType: keyboardType,
         obscureText: obscure,
         maxLength: maxLength,
-        validator: (v) =>
-            (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
+        validator: (v) => (v == null || v.trim().isEmpty)
+            ? AppStrings.t('addpayment_wajib_diisi')
+            : null,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,

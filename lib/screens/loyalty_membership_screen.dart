@@ -1,4 +1,3 @@
-// lib/screens/loyalty_membership_screen.dart
 import 'package:flutter/material.dart';
 
 class LoyaltyMembershipScreen extends StatelessWidget {

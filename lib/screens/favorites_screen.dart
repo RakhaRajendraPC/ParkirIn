@@ -1,7 +1,9 @@
-// lib/screens/favorites_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../services/favorites_service.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
+import '../utils/currency_formatter.dart';
 import 'location_detail_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
@@ -12,18 +14,19 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final FavoritesService _favorites = FavoritesService.instance;
 
   @override
   void initState() {
     super.initState();
     _favorites.addListener(_onChanged);
+    AppSettings.instance.addListener(_onChanged);
   }
 
   @override
   void dispose() {
     _favorites.removeListener(_onChanged);
+    AppSettings.instance.removeListener(_onChanged);
     super.dispose();
   }
 
@@ -43,8 +46,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Favorit Saya',
-              style: TextStyle(
+          title: Text(AppStrings.t('fav_appbar_title'),
+              style: const TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.bold,
                   fontSize: 17)),
@@ -57,12 +60,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     Icon(Icons.favorite_border,
                         size: 52, color: Colors.grey.shade300),
                     const SizedBox(height: 10),
-                    Text('Belum ada lokasi favorit',
+                    Text(AppStrings.t('fav_empty_title'),
                         style: TextStyle(
                             color: Colors.grey.shade500, fontSize: 13)),
                     const SizedBox(height: 4),
-                    Text(
-                        'Tap ikon hati di hasil pencarian untuk menyimpan lokasi.',
+                    Text(AppStrings.t('fav_empty_sub'),
                         style: TextStyle(
                             color: Colors.grey.shade400, fontSize: 11)),
                   ],
@@ -102,13 +104,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                                color: primaryBlue.withOpacity(0.08),
+                                color: AppColors.primaryLight,
                                 borderRadius: BorderRadius.circular(12)),
                             child: Icon(
                                 loc.isIndoor
                                     ? Icons.warehouse
                                     : Icons.local_parking,
-                                color: primaryBlue),
+                                color: AppColors.primary),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -125,6 +127,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                     style: TextStyle(
                                         fontSize: 11,
                                         color: Colors.grey.shade600)),
+                                Text(
+                                    '${CurrencyFormatter.rupiah(loc.pricePerNight)}${AppStrings.t('fav_per_malam')}',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.primary)),
                               ],
                             ),
                           ),

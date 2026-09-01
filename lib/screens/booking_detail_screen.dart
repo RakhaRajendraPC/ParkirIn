@@ -1,4 +1,3 @@
-// lib/screens/booking_detail_screen.dart
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
 import 'checkin_screen.dart';

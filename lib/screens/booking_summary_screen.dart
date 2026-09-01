@@ -93,15 +93,12 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
 
   Future<void> _pay() async {
     setState(() => _isProcessing = true);
-    await Future.delayed(
-        const Duration(seconds: 2)); // simulasi payment gateway (PRD §9)
+    await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     setState(() => _isProcessing = false);
 
     final bookingCode = 'PKR-${DateTime.now().millisecondsSinceEpoch % 100000}';
 
-    // Buat booking asli dan simpan ke sumber data tunggal, supaya langsung
-    // muncul di Riwayat Booking dengan slotCode & data kendaraan yang benar.
     final newBooking = BookingModel(
       bookingCode: bookingCode,
       locationName: widget.location.name,

@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '/main.dart' show RootShell; // sesuaikan import ke lib/main.dart
-import '../services/auth_api_service.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
+import 'set_new_password_screen.dart';
 
-class OtpVerificationScreen extends StatefulWidget {
+class ResetPasswordOtpScreen extends StatefulWidget {
   final String contact;
 
-  const OtpVerificationScreen({super.key, required this.contact});
+  const ResetPasswordOtpScreen({super.key, required this.contact});
 
   @override
-  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
+  State<ResetPasswordOtpScreen> createState() => _ResetPasswordOtpScreenState();
 }
 
-class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
+class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
   final List<TextEditingController> _ctrls =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _nodes = List.generate(6, (_) => FocusNode());
@@ -21,13 +21,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   int _secondsLeft = 60;
   Timer? _timer;
   bool _isVerifying = false;
-  bool _isResending = false;
   String? _error;
-  final _authApiService = AuthApiService();
 
   @override
   void initState() {
     super.initState();
+    AppSettings.instance.addListener(_onChanged);
     _startTimer();
   }
 
@@ -46,6 +45,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    AppSettings.instance.removeListener(_onChanged);
     for (final c in _ctrls) {
       c.dispose();
     }
@@ -55,50 +55,33 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     super.dispose();
   }
 
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
   String get _otpCode => _ctrls.map((c) => c.text).join();
 
   Future<void> _verify() async {
     if (_otpCode.length < 6) {
-      setState(() => _error = 'Masukkan 6 digit kode OTP');
+      setState(() => _error = AppStrings.t('resetotp_error'));
       return;
     }
     setState(() {
       _isVerifying = true;
       _error = null;
     });
-    try {
-      await _authApiService.verifyOtp(widget.contact, _otpCode);
-      if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const RootShell()),
-          (route) => false);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _error = e.message);
-    } finally {
-      if (mounted) setState(() => _isVerifying = false);
-    }
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+    setState(() => _isVerifying = false);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+          builder: (context) => SetNewPasswordScreen(contact: widget.contact)),
+    );
   }
 
-  Future<void> _resendOtp() async {
-    setState(() {
-      _isResending = true;
-      _error = null;
-    });
-    try {
-      await _authApiService.sendOtp(widget.contact);
-      if (!mounted) return;
-      _startTimer();
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _error = e.message);
-    } finally {
-      if (mounted) setState(() => _isResending = false);
-    }
-  }
-
-  void _onChanged(int index, String value) {
+  void _onOtpChanged(int index, String value) {
     if (value.isNotEmpty && index < 5) {
       _nodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
@@ -120,20 +103,21 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.1),
-                    shape: BoxShape.circle),
-                child: const Icon(Icons.sms_outlined,
-                    color: primaryBlue, size: 32),
+                    color: AppColors.primaryLight, shape: BoxShape.circle),
+                child: Icon(Icons.sms_outlined,
+                    color: AppColors.primary, size: 32),
               ),
               const SizedBox(height: 20),
-              const Text('Verifikasi Kode OTP',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(AppStrings.t('resetotp_title'),
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
               RichText(
                 text: TextSpan(
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   children: [
-                    const TextSpan(text: 'Kode verifikasi telah dikirim ke '),
+                    TextSpan(
+                        text: '${AppStrings.t('resetotp_subtitle_prefix')} '),
                     TextSpan(
                         text: widget.contact,
                         style: const TextStyle(
@@ -162,18 +146,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               counterText: '',
                               filled: true,
                               fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 8),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide:
                                       BorderSide(color: Colors.grey.shade300)),
                               focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                      color: primaryBlue, width: 2)),
+                                  borderSide: BorderSide(
+                                      color: AppColors.primary, width: 2)),
                             ),
-                            onChanged: (v) => _onChanged(i, v),
+                            onChanged: (v) => _onOtpChanged(i, v),
                           ),
                         )),
               ),
@@ -187,18 +169,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               Center(
                 child: _secondsLeft > 0
                     ? Text(
-                        'Kirim ulang kode dalam 00:${_secondsLeft.toString().padLeft(2, '0')}',
+                        '${AppStrings.t('resetotp_resend_prefix')} 00:${_secondsLeft.toString().padLeft(2, '0')}',
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey.shade600))
                     : TextButton(
-                        onPressed: _isResending ? null : _resendOtp,
-                        child: Text(
-                            _isResending
-                                ? 'Mengirim ulang...'
-                                : 'Kirim Ulang Kode',
-                            style: const TextStyle(
+                        onPressed: _startTimer,
+                        child: Text(AppStrings.t('resetotp_resend_btn'),
+                            style: TextStyle(
                                 fontSize: 12,
-                                color: primaryBlue,
+                                color: AppColors.primary,
                                 fontWeight: FontWeight.w600)),
                       ),
               ),
@@ -209,18 +188,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 child: ElevatedButton(
                   onPressed: _isVerifying ? null : _verify,
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12))),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
                   child: _isVerifying
                       ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2))
-                      : const Text('Verifikasi',
-                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      : Text(AppStrings.t('resetotp_verify_btn'),
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ),
             ],

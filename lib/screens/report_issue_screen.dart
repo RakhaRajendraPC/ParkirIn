@@ -1,5 +1,5 @@
-// lib/screens/report_issue_screen.dart
 import 'package:flutter/material.dart';
+import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_toast.dart';
 
@@ -18,21 +18,37 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   final List<bool> _attachedPhotos = [false, false, false];
   bool _isSubmitting = false;
 
-  final List<String> _categories = [
-    'Kendaraan Rusak/Tergores',
-    'Biaya Tidak Sesuai',
-    'Shuttle Tidak Datang',
-    'Petugas Tidak Ramah',
-    'Masalah Pembayaran',
-    'Lainnya',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  List<String> get _categories => [
+        AppStrings.t('report_kategori_1'),
+        AppStrings.t('report_kategori_2'),
+        AppStrings.t('report_kategori_3'),
+        AppStrings.t('report_kategori_4'),
+        AppStrings.t('report_kategori_5'),
+        AppStrings.t('report_kategori_6'),
+      ];
 
   Future<void> _submit() async {
     if (_category == null || _descCtrl.text.trim().isEmpty) {
       showAppToast(
         context,
         severity: AppSeverity.warning,
-        message: 'Lengkapi kategori dan deskripsi masalah',
+        message: AppStrings.t('report_validation_snackbar'),
       );
       return;
     }
@@ -47,8 +63,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     showAppToast(
       context,
       severity: AppSeverity.success,
-      message:
-          'Laporan terkirim. Tim kami akan menghubungi dalam 1x24 jam.',
+      message: AppStrings.t('report_success_msg'),
     );
     Navigator.pop(context);
   }
@@ -61,8 +76,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Lapor Masalah',
-              style: TextStyle(
+          title: Text(AppStrings.t('report_appbar_title'),
+              style: const TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.bold,
                   fontSize: 17)),
@@ -74,14 +89,15 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.06),
+                    color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
                     Icon(Icons.confirmation_number_outlined,
                         size: 16, color: AppColors.primary),
                     const SizedBox(width: 8),
-                    Text('Terkait booking: ${widget.bookingCode}',
+                    Text(
+                        '${AppStrings.t('report_booking_terkait')} ${widget.bookingCode}',
                         style: const TextStyle(
                             fontSize: 12, fontWeight: FontWeight.w600)),
                   ],
@@ -89,8 +105,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            const Text('Kategori Masalah',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            Text(AppStrings.t('report_kategori_title'),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -114,14 +131,15 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               }).toList(),
             ),
             const SizedBox(height: 20),
-            const Text('Deskripsi Masalah',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            Text(AppStrings.t('report_deskripsi_title'),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             TextField(
               controller: _descCtrl,
               maxLines: 5,
               decoration: InputDecoration(
-                hintText: 'Jelaskan masalah yang Anda alami secara detail...',
+                hintText: AppStrings.t('report_deskripsi_hint'),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -130,8 +148,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Lampirkan Foto Bukti (opsional)',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            Text(AppStrings.t('report_lampiran_title'),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             Row(
               children: List.generate(_attachedPhotos.length, (i) {
@@ -179,8 +198,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                         height: 18,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : const Text('Kirim Laporan',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    : Text(AppStrings.t('report_kirim_btn'),
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
           ],

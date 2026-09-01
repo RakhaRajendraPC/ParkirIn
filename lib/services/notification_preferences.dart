@@ -1,11 +1,7 @@
-// lib/services/notification_preferences.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/notification_model.dart';
 
-/// Preferensi notifikasi milik user, persist antar sesi. Dibaca oleh
-/// NotificationRepository (untuk memfilter apa yang tampil & apakah
-/// banner boleh muncul) dan diubah dari NotificationSettingsScreen.
 class NotificationPreferences extends ChangeNotifier {
   NotificationPreferences._();
   static final NotificationPreferences instance = NotificationPreferences._();

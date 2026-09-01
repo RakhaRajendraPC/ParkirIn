@@ -5,6 +5,9 @@ import '../models/booking_model.dart';
 import '../models/notification_model.dart';
 import '../services/booking_repository.dart';
 import '../services/notification_repository.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
+import '../utils/currency_formatter.dart';
 import 'ground_transport_screen.dart';
 
 enum _GateStatus { waiting, validated }
@@ -19,20 +22,23 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
-
   _GateStatus _gateStatus = _GateStatus.waiting;
   Timer? _pollTimer;
   final List<bool> _photosTaken = [false, false, false, false];
   bool _showPhotoStep = false;
-  final List<String> _photoLabels = ['Depan', 'Belakang', 'Kiri', 'Kanan'];
+
+  List<String> get _photoLabels => [
+        AppStrings.t('checkout_photo_depan'),
+        AppStrings.t('checkout_photo_belakang'),
+        AppStrings.t('checkout_photo_kiri'),
+        AppStrings.t('checkout_photo_kanan'),
+      ];
 
   double get _overstayFee {
     final now = DateTime.now();
     if (now.isAfter(widget.booking.checkOut)) {
       final extraHours = now.difference(widget.booking.checkOut).inHours;
-      final extraBlocks =
-          (extraHours / 1).ceil(); // per jam, sesuai kebijakan bandara §6.2
+      final extraBlocks = (extraHours / 1).ceil();
       return extraBlocks * 15000.0;
     }
     return 0;
@@ -41,10 +47,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    // Simulasi: kalau ada biaya tambahan tertunggak, portal keluar tidak
-    // akan divalidasi otomatis sampai user "melunasi" (di sini otomatis
-    // dianggap lunas setelah delay, karena pembayaran real terjadi di
-    // BookingSummaryScreen/payment gateway pada kasus nyata).
+    AppSettings.instance.addListener(_onChanged);
+
     _pollTimer = Timer(const Duration(seconds: 6), () {
       if (!mounted) return;
       setState(() {
@@ -57,11 +61,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       NotificationRepository.instance.add(AppNotification(
         id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
         type: NotificationType.checkoutConfirmation,
-        title: 'Kendaraan Berhasil Diambil',
-        description:
-            'Kendaraan ${widget.booking.vehiclePlate} berhasil check-out. Terima kasih!',
+        title: AppStrings.t('checkout_notif_success_title'),
+        description: AppStrings.t('checkout_notif_success_desc')
+            .replaceAll('{plate}', widget.booking.vehiclePlate),
         timestamp: DateTime.now(),
-        actionLabel: 'Lihat Invoice',
+        actionLabel: AppStrings.t('checkout_notif_success_action'),
         bookingCode: widget.booking.bookingCode,
       ));
 
@@ -69,11 +73,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         NotificationRepository.instance.add(AppNotification(
           id: 'notif_${DateTime.now().millisecondsSinceEpoch + 1}',
           type: NotificationType.overstayWarning,
-          title: 'Biaya Keterlambatan Dikenakan',
-          description:
-              'Booking ${widget.booking.bookingCode} dikenakan biaya tambahan Rp ${widget.booking.overstayFee.toStringAsFixed(0)}.',
+          title: AppStrings.t('checkout_notif_overstay_title'),
+          description: AppStrings.t('checkout_notif_overstay_desc')
+              .replaceAll('{code}', widget.booking.bookingCode)
+              .replaceAll('{amount}',
+                  CurrencyFormatter.rupiah(widget.booking.overstayFee)),
           timestamp: DateTime.now(),
-          actionLabel: 'Lihat Detail',
+          actionLabel: AppStrings.t('checkout_notif_overstay_action'),
           bookingCode: widget.booking.bookingCode,
         ));
       }
@@ -85,7 +91,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    AppSettings.instance.removeListener(_onChanged);
     super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -98,9 +109,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text(
-            'Check-out',
-            style: TextStyle(
+          title: Text(
+            AppStrings.t('checkout_appbar_title'),
+            style: const TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.bold,
               fontSize: 17,
@@ -117,13 +128,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Center(
               child: Column(
                 children: [
-                  const Text(
-                    'Tunjukkan QR ini di gerbang keluar',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  Text(
+                    AppStrings.t('checkout_waiting_title'),
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Petugas atau kiosk akan memindai QR Code ini',
+                    AppStrings.t('checkout_waiting_sub'),
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                   ),
@@ -139,9 +151,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 _showPhotoStep ? Icons.expand_less : Icons.expand_more,
                 size: 18,
               ),
-              label: const Text(
-                'Opsional: Verifikasi Akhir Kondisi Kendaraan',
-                style: TextStyle(fontSize: 12),
+              label: Text(
+                AppStrings.t('checkout_photo_toggle'),
+                style: const TextStyle(fontSize: 12),
               ),
             ),
             if (_showPhotoStep) ...[
@@ -168,7 +180,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Anda melebihi durasi booking. Biaya tambahan Rp ${_overstayFee.toStringAsFixed(0)} akan otomatis ditambahkan sebelum portal keluar dapat digunakan.',
+              AppStrings.t('checkout_overstay_warning').replaceAll(
+                  '{amount}', CurrencyFormatter.rupiah(_overstayFee)),
               style: const TextStyle(fontSize: 12, color: Colors.black87),
             ),
           ),
@@ -209,17 +222,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            const SizedBox(
+            SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: primaryBlue,
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Menunggu validasi gerbang...',
+              AppStrings.t('checkout_waiting_qr_status'),
               style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
             ),
           ],
@@ -286,9 +299,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-          title: const Text(
-            'Invoice Final',
-            style: TextStyle(
+          title: Text(
+            AppStrings.t('checkout_invoice_title'),
+            style: const TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.bold,
               fontSize: 17,
@@ -309,12 +322,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const Icon(Icons.check_circle, color: Colors.green, size: 40),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Check-out Berhasil',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              AppStrings.t('checkout_success_title'),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             Text(
-              'Lot parkir Anda telah kembali tersedia',
+              AppStrings.t('checkout_success_sub'),
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 20),
@@ -334,7 +347,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Kode Booking: ${b.bookingCode}',
+                    '${AppStrings.t('checkout_kode_booking')} ${b.bookingCode}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
@@ -349,15 +362,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     padding: EdgeInsets.symmetric(vertical: 10),
                     child: Divider(height: 1),
                   ),
-                  _row('Tarif dasar (${b.durationNights} malam)', b.subtotal),
-                  _row('Biaya layanan', b.serviceFee),
+                  _row(
+                      '${AppStrings.t('checkout_tarif_dasar')} (${b.durationNights} ${AppStrings.t('checkout_malam')})',
+                      b.subtotal),
+                  _row(AppStrings.t('checkout_biaya_layanan'), b.serviceFee),
                   if (b.overstayFee > 0)
-                    _row('Biaya keterlambatan', b.overstayFee, isWarning: true),
+                    _row(AppStrings.t('checkout_biaya_keterlambatan'),
+                        b.overstayFee,
+                        isWarning: true),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 6),
                     child: Divider(height: 1),
                   ),
-                  _row('Total Akhir', b.total, isTotal: true),
+                  _row(AppStrings.t('checkout_total_akhir'), b.total,
+                      isTotal: true),
                 ],
               ),
             ),
@@ -369,15 +387,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 onPressed: () =>
                     Navigator.popUntil(context, (route) => route.isFirst),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryBlue,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Selesai',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                child: Text(
+                  AppStrings.t('checkout_selesai_btn'),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -393,10 +411,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.commute, size: 18),
-                label: const Text('Cari Transportasi Lanjutan'),
+                label: Text(AppStrings.t('checkout_transport_btn')),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryBlue,
-                  side: const BorderSide(color: primaryBlue),
+                  foregroundColor: AppColors.primary,
+                  side: BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -429,7 +447,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
           Text(
-            'Rp ${amount.toStringAsFixed(0)}',
+            CurrencyFormatter.rupiah(amount),
             style: TextStyle(
               fontSize: isTotal ? 14 : 12,
               fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,

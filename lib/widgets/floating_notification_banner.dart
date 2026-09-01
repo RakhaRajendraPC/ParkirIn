@@ -1,4 +1,3 @@
-// lib/widgets/floating_notification_banner.dart
 import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
 import '../services/notification_repository.dart';

@@ -1,14 +1,9 @@
-// lib/screens/shuttle_tracking_screen.dart
-//
-// Lacak Shuttle — menampilkan rute shuttle (titik halte & titik terminal),
-// status armada (berangkat/standby), dan arah jalan kaki dari slot parkir
-// customer menuju halte terdekat. Tidak ada fitur kontak supir.
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/notification_model.dart';
 import '../services/notification_repository.dart';
+import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_toast.dart';
 
@@ -16,7 +11,7 @@ enum ShuttleUnitStatus { berangkat, standby }
 
 class ShuttleStop {
   final String name;
-  final bool isHalte; // true = halte/titik jemput, false = terminal
+  final bool isHalte;
 
   const ShuttleStop({required this.name, required this.isHalte});
 }
@@ -39,15 +34,7 @@ class ShuttleTrackingScreen extends StatefulWidget {
   final String bookingCode;
   final String pickupPointName;
   final String destinationName;
-
-  /// Kode slot parkir customer (mis. 'A3'), dipakai untuk menghitung
-  /// halte terdekat & menampilkan diagram arah jalan kaki.
-  /// Production: sambungkan dari BookingModel.slotCode setelah field itu
-  /// ditambahkan ke model booking.
   final String userSlotCode;
-
-  /// Alamat venue untuk fallback "Buka Petunjuk Arah" ke Google Maps
-  /// (navigasi menuju area bandara secara umum, bukan turn-by-turn indoor).
   final String venueAddress;
 
   const ShuttleTrackingScreen({
@@ -66,8 +53,6 @@ class ShuttleTrackingScreen extends StatefulWidget {
 
 class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
     with SingleTickerProviderStateMixin {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
-
   final List<ShuttleStop> _stops = const [
     ShuttleStop(name: 'Halte A - Lahan Parkir', isHalte: true),
     ShuttleStop(name: 'Halte B - Lahan Parkir', isHalte: true),
@@ -83,6 +68,8 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
   @override
   void initState() {
     super.initState();
+    AppSettings.instance.addListener(_onChanged);
+
     _pulseController =
         AnimationController(vsync: this, duration: const Duration(seconds: 2))
           ..repeat(reverse: true);
@@ -115,11 +102,11 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
       NotificationRepository.instance.add(AppNotification(
         id: 'notif_shuttle_${DateTime.now().millisecondsSinceEpoch}',
         type: NotificationType.shuttleArriving,
-        title: 'Shuttle Tersedia di Halte Terdekat',
-        description:
-            'Shuttle sudah standby di ${_nearestHalte.name}, siap mengantar Anda.',
+        title: AppStrings.t('shuttle_notif_title'),
+        description: AppStrings.t('shuttle_notif_desc')
+            .replaceAll('{halte}', _nearestHalte.name),
         timestamp: DateTime.now(),
-        actionLabel: 'Lacak Shuttle',
+        actionLabel: AppStrings.t('shuttle_notif_action'),
         bookingCode: widget.bookingCode,
       ));
     });
@@ -152,7 +139,12 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
   void dispose() {
     _refreshTimer?.cancel();
     _pulseController.dispose();
+    AppSettings.instance.removeListener(_onChanged);
     super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
   }
 
   List<ShuttleUnit> get _berangkatUnits =>
@@ -160,18 +152,14 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
   List<ShuttleUnit> get _standbyUnits =>
       _units.where((u) => u.status == ShuttleUnitStatus.standby).toList();
 
-  /// Menentukan halte terdekat berdasarkan baris slot: baris A/B -> Halte A,
-  /// baris C/D dst -> Halte B. Logika sederhana; production sebaiknya
-  /// pakai jarak Euclidean dari koordinat riil slot & halte.
   ShuttleStop get _nearestHalte {
     final rowLetter = widget.userSlotCode.isNotEmpty
         ? widget.userSlotCode[0].toUpperCase()
         : 'A';
-    final index = rowLetter.codeUnitAt(0) - 65; // A=0, B=1, C=2, ...
+    final index = rowLetter.codeUnitAt(0) - 65;
     return index <= 1 ? _stops[0] : _stops[1];
   }
 
-  /// Estimasi jarak & waktu jalan kaki, mock berdasarkan baris slot.
   (int meters, int minutes) get _walkingEstimate {
     final rowLetter = widget.userSlotCode.isNotEmpty
         ? widget.userSlotCode[0].toUpperCase()
@@ -192,7 +180,7 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
       showAppToast(
         context,
         severity: AppSeverity.warning,
-        message: 'Tidak dapat membuka aplikasi peta',
+        message: AppStrings.t('shuttle_maps_error'),
       );
     }
   }
@@ -209,9 +197,9 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
             icon: const Icon(Icons.arrow_back, color: Colors.black87),
             onPressed: () => Navigator.maybePop(context),
           ),
-          title: const Text(
-            'Lacak Shuttle',
-            style: TextStyle(
+          title: Text(
+            AppStrings.t('shuttle_appbar_title'),
+            style: const TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.bold,
                 fontSize: 17),
@@ -226,25 +214,24 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
             _buildRouteCard(),
             const SizedBox(height: 20),
             _buildSectionTitle(
-                'Shuttle Sedang Berangkat',
+                AppStrings.t('shuttle_berangkat_section'),
                 Icons.directions_bus_filled,
-                primaryBlue,
+                AppColors.primary,
                 _berangkatUnits.length),
             const SizedBox(height: 10),
             if (_berangkatUnits.isEmpty)
-              _buildEmptyState(
-                  'Tidak ada shuttle yang sedang dalam perjalanan saat ini.')
+              _buildEmptyState(AppStrings.t('shuttle_empty_berangkat'))
             else
               ..._berangkatUnits.map((u) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _buildBerangkatCard(u),
                   )),
             const SizedBox(height: 20),
-            _buildSectionTitle('Shuttle Standby di Terminal',
+            _buildSectionTitle(AppStrings.t('shuttle_standby_section'),
                 Icons.pause_circle_outline, Colors.teal, _standbyUnits.length),
             const SizedBox(height: 10),
             if (_standbyUnits.isEmpty)
-              _buildEmptyState('Tidak ada shuttle yang standby saat ini.')
+              _buildEmptyState(AppStrings.t('shuttle_empty_standby'))
             else
               ..._standbyUnits.map((u) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -274,10 +261,11 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
         children: [
           Row(
             children: [
-              const Icon(Icons.directions_walk, size: 16, color: primaryBlue),
+              Icon(Icons.directions_walk, size: 16, color: AppColors.primary),
               const SizedBox(width: 8),
-              const Text('Arah ke Halte Terdekat',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              Text(AppStrings.t('shuttle_walking_title'),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14)),
             ],
           ),
           const SizedBox(height: 14),
@@ -290,29 +278,29 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _stopLabel(Icons.local_parking, 'Slot Anda', widget.userSlotCode,
-                  Colors.redAccent),
-              _stopLabel(
-                  Icons.flag, 'Halte Terdekat', halte.name, Colors.orange),
+              _stopLabel(Icons.local_parking, AppStrings.t('shuttle_slot_anda'),
+                  widget.userSlotCode, Colors.redAccent),
+              _stopLabel(Icons.flag, AppStrings.t('shuttle_halte_terdekat'),
+                  halte.name, Colors.orange),
             ],
           ),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-                color: primaryBlue.withOpacity(0.06),
+                color: AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(12)),
             child: Row(
               children: [
-                const Icon(Icons.social_distance, size: 16, color: primaryBlue),
+                Icon(Icons.social_distance, size: 16, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text('± $meters meter',
+                Text('± $meters ${AppStrings.t('shuttle_meter_suffix')}',
                     style: const TextStyle(
                         fontSize: 12, fontWeight: FontWeight.w600)),
                 const SizedBox(width: 16),
-                const Icon(Icons.timer_outlined, size: 16, color: primaryBlue),
+                Icon(Icons.timer_outlined, size: 16, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text('± $minutes menit jalan kaki',
+                Text('± $minutes ${AppStrings.t('shuttle_menit_jalan_kaki')}',
                     style: const TextStyle(
                         fontSize: 12, fontWeight: FontWeight.w600)),
               ],
@@ -325,11 +313,11 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
             child: OutlinedButton.icon(
               onPressed: _openExternalMaps,
               icon: const Icon(Icons.map_outlined, size: 16),
-              label: const Text('Buka Petunjuk Arah',
-                  style: TextStyle(fontSize: 12)),
+              label: Text(AppStrings.t('shuttle_petunjuk_arah_btn'),
+                  style: const TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: primaryBlue,
-                side: const BorderSide(color: primaryBlue),
+                foregroundColor: AppColors.primary,
+                side: BorderSide(color: AppColors.primary),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
@@ -379,10 +367,11 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
         children: [
           Row(
             children: [
-              const Icon(Icons.route_outlined, size: 16, color: primaryBlue),
+              Icon(Icons.route_outlined, size: 16, color: AppColors.primary),
               const SizedBox(width: 8),
-              const Text('Rute Shuttle',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              Text(AppStrings.t('shuttle_rute_title'),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14)),
             ],
           ),
           const SizedBox(height: 16),
@@ -403,7 +392,8 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
                         height: 14,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: stop.isHalte ? Colors.orange : primaryBlue,
+                          color:
+                              stop.isHalte ? Colors.orange : AppColors.primary,
                         ),
                         child: stop.isHalte
                             ? const Icon(Icons.flag,
@@ -439,8 +429,8 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
                                 ),
                                 Text(
                                   stop.isHalte
-                                      ? 'Titik Jemput'
-                                      : 'Titik Terminal',
+                                      ? AppStrings.t('shuttle_titik_jemput')
+                                      : AppStrings.t('shuttle_titik_terminal'),
                                   style: TextStyle(
                                       fontSize: 10,
                                       color: Colors.grey.shade500),
@@ -546,17 +536,18 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Shuttle ${u.plateNumber}',
+                Text('${AppStrings.t('shuttle_prefix')} ${u.plateNumber}',
                     style: const TextStyle(
                         fontWeight: FontWeight.w700, fontSize: 13)),
                 const SizedBox(height: 2),
-                Text('Baru saja lewat: ${currentStop.name}',
+                Text(
+                    '${AppStrings.t('shuttle_baru_lewat')} ${currentStop.name}',
                     style:
                         TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                 if (nextStop != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Menuju: ${nextStop.name} · ETA ${m}m ${s.toString().padLeft(2, '0')}d',
+                    '${AppStrings.t('shuttle_menuju')} ${nextStop.name} · ETA ${m}m ${s.toString().padLeft(2, '0')}d',
                     style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -596,11 +587,11 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Shuttle ${u.plateNumber}',
+                Text('${AppStrings.t('shuttle_prefix')} ${u.plateNumber}',
                     style: const TextStyle(
                         fontWeight: FontWeight.w700, fontSize: 13)),
                 const SizedBox(height: 2),
-                Text('Standby di ${stop.name}',
+                Text('${AppStrings.t('shuttle_standby_di')} ${stop.name}',
                     style:
                         TextStyle(fontSize: 11, color: Colors.grey.shade600)),
               ],
@@ -611,8 +602,8 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
             decoration: BoxDecoration(
                 color: Colors.teal.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8)),
-            child: const Text('Siap Berangkat',
-                style: TextStyle(
+            child: Text(AppStrings.t('shuttle_siap_berangkat'),
+                style: const TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
                     color: Colors.teal)),
@@ -642,8 +633,6 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
   }
 }
 
-/// Diagram sederhana garis putus-putus dari ikon mobil (slot parkir) menuju
-/// ikon bendera (halte terdekat), meniru peta arah jalan kaki singkat.
 class _WalkingPathPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -669,11 +658,9 @@ class _WalkingPathPainter extends CustomPainter {
       }
     }
 
-    // Marker start (slot parkir)
     final startPaint = Paint()..color = Colors.redAccent;
     canvas.drawCircle(Offset(24, size.height - 20), 8, startPaint);
 
-    // Marker end (halte)
     final endPaint = Paint()..color = Colors.orange;
     canvas.drawCircle(Offset(size.width - 24, size.height - 20), 8, endPaint);
   }

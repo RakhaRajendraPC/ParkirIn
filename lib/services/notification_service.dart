@@ -1,9 +1,5 @@
 import '../models/notification_model.dart';
 
-/// Mock data source standing in for the real Push Notification Service
-/// integration described in PRD section 9 ("Integrasi Pihak Ketiga").
-/// In production this would be replaced by a repository that listens to
-/// FCM/APNs pushes and/or polls a backend notifications endpoint.
 class NotificationService {
   static List<AppNotification> getMockNotifications() {
     final now = DateTime.now();

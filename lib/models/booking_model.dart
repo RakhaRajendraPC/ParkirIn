@@ -1,10 +1,10 @@
 enum BookingStatus {
-  menungguPembayaran, // Lot terkunci sementara selama proses bayar
-  dipesan, // Bayar sukses, QR diterbitkan, menunggu check-in
-  checkIn, // Sedang parkir (sesi aktif)
-  checkOut, // Sesi selesai, lot kembali tersedia
-  dibatalkan, // Dibatalkan oleh user
-  kedaluwarsa, // Auto-cancel sistem karena tidak check-in
+  menungguPembayaran,
+  dipesan,
+  checkIn,
+  checkOut,
+  dibatalkan,
+  kedaluwarsa,
 }
 
 extension BookingStatusX on BookingStatus {
@@ -48,7 +48,7 @@ class BookingModel {
   DateTime checkIn;
   DateTime checkOut;
   final String vehiclePlate;
-  final String slotCode; // kode slot parkir yang dipilih user, mis. 'A3'
+  final String slotCode;
   final double basePrice;
   final double serviceFee;
   final double shuttleFee;
@@ -78,6 +78,43 @@ class BookingModel {
 
   double get subtotal => basePrice * durationNights;
   double get total => subtotal + serviceFee + shuttleFee + overstayFee;
+
+  Map<String, dynamic> toJson() => {
+        'bookingCode': bookingCode,
+        'locationName': locationName,
+        'locationAddress': locationAddress,
+        'checkIn': checkIn.toIso8601String(),
+        'checkOut': checkOut.toIso8601String(),
+        'vehiclePlate': vehiclePlate,
+        'slotCode': slotCode,
+        'basePrice': basePrice,
+        'serviceFee': serviceFee,
+        'shuttleFee': shuttleFee,
+        'status': status.name,
+        'overstayFee': overstayFee,
+        'actualCheckoutTime': actualCheckoutTime?.toIso8601String(),
+      };
+
+  factory BookingModel.fromJson(Map<String, dynamic> json) => BookingModel(
+        bookingCode: json['bookingCode'] as String,
+        locationName: json['locationName'] as String,
+        locationAddress: json['locationAddress'] as String,
+        checkIn: DateTime.parse(json['checkIn'] as String),
+        checkOut: DateTime.parse(json['checkOut'] as String),
+        vehiclePlate: json['vehiclePlate'] as String,
+        slotCode: json['slotCode'] as String? ?? '',
+        basePrice: (json['basePrice'] as num).toDouble(),
+        serviceFee: (json['serviceFee'] as num).toDouble(),
+        shuttleFee: (json['shuttleFee'] as num).toDouble(),
+        status: BookingStatus.values.firstWhere(
+          (e) => e.name == json['status'],
+          orElse: () => BookingStatus.dipesan,
+        ),
+        overstayFee: (json['overstayFee'] as num?)?.toDouble() ?? 0,
+        actualCheckoutTime: json['actualCheckoutTime'] != null
+            ? DateTime.parse(json['actualCheckoutTime'] as String)
+            : null,
+      );
 
   static List<BookingModel> mockList() {
     final now = DateTime.now();

@@ -1,4 +1,3 @@
-// lib/screens/referral_screen.dart
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_toast.dart';

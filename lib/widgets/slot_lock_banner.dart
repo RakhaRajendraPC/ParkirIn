@@ -1,4 +1,3 @@
-// lib/widgets/slot_lock_banner.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/slot_lock_service.dart';

@@ -1,4 +1,3 @@
-// lib/screens/notification_settings_screen.dart
 import 'package:flutter/material.dart';
 import '../services/notification_preferences.dart';
 

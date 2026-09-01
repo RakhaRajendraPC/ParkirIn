@@ -1,4 +1,3 @@
-// lib/services/receipt_generator.dart
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -101,7 +100,6 @@ class ReceiptGenerator {
       ),
     );
 
-    // Membuka sheet share/print bawaan OS (WhatsApp, Email, Simpan ke Files, Print, dll).
     await Printing.sharePdf(
         bytes: await doc.save(), filename: 'Struk_${booking.bookingCode}.pdf');
   }

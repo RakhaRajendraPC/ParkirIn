@@ -6,6 +6,7 @@ import '../utils/app_colors.dart';
 import '../widgets/app_toast.dart';
 import 'otp_verification_screen.dart';
 import 'terms_privacy_screen.dart';
+import 'forgot_password_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -130,12 +131,17 @@ class _AuthScreenState extends State<AuthScreen> {
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 14),
+              // Registration requires both email and phone — the backend's
+              // RegisterDto has no optional fields, and OTP verification
+              // (POST /auth/otp/send, /otp/verify) is phone-only with no
+              // email-based alternative. There is no "pick one" path today.
               if (!_isLogin) ...[
                 _buildField(
                   'Nomor HP',
                   _phoneCtrl,
                   Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
+                  hint: '08xxxxxxxxxx',
                 ),
                 const SizedBox(height: 14),
               ],
@@ -160,7 +166,11 @@ class _AuthScreenState extends State<AuthScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen()),
+                    ),
                     child: const Text(
                       'Lupa Password?',
                       style: TextStyle(fontSize: 12, color: primaryBlue),
@@ -308,6 +318,7 @@ class _AuthScreenState extends State<AuthScreen> {
     bool obscure = false,
     Widget? suffix,
     TextInputType? keyboardType,
+    String? hint,
   }) {
     return TextField(
       controller: ctrl,
@@ -315,6 +326,7 @@ class _AuthScreenState extends State<AuthScreen> {
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
+        hintText: hint,
         prefixIcon: Icon(icon, size: 20),
         suffixIcon: suffix,
         filled: true,

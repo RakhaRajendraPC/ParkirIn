@@ -1,5 +1,5 @@
-// lib/screens/livechat_sos_screen.dart
 import 'package:flutter/material.dart';
+import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_sheet.dart';
 import '../widgets/app_toast.dart';
@@ -22,34 +22,52 @@ class LiveChatSosScreen extends StatefulWidget {
 
 class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
   final _msgCtrl = TextEditingController();
-  final _scrollCtrl = ScrollController();
+  late List<ChatMessage> _messages;
+  late List<String> _quickReplies;
 
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-        text:
-            'Halo Budi! Ada yang bisa kami bantu terkait booking parkir Anda?',
-        isFromUser: false,
-        time: DateTime.now().subtract(const Duration(minutes: 2))),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _messages = [
+      ChatMessage(
+          text: AppStrings.t('chat_greeting'),
+          isFromUser: false,
+          time: DateTime.now().subtract(const Duration(minutes: 2))),
+    ];
+    _quickReplies = [
+      'Baik, saya tunggu',
+      'Saya di titik jemput',
+      'Mohon tunggu sebentar',
+      'Terima kasih'
+    ];
+    AppSettings.instance.addListener(_onChanged);
+  }
 
-  void _send() {
-    final text = _msgCtrl.text.trim();
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _send([String? quick]) {
+    final text = quick ?? _msgCtrl.text.trim();
     if (text.isEmpty) return;
     setState(() {
       _messages
           .add(ChatMessage(text: text, isFromUser: true, time: DateTime.now()));
       _msgCtrl.clear();
     });
-    // Simulasi balasan otomatis dari CS (production: integrasi live chat/chatbot §6.9).
     Future.delayed(const Duration(seconds: 1), () {
       if (!mounted) return;
       setState(() {
         _messages.add(ChatMessage(
-          text:
-              'Terima kasih atas pesannya. Tim kami akan segera membantu Anda.',
-          isFromUser: false,
-          time: DateTime.now(),
-        ));
+            text: AppStrings.t('chat_autoresponse'),
+            isFromUser: false,
+            time: DateTime.now()));
       });
     });
   }
@@ -59,19 +77,18 @@ class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
       context,
       severity: AppSeverity.destructive,
       icon: Icons.warning_amber_rounded,
-      title: 'Panggilan Darurat (SOS)',
-      body:
-          'Ini akan menghubungkan Anda langsung dengan petugas keamanan/hotline darurat di lokasi parkir. Lanjutkan?',
-      primaryLabel: 'Ya, Hubungi Sekarang',
+      title: AppStrings.t('chat_sos_dialog_title'),
+      body: AppStrings.t('chat_sos_dialog_msg'),
+      primaryLabel: AppStrings.t('chat_sos_confirm'),
       onPrimary: () {
         Navigator.pop(context);
         showAppToast(
           context,
           severity: AppSeverity.destructive,
-          message: 'Menghubungkan ke petugas darurat...',
+          message: AppStrings.t('chat_sos_connecting'),
         );
       },
-      secondaryLabel: 'Batal',
+      secondaryLabel: AppStrings.t('chat_sos_batal'),
       onSecondary: () => Navigator.pop(context),
     );
   }
@@ -89,19 +106,20 @@ class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
               CircleAvatar(
                   radius: 16,
                   backgroundColor: AppColors.primary,
-                  child:
-                      Icon(Icons.support_agent, color: Colors.white, size: 18)),
+                  child: const Icon(Icons.support_agent,
+                      color: Colors.white, size: 18)),
               const SizedBox(width: 10),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Customer Support',
+                  const Text('Customer Support',
                       style: TextStyle(
                           color: Colors.black87,
                           fontSize: 14,
                           fontWeight: FontWeight.bold)),
-                  Text('Online 24 Jam',
-                      style: TextStyle(color: Colors.green, fontSize: 10)),
+                  Text(AppStrings.t('chat_appbar_online'),
+                      style:
+                          const TextStyle(color: Colors.green, fontSize: 10)),
                 ],
               ),
             ],
@@ -112,7 +130,8 @@ class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
               child: ElevatedButton.icon(
                 onPressed: _triggerSos,
                 icon: const Icon(Icons.sos, size: 16),
-                label: const Text('SOS', style: TextStyle(fontSize: 11)),
+                label: Text(AppStrings.t('chat_sos_btn'),
+                    style: const TextStyle(fontSize: 11)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
                   foregroundColor: Colors.white,
@@ -128,12 +147,28 @@ class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
           children: [
             Expanded(
               child: ListView.builder(
-                controller: _scrollCtrl,
                 padding: const EdgeInsets.all(16),
                 itemCount: _messages.length,
                 itemBuilder: (context, index) => _buildBubble(_messages[index]),
               ),
             ),
+            SizedBox(
+              height: 40,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _quickReplies.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, i) => ActionChip(
+                  label: Text(_quickReplies[i],
+                      style: const TextStyle(fontSize: 11)),
+                  onPressed: () => _send(_quickReplies[i]),
+                  backgroundColor: Colors.white,
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             SafeArea(
               child: Container(
                 padding: const EdgeInsets.all(12),
@@ -149,7 +184,7 @@ class _LiveChatSosScreenState extends State<LiveChatSosScreen> {
                       child: TextField(
                         controller: _msgCtrl,
                         decoration: InputDecoration(
-                          hintText: 'Tulis pesan...',
+                          hintText: AppStrings.t('chat_input_hint'),
                           filled: true,
                           fillColor: const Color(0xFFF2F3F5),
                           contentPadding: const EdgeInsets.symmetric(

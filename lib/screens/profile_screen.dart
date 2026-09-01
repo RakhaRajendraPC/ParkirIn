@@ -1,4 +1,3 @@
-// lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
 import '../services/auth_api_service.dart';
 import '../services/user_session.dart';
@@ -46,7 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context,
       MaterialPageRoute(builder: (context) => const MyDetailsScreen()),
     );
-    setState(() {}); // refresh tampilan setelah kembali jika ada perubahan data
+    setState(() {});
   }
 
   @override
@@ -57,23 +56,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          leadingWidth: 56,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Icon(Icons.airport_shuttle, color: AppColors.primary),
+          ),
           title: Text(
-            AppStrings.t('profile_appbar_title'),
+            AppStrings.t('search_appbar_title'),
             style: TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
           ),
+          centerTitle: true,
           actions: const [
             Padding(
               padding: EdgeInsets.only(right: 16),
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: Color(0xFFEDEDED),
-                backgroundImage: NetworkImage(
-                  'https://i.pravatar.cc/100?img=12',
-                ),
+                backgroundImage:
+                    NetworkImage('https://i.pravatar.cc/100?img=12'),
               ),
             ),
           ],

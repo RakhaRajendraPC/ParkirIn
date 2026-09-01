@@ -1,8 +1,5 @@
-// lib/widgets/empty_search_view.dart
 import 'package:flutter/material.dart';
 
-/// Ditampilkan saat hasil pencarian kosong (mis. filter lanjutan terlalu ketat,
-/// atau tidak ada lahan parkir tersedia di tanggal yang dipilih).
 class EmptySearchView extends StatelessWidget {
   final VoidCallback onResetFilter;
   final String? message;

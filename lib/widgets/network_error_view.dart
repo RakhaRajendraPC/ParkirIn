@@ -1,4 +1,3 @@
-// lib/widgets/network_error_view.dart
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 

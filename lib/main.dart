@@ -1,4 +1,3 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
 import 'screens/search_screen.dart';
 import 'screens/notifications_screen.dart';
@@ -6,10 +5,18 @@ import 'screens/profile_screen.dart';
 import 'screens/bookings_screen.dart';
 import 'screens/splash_onboarding_screen.dart';
 import 'services/app_settings.dart';
+import 'services/booking_repository.dart';
+import 'services/notification_repository.dart';
+import 'services/user_session.dart';
+import 'services/favorites_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSettings.instance.load();
+  await BookingRepository.instance.load();
+  await NotificationRepository.instance.load();
+  await UserSession.instance.load();
+  await FavoritesService.instance.load();
   runApp(const ParkirInApp());
 }
 
@@ -66,8 +73,6 @@ class _ParkirInAppState extends State<ParkirInApp> {
   }
 }
 
-/// RootShell holds the bottom navigation and swaps between the 4 tabs:
-/// Search, Bookings, Alerts (Notifications), Profile.
 class RootShell extends StatefulWidget {
   const RootShell({super.key});
 

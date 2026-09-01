@@ -1,4 +1,3 @@
-// lib/screens/parking_slot_map_screen.dart
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/parking_slot_model.dart';
@@ -25,6 +24,7 @@ class ParkingSlotMapScreen extends StatefulWidget {
 
 class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
   late final List<ParkingRow> _rows;
+  late final List<List<ParkingRow>> _rowGroups;
   ParkingSlot? _selected;
 
   @override
@@ -32,6 +32,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
     super.initState();
     _rows =
         ParkingSlotGenerator.generate(basePrice: widget.location.pricePerNight);
+    _rowGroups = ParkingSlotGenerator.groupRows(_rows);
     AppSettings.instance.addListener(_onChanged);
   }
 
@@ -91,7 +92,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
             _buildLegend(),
             Expanded(
               child: InteractiveViewer(
-                minScale: 0.6,
+                minScale: 0.5,
                 maxScale: 2.5,
                 boundaryMargin: const EdgeInsets.all(80),
                 constrained: false,
@@ -174,18 +175,25 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
 
   Widget _buildParkingLot() {
     return SizedBox(
-      width: 720,
+      width: 1080,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: List.generate(_rows.length * 2 - 1, (i) {
+        children: List.generate(_rowGroups.length * 2 - 1, (i) {
           if (i.isEven) {
-            final row = _rows[i ~/ 2];
-            return _buildParkingRow(row);
+            final group = _rowGroups[i ~/ 2];
+            return _buildRowGroup(group);
           } else {
             return _buildHorizontalAksesJalan();
           }
         }),
       ),
+    );
+  }
+
+  Widget _buildRowGroup(List<ParkingRow> group) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: group.map((row) => _buildParkingRow(row)).toList(),
     );
   }
 
@@ -204,9 +212,10 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
                       color: Colors.black87)),
             ),
           ),
-          Expanded(flex: 2, child: _buildSlotBlock(row.leftBlock)),
-          _buildVerticalAksesJalan(),
-          Expanded(flex: 1, child: _buildSlotBlock(row.rightBlock)),
+          for (int b = 0; b < row.blocks.length; b++) ...[
+            Expanded(child: _buildSlotBlock(row.blocks[b])),
+            if (b < row.blocks.length - 1) _buildVerticalAksesJalan(),
+          ],
         ],
       ),
     );
@@ -381,7 +390,6 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
   }
 }
 
-/// Garis putus-putus abu-abu tebal, meniru marka batas parkir pada referensi.
 class _DashedLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
