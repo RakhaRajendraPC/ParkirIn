@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/user_session.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
@@ -42,6 +44,15 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _changeAvatar() async {
+    final picker = ImagePicker();
+    final picked =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked == null) return;
+    _session.setAvatarPath(picked.path);
+    setState(() {});
+  }
+
   Future<void> _save() async {
     setState(() => _isSaving = true);
     await Future.delayed(const Duration(seconds: 1));
@@ -76,24 +87,36 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             Center(
-              child: Stack(
-                children: [
-                  const CircleAvatar(
+              child: GestureDetector(
+                onTap: _changeAvatar,
+                child: Stack(
+                  children: [
+                    CircleAvatar(
                       radius: 42,
-                      backgroundImage:
-                          NetworkImage('https://i.pravatar.cc/150?img=12')),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                          color: AppColors.primary, shape: BoxShape.circle),
-                      child: const Icon(Icons.camera_alt,
-                          color: Colors.white, size: 14),
+                      backgroundColor: const Color(0xFFEDEDED),
+                      backgroundImage: (_session.avatarPath != null &&
+                              File(_session.avatarPath!).existsSync())
+                          ? FileImage(File(_session.avatarPath!))
+                          : null,
+                      child: (_session.avatarPath == null ||
+                              !File(_session.avatarPath!).existsSync())
+                          ? const Icon(Icons.person,
+                              size: 40, color: Colors.grey)
+                          : null,
                     ),
-                  ),
-                ],
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                            color: AppColors.primary, shape: BoxShape.circle),
+                        child: const Icon(Icons.camera_alt,
+                            color: Colors.white, size: 14),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),

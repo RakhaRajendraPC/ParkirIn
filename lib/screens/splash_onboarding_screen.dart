@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: primaryBlue,
       body: Center(
         child: Image.asset(
-          'assets/logo/logo_parkirin_white.png',
+          'assets/logo/logo_inapandara_white.jpeg',
           width: 480,
           height: 480,
           fit: BoxFit.contain,

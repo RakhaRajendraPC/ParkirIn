@@ -7,6 +7,9 @@ import '../services/booking_repository.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import 'booking_detail_screen.dart';
+import '../widgets/app_logo_badge.dart';
+import '../widgets/app_header_avatar.dart';
+import '../widgets/stub_icon.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -54,30 +57,14 @@ class _SearchScreenState extends State<SearchScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leadingWidth: 56,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Icon(Icons.airport_shuttle, color: AppColors.primary),
+          leading: const Padding(
+            padding: EdgeInsets.only(left: 0),
+            child: AppLogoBadge(height: 38),
           ),
-          title: Text(
-            AppStrings.t('search_appbar_title'),
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
+          leadingWidth: 160,
+          title: null,
           centerTitle: true,
-          actions: const [
-            Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: Color(0xFFEDEDED),
-                child: Icon(Icons.person, color: Colors.grey, size: 18),
-              ),
-            ),
-          ],
+          actions: const [AppHeaderAvatar()],
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -395,75 +382,104 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildPromoBanner() {
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDEEFC),
-        borderRadius: BorderRadius.circular(14),
+        color: const Color(0xFF4B4FE0).withOpacity(0.05),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+              color: const Color(0xFF4B4FE0).withOpacity(0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 6))
+        ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4B4FE0),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    AppStrings.t('search_promo_badge'),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  AppStrings.t('search_promo_title'),
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 2),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                const StubIcon(
+                    icon: Icons.local_offer_rounded,
+                    color: Color(0xFF4B4FE0),
+                    size: 46),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextSpan(text: AppStrings.t('search_promo_code_label')),
-                      const TextSpan(
-                        text: 'TERBANGAMAN',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                      BarAccentLabel(
+                          text: AppStrings.t('search_promo_badge'),
+                          color: const Color(0xFF4B4FE0)),
+                      const SizedBox(height: 6),
+                      Text(
+                        AppStrings.t('search_promo_title'),
+                        style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF16181F),
+                            letterSpacing: -0.3),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
+            const SizedBox(height: 14),
+            const PerforationDivider(),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Text(AppStrings.t('search_promo_code_label'),
+                    style:
+                        TextStyle(fontSize: 11.5, color: Colors.grey.shade600)),
+                Text(
+                  'TERBANGAMAN',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF4B4FE0),
+                    fontFamily: 'monospace',
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const Spacer(),
+                Text('PAKAI KODE',
+                    style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.grey.shade400,
+                        letterSpacing: 0.5)),
+                const SizedBox(width: 2),
+                const LinkArrow(color: Color(0xFF4B4FE0)),
+              ],
             ),
-            child: Icon(Icons.local_offer_outlined, color: AppColors.primary),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildWhyChooseUsTitle() {
-    return Text(
-      AppStrings.t('search_why_title'),
-      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+    return Row(
+      children: [
+        Container(
+            width: 4,
+            height: 20,
+            decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(2))),
+        const SizedBox(width: 8),
+        Text(
+          AppStrings.t('search_why_title'),
+          style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF16181F),
+              letterSpacing: -0.2),
+        ),
+      ],
     );
   }
 
@@ -472,8 +488,8 @@ class _SearchScreenState extends State<SearchScreen> {
       children: [
         Expanded(
           child: _FeatureCard(
-            icon: Icons.verified_user_outlined,
-            iconColor: Colors.green,
+            icon: Icons.verified_user_rounded,
+            color: const Color(0xFF16A34A),
             title: AppStrings.t('search_feature_slot_title'),
             subtitle: AppStrings.t('search_feature_slot_sub'),
           ),
@@ -481,8 +497,8 @@ class _SearchScreenState extends State<SearchScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: _FeatureCard(
-            icon: Icons.attach_money,
-            iconColor: AppColors.primary,
+            icon: Icons.payments_rounded,
+            color: AppColors.primary,
             title: AppStrings.t('search_feature_biaya_title'),
             subtitle: AppStrings.t('search_feature_biaya_sub'),
           ),
@@ -492,8 +508,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildShuttleTracker() {
+    const accent = Color(0xFFFF8A00);
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       onTap: () {
         Navigator.push(
           context,
@@ -509,38 +526,42 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF1E6),
-          borderRadius: BorderRadius.circular(14),
+          color: accent.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+                color: accent.withOpacity(0.1),
+                blurRadius: 14,
+                offset: const Offset(0, 6))
+          ],
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.airport_shuttle, color: Colors.orange),
-            ),
-            const SizedBox(width: 12),
+            const StubIcon(
+                icon: Icons.directions_bus_filled_rounded,
+                color: accent,
+                size: 44),
+            const SizedBox(width: 13),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    AppStrings.t('search_shuttle_title'),
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                  const SizedBox(height: 2),
+                  BarAccentLabel(
+                      text: AppStrings.t('search_shuttle_title').toUpperCase(),
+                      color: accent),
+                  const SizedBox(height: 4),
                   Text(
                     AppStrings.t('search_shuttle_sub'),
-                    style: const TextStyle(fontSize: 11, color: Colors.black54),
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        color: Colors.grey.shade600,
+                        height: 1.4),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black38),
+            const SizedBox(width: 8),
+            const LinkArrow(color: accent),
           ],
         ),
       ),
@@ -548,49 +569,51 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildGroundTransportCard() {
+    const accent = Color(0xFF00A896);
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const GroundTransportScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const GroundTransportScreen()),
       ),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFEDF6F2),
-          borderRadius: BorderRadius.circular(14),
+          color: accent.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+                color: accent.withOpacity(0.1),
+                blurRadius: 14,
+                offset: const Offset(0, 6))
+          ],
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.commute, color: Color(0xFF00A896)),
-            ),
-            const SizedBox(width: 12),
+            const StubIcon(
+                icon: Icons.commute_rounded, color: accent, size: 44),
+            const SizedBox(width: 13),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    AppStrings.t('search_ground_transport_title'),
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                  const SizedBox(height: 2),
+                  BarAccentLabel(
+                      text: AppStrings.t('search_ground_transport_title')
+                          .toUpperCase(),
+                      color: accent),
+                  const SizedBox(height: 4),
                   Text(
                     AppStrings.t('search_ground_transport_sub'),
-                    style: const TextStyle(fontSize: 11, color: Colors.black54),
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        color: Colors.grey.shade600,
+                        height: 1.4),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black38),
+            const SizedBox(width: 8),
+            const LinkArrow(color: accent),
           ],
         ),
       ),
@@ -699,13 +722,13 @@ class _DateTile extends StatelessWidget {
 
 class _FeatureCard extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
+  final Color color;
   final String title;
   final String subtitle;
 
   const _FeatureCard({
     required this.icon,
-    required this.iconColor,
+    required this.color,
     required this.title,
     required this.subtitle,
   });
@@ -716,35 +739,36 @@ class _FeatureCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
+            color: color.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          )
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          const SizedBox(height: 10),
+          StubIcon(icon: icon, color: color, size: 38),
+          const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13.5,
+              color: Color(0xFF16181F),
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: const TextStyle(fontSize: 11, color: Colors.black54),
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              height: 1.4,
+            ),
           ),
         ],
       ),

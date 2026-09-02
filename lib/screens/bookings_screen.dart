@@ -9,6 +9,8 @@ import 'checkout_screen.dart';
 import 'booking_qr_screen.dart';
 import 'booking_detail_screen.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/app_logo_badge.dart';
+import '../widgets/app_header_avatar.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -53,30 +55,14 @@ class _BookingsScreenState extends State<BookingsScreen>
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leadingWidth: 56,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Icon(Icons.airport_shuttle, color: AppColors.primary),
+          leading: const Padding(
+            padding: EdgeInsets.only(left: 0),
+            child: AppLogoBadge(height: 38),
           ),
-          title: Text(
-            AppStrings.t('search_appbar_title'),
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
+          leadingWidth: 160,
+          title: null,
           centerTitle: true,
-          actions: const [
-            Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: Color(0xFFEDEDED),
-                child: Icon(Icons.person, color: Colors.grey, size: 18),
-              ),
-            ),
-          ],
+          actions: const [AppHeaderAvatar()],
           bottom: TabBar(
             controller: _tabController,
             isScrollable: true,

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/user_session.dart';
 import '../services/app_settings.dart';
@@ -9,6 +10,8 @@ import 'help_center_screen.dart';
 import 'language_settings_screen.dart';
 import 'my_details_screen.dart';
 import 'payment_methods_screen.dart';
+import '../widgets/app_logo_badge.dart';
+import '../widgets/app_header_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -52,31 +55,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leadingWidth: 56,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Icon(Icons.airport_shuttle, color: AppColors.primary),
+          leading: const Padding(
+            padding: EdgeInsets.only(left: 0),
+            child: AppLogoBadge(height: 38),
           ),
-          title: Text(
-            AppStrings.t('search_appbar_title'),
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
+          leadingWidth: 160,
+          title: null,
           centerTitle: true,
-          actions: const [
-            Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: Color(0xFFEDEDED),
-                backgroundImage:
-                    NetworkImage('https://i.pravatar.cc/100?img=12'),
-              ),
-            ),
-          ],
+          actions: const [AppHeaderAvatar()],
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -199,10 +185,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Stack(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 40,
-                backgroundImage:
-                    NetworkImage('https://i.pravatar.cc/150?img=12'),
+                backgroundColor: const Color(0xFFEDEDED),
+                backgroundImage: (_session.avatarPath != null &&
+                        File(_session.avatarPath!).existsSync())
+                    ? FileImage(File(_session.avatarPath!))
+                    : null,
+                child: (_session.avatarPath == null ||
+                        !File(_session.avatarPath!).existsSync())
+                    ? const Icon(Icons.person, size: 36, color: Colors.grey)
+                    : null,
               ),
               Positioned(
                 bottom: 0,

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,9 +10,8 @@ class CoachMarkStep {
       {required this.title, required this.description, required this.icon});
 }
 
-
-[featureKey] unik).
- [CoachMarkOverlay.showIfFirstTime] 
+///[featureKey]
+/// [CoachMarkOverlay.showIfFirstTime]
 class CoachMarkOverlay {
   static Future<void> showIfFirstTime(BuildContext context, String featureKey,
       List<CoachMarkStep> steps) async {

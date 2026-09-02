@@ -47,6 +47,7 @@ class UserSession extends ChangeNotifier {
   String name = 'Budi Santoso';
   String email = 'budi.santoso@example.com';
   String phone = '0812-3456-7890';
+  String? avatarPath;
   List<SavedVehicle> vehicles = [];
   bool _isLoaded = false;
 
@@ -78,6 +79,7 @@ class UserSession extends ChangeNotifier {
         name = data['name'] as String? ?? name;
         email = data['email'] as String? ?? email;
         phone = data['phone'] as String? ?? phone;
+        avatarPath = data['avatarPath'] as String?;
         final List<dynamic> vList = data['vehicles'] as List<dynamic>? ?? [];
         vehicles = vList
             .map((e) => SavedVehicle.fromJson(e as Map<String, dynamic>))
@@ -96,12 +98,19 @@ class UserSession extends ChangeNotifier {
       'name': name,
       'email': email,
       'phone': phone,
+      'avatarPath': avatarPath,
       'vehicles': vehicles.map((v) => v.toJson()).toList(),
     });
     await prefs.setString(_prefsKey, raw);
   }
 
   void save() {
+    notifyListeners();
+    _persist();
+  }
+
+  void setAvatarPath(String path) {
+    avatarPath = path;
     notifyListeners();
     _persist();
   }

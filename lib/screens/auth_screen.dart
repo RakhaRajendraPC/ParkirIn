@@ -68,39 +68,54 @@ class _AuthScreenState extends State<AuthScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F8FA),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 40),
-              const Row(
-                children: [
-                  Icon(Icons.airport_shuttle, color: primaryBlue, size: 32),
-                  SizedBox(width: 8),
-                  Text(
-                    'ParkirIn',
-                    style: TextStyle(
-                      color: primaryBlue,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+              const SizedBox(height: 12),
+
+              // Logo Proorsional dan Solid
+              Center(
+                child: Transform.scale(
+                  scale:
+                      1.85, // Memperbesar visual logo hingga mengisi area merah
+                  child: Image.asset(
+                    'assets/logo/logo_inapandara_color.png',
+                    height: 90, // Menjaga bounding box vertikal tetap ringkas
+                    fit: BoxFit.contain,
                   ),
-                ],
+                ),
               ),
-              const SizedBox(height: 32),
+
+              const SizedBox(height: 12),
+
+              // Header Teks Lebih Tegas
               Text(
                 _isLogin ? 'Selamat Datang Kembali' : 'Buat Akun Baru',
-                style:
-                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.3,
+                  color: Color(0xFF1E293B),
+                ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 _isLogin
                     ? 'Masuk untuk melanjutkan booking parkir Anda.'
                     : 'Daftar untuk mulai booking parkir inap bandara.',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                  height: 1.3,
+                ),
               ),
-              const SizedBox(height: 28),
+
+              const SizedBox(height: 24),
+
+              // Input Form Field
               if (!_isLogin) ...[
                 _buildField('Nama Lengkap', _nameCtrl, Icons.person_outline),
                 const SizedBox(height: 14),
@@ -133,81 +148,101 @@ class _AuthScreenState extends State<AuthScreen> {
                     _obscurePassword
                         ? Icons.visibility_off_outlined
                         : Icons.visibility_outlined,
-                    size: 18,
+                    size: 20,
+                    color: Colors.grey.shade600,
                   ),
                   onPressed: () =>
                       setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
+
               if (_isLogin) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const ForgotPasswordScreen()),
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: const Text(
                       'Lupa Password?',
-                      style: TextStyle(fontSize: 12, color: primaryBlue),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: primaryBlue,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
               ],
+
               if (!_isLogin) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Checkbox(
-                      value: _agreedToTerms,
-                      onChanged: (v) =>
-                          setState(() => _agreedToTerms = v ?? false),
-                      activeColor: primaryBlue,
+                    SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: Checkbox(
+                        value: _agreedToTerms,
+                        onChanged: (v) =>
+                            setState(() => _agreedToTerms = v ?? false),
+                        activeColor: primaryBlue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                     ),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade700,
-                            ),
-                            children: [
-                              const TextSpan(text: 'Saya menyetujui '),
-                              TextSpan(
-                                text: 'Syarat & Ketentuan',
-                                style: const TextStyle(
-                                  color: primaryBlue,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const TermsPrivacyScreen(),
-                                        ),
-                                      ),
-                              ),
-                              const TextSpan(
-                                text: ' dan Kebijakan Privasi ParkirIn.',
-                              ),
-                            ],
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
                           ),
+                          children: [
+                            const TextSpan(text: 'Saya menyetujui '),
+                            TextSpan(
+                              text: 'Syarat & Ketentuan',
+                              style: const TextStyle(
+                                color: primaryBlue,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const TermsPrivacyScreen(),
+                                      ),
+                                    ),
+                            ),
+                            const TextSpan(
+                              text: ' & Kebijakan Privasi Inapandara.',
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
               ],
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 30),
+
+              // Tombol Utama (Lebih Tinggi dan Tegas)
               SizedBox(
-                width: double.infinity,
-                height: 50,
+                height: 52,
                 child: ElevatedButton(
                   onPressed: (_isLoading || (!_isLogin && !_agreedToTerms))
                       ? null
@@ -216,54 +251,77 @@ class _AuthScreenState extends State<AuthScreen> {
                     backgroundColor: primaryBlue,
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: Colors.grey.shade300,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: _isLoading
                       ? const SizedBox(
-                          width: 20,
-                          height: 20,
+                          width: 22,
+                          height: 22,
                           child: CircularProgressIndicator(
                             color: Colors.white,
-                            strokeWidth: 2,
+                            strokeWidth: 2.5,
                           ),
                         )
                       : Text(
                           _isLogin ? 'Masuk' : 'Daftar',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
+
               const SizedBox(height: 20),
+
+              // Pembatas "atau"
               Row(
                 children: [
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Expanded(
+                      child:
+                          Divider(color: Colors.grey.shade300, thickness: 1)),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: Text(
                       'atau',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                         color: Colors.grey.shade500,
                       ),
                     ),
                   ),
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Expanded(
+                      child:
+                          Divider(color: Colors.grey.shade300, thickness: 1)),
                 ],
               ),
+
               const SizedBox(height: 20),
+
+              // Social Media Login Buttons
               _buildSocialButton('Lanjutkan dengan Google', Icons.g_mobiledata),
               const SizedBox(height: 10),
               _buildSocialButton('Lanjutkan dengan Apple', Icons.apple),
-              const SizedBox(height: 24),
+
+              const SizedBox(height: 20),
+
+              // Switch Login / Daftar
               Center(
                 child: TextButton(
                   onPressed: () => setState(() => _isLogin = !_isLogin),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
                   child: RichText(
                     text: TextSpan(
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade700,
+                      ),
                       children: [
                         TextSpan(
                           text: _isLogin
@@ -274,7 +332,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           text: _isLogin ? 'Daftar' : 'Masuk',
                           style: const TextStyle(
                             color: primaryBlue,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
@@ -282,6 +340,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -297,27 +356,30 @@ class _AuthScreenState extends State<AuthScreen> {
           onTap: () => setState(() => _registerMethod = method),
           borderRadius: BorderRadius.circular(10),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
               color: selected ? primaryBlue : Colors.white,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: selected ? primaryBlue : Colors.grey.shade300,
+                width: 1.2,
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon,
-                    size: 16,
-                    color: selected ? Colors.white : Colors.grey.shade600),
-                const SizedBox(width: 6),
+                Icon(
+                  icon,
+                  size: 18,
+                  color: selected ? Colors.white : Colors.grey.shade700,
+                ),
+                const SizedBox(width: 8),
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: selected ? Colors.white : Colors.grey.shade700,
+                    color: selected ? Colors.white : Colors.grey.shade800,
                   ),
                 ),
               ],
@@ -349,19 +411,30 @@ class _AuthScreenState extends State<AuthScreen> {
       controller: ctrl,
       obscureText: obscure,
       keyboardType: keyboardType,
+      style: const TextStyle(fontSize: 14, color: Colors.black87),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(fontSize: 13, color: Colors.grey.shade600),
         hintText: hint,
-        prefixIcon: Icon(icon, size: 20),
+        hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+        prefixIcon: Icon(icon, size: 20, color: Colors.grey.shade600),
         suffixIcon: suffix,
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: primaryBlue, width: 1.5),
         ),
         contentPadding:
-            const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
       ),
     );
   }
@@ -369,14 +442,20 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _buildSocialButton(String label, IconData icon) {
     return SizedBox(
       width: double.infinity,
-      height: 46,
+      height: 48,
       child: OutlinedButton.icon(
         onPressed: () {},
-        icon: Icon(icon, size: 20),
-        label: Text(label, style: const TextStyle(fontSize: 13)),
+        icon: Icon(icon, size: 20, color: Colors.black87),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.black87,
-          side: BorderSide(color: Colors.grey.shade300),
+          side: BorderSide(color: Colors.grey.shade300, width: 1.2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
