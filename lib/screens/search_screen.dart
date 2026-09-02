@@ -1,3 +1,4 @@
+// lib/screens/search_screen.dart
 import 'package:flutter/material.dart';
 import 'shuttle_tracking_screen.dart';
 import 'search_results_screen.dart';
@@ -10,6 +11,7 @@ import 'booking_detail_screen.dart';
 import '../widgets/app_logo_badge.dart';
 import '../widgets/app_header_avatar.dart';
 import '../widgets/stub_icon.dart';
+import '../widgets/hero_banner_carousel.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -49,6 +51,30 @@ class _SearchScreenState extends State<SearchScreen> {
     return active.isEmpty ? null : active.first;
   }
 
+  List<BannerSlide> get _banners => [
+        BannerSlide(
+          imagePath: 'assets/images/hero_banner.png',
+          badgeText: 'PARK & FLY',
+          badgeIcon: Icons.local_parking,
+          title: 'Parkir Aman\nSampai Pulang',
+          accent: AppColors.primary,
+        ),
+        const BannerSlide(
+          imagePath: 'assets/images/hero_banner2.jpeg',
+          badgeText: 'GRATIS SHUTTLE',
+          badgeIcon: Icons.directions_bus_filled,
+          title: 'Antar-Jemput\nLangsung ke Terminal',
+          accent: Color(0xFFFF8A00),
+        ),
+        const BannerSlide(
+          imagePath: 'assets/images/hero_banner3.jpeg',
+          badgeText: 'PROMO PENGGUNA BARU',
+          badgeIcon: Icons.local_offer_rounded,
+          title: 'Diskon 20%\nBooking Pertama',
+          accent: Color(0xFF4B4FE0),
+        ),
+      ];
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -71,12 +97,12 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeroBanner(),
+              HeroBannerCarousel(slides: _banners),
               if (_activeBooking != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 _buildActiveBookingBanner(),
               ],
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
               _buildTitle(),
               const SizedBox(height: 16),
               _buildSearchCard(),
@@ -106,39 +132,37 @@ class _SearchScreenState extends State<SearchScreen> {
 
     final isParked = b.status == BookingStatus.checkIn;
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => BookingDetailScreen(booking: b),
-        ),
+            builder: (context) => BookingDetailScreen(booking: b)),
       ),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.primary, AppColors.primary.withOpacity(0.85)],
-          ),
-          borderRadius: BorderRadius.circular(16),
+              colors: [AppColors.primary, AppColors.primary.withOpacity(0.82)]),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+                color: AppColors.primary.withOpacity(0.28),
+                blurRadius: 18,
+                offset: const Offset(0, 8))
+          ],
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isParked
-                    ? Icons.local_parking
-                    : Icons.confirmation_number_outlined,
-                color: Colors.white,
-                size: 20,
-              ),
+            StubIcon(
+              icon: isParked
+                  ? Icons.local_parking
+                  : Icons.confirmation_number_outlined,
+              color: Colors.white,
+              size: 42,
+              onWhiteBase: false,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 13),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,12 +172,11 @@ class _SearchScreenState extends State<SearchScreen> {
                         ? AppStrings.t('search_active_booking_parked')
                         : AppStrings.t('search_active_booking_waiting'),
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     '${b.locationName} · ${AppStrings.t('bookings_slot_label')} ${b.slotCode}',
                     style: const TextStyle(color: Colors.white70, fontSize: 11),
@@ -161,63 +184,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.white70),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroBanner() {
-    return Container(
-      height: 130,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/hero_banner.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: [Colors.black.withOpacity(0.35), Colors.transparent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              left: 16,
-              top: 16,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.local_parking,
-                        color: Colors.white, size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      AppStrings.t('search_hero_badge'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const Icon(Icons.north_east_rounded,
+                color: Colors.white70, size: 18),
           ],
         ),
       ),
@@ -228,17 +196,16 @@ class _SearchScreenState extends State<SearchScreen> {
     return RichText(
       text: TextSpan(
         style: const TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          height: 1.3,
-        ),
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF16181F),
+            height: 1.28,
+            letterSpacing: -0.4),
         children: [
           TextSpan(text: AppStrings.t('search_title_1')),
           TextSpan(
-            text: AppStrings.t('search_title_2'),
-            style: TextStyle(color: AppColors.primary),
-          ),
+              text: AppStrings.t('search_title_2'),
+              style: TextStyle(color: AppColors.primary)),
         ],
       ),
     );
@@ -249,90 +216,67 @@ class _SearchScreenState extends State<SearchScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
+              color: Colors.black.withOpacity(0.045),
+              blurRadius: 18,
+              offset: const Offset(0, 8))
         ],
       ),
       child: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.local_parking,
-                    color: AppColors.primary,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Lokasi Parkir',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey.shade500,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'CGK - Soekarno Hatta',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.verified,
+          Row(
+            children: [
+              StubIcon(
+                  icon: Icons.local_parking_rounded,
                   color: AppColors.primary,
-                  size: 20,
+                  size: 40),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('LOKASI PARKIR',
+                        style: TextStyle(
+                            fontSize: 9.5,
+                            color: Colors.grey.shade500,
+                            letterSpacing: 0.6,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 3),
+                    const Text('CGK - Soekarno Hatta',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF16181F))),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              Icon(Icons.verified_rounded, color: AppColors.primary, size: 20),
+            ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(height: 1),
-          ),
+          const SizedBox(height: 14),
+          const PerforationDivider(),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: _DateTile(
-                  icon: Icons.login,
-                  iconColor: Colors.orange,
+                  icon: Icons.flight_takeoff_rounded,
+                  iconColor: const Color(0xFFFF8A00),
                   label: AppStrings.t('search_masuk'),
                   date: checkIn,
                   onTap: () => _pickDate(isCheckIn: true),
                 ),
               ),
               Container(
-                height: 36,
-                width: 1,
-                color: Colors.grey.shade200,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-              ),
+                  height: 34,
+                  width: 1,
+                  color: Colors.grey.shade200,
+                  margin: const EdgeInsets.symmetric(horizontal: 10)),
               Expanded(
                 child: _DateTile(
-                  icon: Icons.logout,
+                  icon: Icons.flight_land_rounded,
                   iconColor: AppColors.primary,
                   label: AppStrings.t('search_keluar'),
                   date: checkOut,
@@ -349,32 +293,38 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildSearchButton() {
     return SizedBox(
       width: double.infinity,
-      height: 52,
-      child: ElevatedButton.icon(
+      height: 54,
+      child: ElevatedButton(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => SearchResultsScreen(
-                airportName: airportName,
-                checkIn: checkIn,
-                checkOut: checkOut,
-              ),
+                  airportName: airportName,
+                  checkIn: checkIn,
+                  checkOut: checkOut),
             ),
           );
         },
-        icon: const Icon(Icons.search),
-        label: Text(
-          AppStrings.t('search_cta'),
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFF8A00),
           foregroundColor: Colors.white,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          shadowColor: Colors.transparent,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.search_rounded, size: 20),
+            const SizedBox(width: 8),
+            Text(AppStrings.t('search_cta'),
+                style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2)),
+          ],
         ),
       ),
     );
@@ -413,14 +363,12 @@ class _SearchScreenState extends State<SearchScreen> {
                           text: AppStrings.t('search_promo_badge'),
                           color: const Color(0xFF4B4FE0)),
                       const SizedBox(height: 6),
-                      Text(
-                        AppStrings.t('search_promo_title'),
-                        style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF16181F),
-                            letterSpacing: -0.3),
-                      ),
+                      Text(AppStrings.t('search_promo_title'),
+                          style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF16181F),
+                              letterSpacing: -0.3)),
                     ],
                   ),
                 ),
@@ -434,16 +382,13 @@ class _SearchScreenState extends State<SearchScreen> {
                 Text(AppStrings.t('search_promo_code_label'),
                     style:
                         TextStyle(fontSize: 11.5, color: Colors.grey.shade600)),
-                Text(
-                  'TERBANGAMAN',
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF4B4FE0),
-                    fontFamily: 'monospace',
-                    letterSpacing: 1.2,
-                  ),
-                ),
+                const Text('TERBANGAMAN',
+                    style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF4B4FE0),
+                        fontFamily: 'monospace',
+                        letterSpacing: 1.2)),
                 const Spacer(),
                 Text('PAKAI KODE',
                     style: TextStyle(
@@ -471,14 +416,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(2))),
         const SizedBox(width: 8),
-        Text(
-          AppStrings.t('search_why_title'),
-          style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF16181F),
-              letterSpacing: -0.2),
-        ),
+        Text(AppStrings.t('search_why_title'),
+            style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF16181F),
+                letterSpacing: -0.2)),
       ],
     );
   }
@@ -550,13 +493,11 @@ class _SearchScreenState extends State<SearchScreen> {
                       text: AppStrings.t('search_shuttle_title').toUpperCase(),
                       color: accent),
                   const SizedBox(height: 4),
-                  Text(
-                    AppStrings.t('search_shuttle_sub'),
-                    style: TextStyle(
-                        fontSize: 11.5,
-                        color: Colors.grey.shade600,
-                        height: 1.4),
-                  ),
+                  Text(AppStrings.t('search_shuttle_sub'),
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          color: Colors.grey.shade600,
+                          height: 1.4)),
                 ],
               ),
             ),
@@ -573,9 +514,9 @@ class _SearchScreenState extends State<SearchScreen> {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const GroundTransportScreen()),
-      ),
+          context,
+          MaterialPageRoute(
+              builder: (context) => const GroundTransportScreen())),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -602,13 +543,11 @@ class _SearchScreenState extends State<SearchScreen> {
                           .toUpperCase(),
                       color: accent),
                   const SizedBox(height: 4),
-                  Text(
-                    AppStrings.t('search_ground_transport_sub'),
-                    style: TextStyle(
-                        fontSize: 11.5,
-                        color: Colors.grey.shade600,
-                        height: 1.4),
-                  ),
+                  Text(AppStrings.t('search_ground_transport_sub'),
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          color: Colors.grey.shade600,
+                          height: 1.4)),
                 ],
               ),
             ),
@@ -623,16 +562,13 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _pickDate({required bool isCheckIn}) async {
     final initial = isCheckIn ? checkIn : checkOut;
     final date = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
+        context: context,
+        initialDate: initial,
+        firstDate: DateTime.now(),
+        lastDate: DateTime.now().add(const Duration(days: 365)));
     if (date == null) return;
     final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(initial),
-    );
+        context: context, initialTime: TimeOfDay.fromDateTime(initial));
     if (time == null) return;
     setState(() {
       final combined =
@@ -653,13 +589,12 @@ class _DateTile extends StatelessWidget {
   final DateTime date;
   final VoidCallback onTap;
 
-  const _DateTile({
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.date,
-    required this.onTap,
-  });
+  const _DateTile(
+      {required this.icon,
+      required this.iconColor,
+      required this.label,
+      required this.date,
+      required this.onTap});
 
   String get _formatted {
     const months = [
@@ -686,31 +621,28 @@ class _DateTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: iconColor),
+          Icon(icon, size: 17, color: iconColor),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey.shade500,
-                    letterSpacing: 0.5,
-                  ),
-                ),
+                Text(label,
+                    style: TextStyle(
+                        fontSize: 9.5,
+                        color: Colors.grey.shade500,
+                        letterSpacing: 0.5,
+                        fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                Text(
-                  _formatted,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                Text(_formatted,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF16181F)),
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -726,12 +658,11 @@ class _FeatureCard extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _FeatureCard({
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.subtitle,
-  });
+  const _FeatureCard(
+      {required this.icon,
+      required this.color,
+      required this.title,
+      required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -742,10 +673,9 @@ class _FeatureCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.08),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          )
+              color: color.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 6))
         ],
       ),
       child: Column(
@@ -753,23 +683,15 @@ class _FeatureCard extends StatelessWidget {
         children: [
           StubIcon(icon: icon, color: color, size: 38),
           const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 13.5,
-              color: Color(0xFF16181F),
-            ),
-          ),
+          Text(title,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.5,
+                  color: Color(0xFF16181F))),
           const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
-              height: 1.4,
-            ),
-          ),
+          Text(subtitle,
+              style: TextStyle(
+                  fontSize: 11, color: Colors.grey.shade600, height: 1.4)),
         ],
       ),
     );
