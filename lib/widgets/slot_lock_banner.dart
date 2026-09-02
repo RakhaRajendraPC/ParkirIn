@@ -29,7 +29,12 @@ class _SlotLockBannerState extends State<SlotLockBanner> {
     _sub = SlotLockService.instance.countdown.listen((d) {
       if (!mounted) return;
       setState(() => _remaining = d);
-      if (d == Duration.zero && !_hasExpired) {
+      // A zero-duration tick also fires when the lock is released
+      // intentionally (e.g. a successful booking elsewhere) — only treat it
+      // as an expiry if the service confirms the countdown actually ran out.
+      if (d == Duration.zero &&
+          !_hasExpired &&
+          SlotLockService.instance.lastReleaseWasExpiry) {
         _hasExpired = true;
         widget.onExpired();
       }

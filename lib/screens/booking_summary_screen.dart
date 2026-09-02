@@ -126,7 +126,11 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       bookingCode: bookingCode,
     ));
 
-    Navigator.pushReplacement(
+    // Clears SelectVehicleScreen and this summary screen from the stack —
+    // once a booking succeeds, back-navigation must never land the user in
+    // the middle of an already-completed booking flow (also what leaves a
+    // stale SlotLockBanner alive to misfire an expiry dialog).
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
         builder: (context) => BookingConfirmationScreen(
@@ -137,6 +141,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
           total: _total,
         ),
       ),
+      (route) => route.isFirst,
     );
   }
 

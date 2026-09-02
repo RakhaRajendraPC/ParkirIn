@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../services/favorites_service.dart';
+import '../services/locations_api_service.dart';
+import '../services/api_exception.dart';
+import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/empty_search_view.dart';
+import '../widgets/app_toast.dart';
 import 'location_detail_screen.dart';
 import 'map_view_screen.dart';
 import 'advanced_filter_screen.dart';
@@ -26,12 +30,37 @@ class SearchResultsScreen extends StatefulWidget {
 class _SearchResultsScreenState extends State<SearchResultsScreen> {
   static const Color primaryBlue = Color(0xFF1E5EFF);
   final FavoritesService _favorites = FavoritesService.instance;
+  final LocationsApiService _locationsApi = LocationsApiService();
   String _sortBy = 'Terdekat';
   bool _onlyAccessible = false;
   SearchFilterResult? _advancedFilter;
+  List<ParkingLocation> _locations = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocations();
+  }
+
+  Future<void> _loadLocations() async {
+    setState(() => _isLoading = true);
+    try {
+      final locations = await _locationsApi.getLocations();
+      if (!mounted) return;
+      setState(() {
+        _locations = locations;
+        _isLoading = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    }
+  }
 
   List<ParkingLocation> get _results {
-    var list = List<ParkingLocation>.from(ParkingLocation.mockList());
+    var list = List<ParkingLocation>.from(_locations);
 
     if (_onlyAccessible) {
       list = list.where((e) => e.isAccessible).toList();
@@ -104,7 +133,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           children: [
             _buildFilterBar(),
             Expanded(
-              child: _results.isEmpty
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _results.isEmpty
                   ? EmptySearchView(
                       onResetFilter: () => setState(() {
                         _advancedFilter = null;

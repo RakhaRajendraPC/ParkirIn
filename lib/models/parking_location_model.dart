@@ -23,6 +23,28 @@ class ParkingLocation {
     this.imagePath = '',
   });
 
+  /// Maps a `/locations` summary JSON object to this model. The backend
+  /// doesn't provide rating, distance, or an image yet, so those fall back
+  /// to 0/empty rather than fabricated placeholder values.
+  factory ParkingLocation.fromApi(Map<String, dynamic> json) {
+    final startingPrice = json['startingPrice'];
+    return ParkingLocation(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      address: json['address'] as String,
+      pricePerNight:
+          startingPrice == null ? 0 : (startingPrice as num).toDouble(),
+      rating: 0,
+      distanceKm: 0,
+      isIndoor: json['isIndoor'] as bool? ?? false,
+      facilities: (json['facilities'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString())
+          .toList(),
+      isAccessible: json['isAccessible'] as bool? ?? false,
+      imagePath: '',
+    );
+  }
+
   static List<ParkingLocation> mockList() => const [
         ParkingLocation(
           id: 'loc1',
