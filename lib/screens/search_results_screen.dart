@@ -6,6 +6,7 @@ import '../services/api_exception.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/empty_search_view.dart';
+import '../widgets/network_error_view.dart';
 import '../widgets/app_toast.dart';
 import 'location_detail_screen.dart';
 import 'map_view_screen.dart';
@@ -36,6 +37,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   SearchFilterResult? _advancedFilter;
   List<ParkingLocation> _locations = [];
   bool _isLoading = true;
+  bool _hasError = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -44,18 +47,23 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   }
 
   Future<void> _loadLocations() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
     try {
       final locations = await _locationsApi.getLocations();
       if (!mounted) return;
-      setState(() {
-        _locations = locations;
-        _isLoading = false;
-      });
+      setState(() => _locations = locations);
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      setState(() {
+        _hasError = true;
+        _errorMessage = e.message;
+      });
       showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -135,6 +143,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
+                  : _hasError
+                  ? NetworkErrorView(
+                      onRetry: _loadLocations,
+                      message: _errorMessage,
+                      title: 'Tidak Dapat Terhubung ke Server',
+                      icon: Icons.cloud_off_outlined,
+                    )
                   : _results.isEmpty
                   ? EmptySearchView(
                       onResetFilter: () => setState(() {

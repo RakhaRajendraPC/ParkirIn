@@ -1,31 +1,32 @@
 import 'package:flutter/material.dart';
 
-enum SlotAvailability { available, occupied }
+/// 'locked' means someone else has an active, time-limited hold on the slot
+/// mid-booking (not yet paid) — distinct from 'occupied' (a parked vehicle)
+/// and 'outOfService' (closed for maintenance by the operator).
+enum SlotAvailability { available, locked, occupied, outOfService }
 
 enum SlotTier { premium, standard, economy }
 
 class ParkingSlot {
+  final String id;
   final String code;
   final String rowLabel;
   final int col;
   final double distanceFromEntrance;
   final double price;
+  final SlotTier tier;
   final SlotAvailability availability;
 
   const ParkingSlot({
+    this.id = '',
     required this.code,
     required this.rowLabel,
     required this.col,
     required this.distanceFromEntrance,
     required this.price,
+    required this.tier,
     required this.availability,
   });
-
-  SlotTier get tier {
-    if (distanceFromEntrance < 20) return SlotTier.premium;
-    if (distanceFromEntrance < 45) return SlotTier.standard;
-    return SlotTier.economy;
-  }
 
   Color get tierColor {
     switch (tier) {
@@ -48,6 +49,67 @@ class ParkingSlot {
         return 'Ekonomis';
     }
   }
+
+  /// Maps a `/locations/:id/slots` JSON object to this model. The backend
+  /// doesn't return a per-slot price — only the location's starting price —
+  /// so it's derived the same way the old mock data did: a tier multiplier
+  /// applied to [basePrice].
+  factory ParkingSlot.fromApi(
+    Map<String, dynamic> json, {
+    required double basePrice,
+  }) {
+    final tier = _tierFromApi(json['tier'] as String);
+    return ParkingSlot(
+      id: json['id'] as String,
+      code: json['code'] as String,
+      rowLabel: json['rowLabel'] as String,
+      col: json['col'] as int,
+      distanceFromEntrance: (json['distanceFromEntrance'] as num).toDouble(),
+      price: _priceForTier(tier, basePrice),
+      tier: tier,
+      availability: _availabilityFromApi(json['status'] as String),
+    );
+  }
+
+  static SlotTier _tierFromApi(String raw) {
+    switch (raw) {
+      case 'premium':
+        return SlotTier.premium;
+      case 'standard':
+        return SlotTier.standard;
+      default:
+        return SlotTier.economy;
+    }
+  }
+
+  static SlotAvailability _availabilityFromApi(String raw) {
+    switch (raw) {
+      case 'available':
+        return SlotAvailability.available;
+      case 'locked':
+        return SlotAvailability.locked;
+      case 'occupied':
+        return SlotAvailability.occupied;
+      default:
+        return SlotAvailability.outOfService;
+    }
+  }
+
+  static double _priceForTier(SlotTier tier, double basePrice) {
+    final double multiplier;
+    switch (tier) {
+      case SlotTier.premium:
+        multiplier = 1.35;
+        break;
+      case SlotTier.standard:
+        multiplier = 1.10;
+        break;
+      case SlotTier.economy:
+        multiplier = 0.85;
+        break;
+    }
+    return (basePrice * multiplier / 1000).round() * 1000.0;
+  }
 }
 
 class ParkingRow {
@@ -58,55 +120,18 @@ class ParkingRow {
 }
 
 class ParkingSlotGenerator {
-  static List<ParkingRow> generate({
-    required double basePrice,
-    int totalRows = 6,
-    int blocksPerRow = 3,
-    int colsPerBlock = 8,
-  }) {
-    final List<ParkingRow> rows = [];
-    final rowLabels =
-        List.generate(totalRows, (i) => String.fromCharCode(65 + i));
-
-    for (int r = 0; r < totalRows; r++) {
-      final distance = (r * 18) + 10.0;
-
-      double multiplier;
-      if (distance < 20) {
-        multiplier = 1.35;
-      } else if (distance < 45) {
-        multiplier = 1.10;
-      } else {
-        multiplier = 0.85;
-      }
-      final price = (basePrice * multiplier / 1000).round() * 1000.0;
-
-      final List<List<ParkingSlot>> blocks = [];
-      int slotCounter = 1;
-      for (int b = 0; b < blocksPerRow; b++) {
-        final blockSlots = List.generate(colsPerBlock, (c) {
-          final code = '${rowLabels[r]}$slotCounter';
-          final seed =
-              r * (blocksPerRow * colsPerBlock) + (b * colsPerBlock) + c;
-          final isOccupied = seed % 7 == 0 || (r == 1 && b == 1 && c == 2);
-          slotCounter++;
-          return ParkingSlot(
-            code: code,
-            rowLabel: rowLabels[r],
-            col: b * colsPerBlock + c,
-            distanceFromEntrance: distance,
-            price: price,
-            availability: isOccupied
-                ? SlotAvailability.occupied
-                : SlotAvailability.available,
-          );
-        });
-        blocks.add(blockSlots);
-      }
-
-      rows.add(ParkingRow(label: rowLabels[r], blocks: blocks));
+  /// Groups a flat, already row/col-sorted slot list (as returned by
+  /// `/locations/:id/slots`) into [ParkingRow]s for the slot map grid. The
+  /// backend doesn't provide sub-row block boundaries, so each row renders
+  /// as a single block.
+  static List<ParkingRow> groupByRow(List<ParkingSlot> slots) {
+    final Map<String, List<ParkingSlot>> byRow = {};
+    for (final slot in slots) {
+      byRow.putIfAbsent(slot.rowLabel, () => []).add(slot);
     }
-    return rows;
+    return byRow.entries
+        .map((e) => ParkingRow(label: e.key, blocks: [e.value]))
+        .toList();
   }
 
   static List<List<ParkingRow>> groupRows(List<ParkingRow> rows) {

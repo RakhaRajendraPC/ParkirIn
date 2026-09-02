@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/parking_slot_model.dart';
+import '../services/api_exception.dart';
 import '../services/app_settings.dart';
+import '../services/locations_api_service.dart';
+import '../services/slot_lock_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/app_toast.dart';
 import 'select_vehicle_screen.dart';
 
 class ParkingSlotMapScreen extends StatefulWidget {
@@ -23,17 +27,17 @@ class ParkingSlotMapScreen extends StatefulWidget {
 }
 
 class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
-  late final List<ParkingRow> _rows;
-  late final List<List<ParkingRow>> _rowGroups;
+  final LocationsApiService _locationsApi = LocationsApiService();
+  List<List<ParkingRow>> _rowGroups = [];
   ParkingSlot? _selected;
+  bool _isLoading = true;
+  bool _isLocking = false;
 
   @override
   void initState() {
     super.initState();
-    _rows =
-        ParkingSlotGenerator.generate(basePrice: widget.location.pricePerNight);
-    _rowGroups = ParkingSlotGenerator.groupRows(_rows);
     AppSettings.instance.addListener(_onChanged);
+    _loadSlots();
   }
 
   @override
@@ -46,13 +50,63 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _loadSlots() async {
+    setState(() => _isLoading = true);
+    try {
+      final slotJson = await _locationsApi.getLocationSlots(widget.location.id);
+      final slots = slotJson
+          .map((json) => ParkingSlot.fromApi(
+                json,
+                basePrice: widget.location.pricePerNight,
+              ))
+          .toList();
+      final rows = ParkingSlotGenerator.groupByRow(slots);
+      if (!mounted) return;
+      setState(() => _rowGroups = ParkingSlotGenerator.groupRows(rows));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _selectSlot(ParkingSlot slot) {
-    if (slot.availability == SlotAvailability.occupied) return;
+    if (slot.availability != SlotAvailability.available) return;
     setState(() => _selected = slot);
   }
 
-  void _continue() {
-    if (_selected == null) return;
+  Future<void> _continue() async {
+    final slot = _selected;
+    if (slot == null || _isLocking) return;
+
+    setState(() => _isLocking = true);
+    try {
+      await SlotLockService.instance.lockSlot(
+        slot.id,
+        widget.checkIn,
+        widget.checkOut,
+      );
+    } on SlotLockConflictException catch (e) {
+      if (!mounted) return;
+      showAppToast(context, severity: AppSeverity.warning, message: e.message);
+      setState(() {
+        _isLocking = false;
+        _selected = null;
+      });
+      // The slot's status changed server-side — refresh so it renders as
+      // locked/occupied instead of leaving the stale "available" grid up.
+      await _loadSlots();
+      return;
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLocking = false);
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLocking = false);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -60,7 +114,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
           location: widget.location,
           checkIn: widget.checkIn,
           checkOut: widget.checkOut,
-          selectedSlot: _selected!,
+          selectedSlot: slot,
         ),
       ),
     );
@@ -87,24 +141,26 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
             ],
           ),
         ),
-        body: Column(
-          children: [
-            _buildLegend(),
-            Expanded(
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 2.5,
-                boundaryMargin: const EdgeInsets.all(80),
-                constrained: false,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: _buildParkingLot(),
-                ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  _buildLegend(),
+                  Expanded(
+                    child: InteractiveViewer(
+                      minScale: 0.5,
+                      maxScale: 2.5,
+                      boundaryMargin: const EdgeInsets.all(80),
+                      constrained: false,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: _buildParkingLot(),
+                      ),
+                    ),
+                  ),
+                  if (_selected != null) _buildSelectedPreview(),
+                ],
               ),
-            ),
-            if (_selected != null) _buildSelectedPreview(),
-          ],
-        ),
         bottomNavigationBar: SafeArea(
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -118,7 +174,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: _selected == null ? null : _continue,
+                onPressed: (_selected == null || _isLocking) ? null : _continue,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -126,12 +182,21 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text(
-                  _selected == null
-                      ? AppStrings.t('slot_select_first')
-                      : '${AppStrings.t('slot_continue_with')} ${_selected!.code}',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
+                child: _isLocking
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        _selected == null
+                            ? AppStrings.t('slot_select_first')
+                            : '${AppStrings.t('slot_continue_with')} ${_selected!.code}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
               ),
             ),
           ),
@@ -168,6 +233,9 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
           dot(AppColors.primary, AppStrings.t('slot_legend_standard')),
           dot(const Color(0xFF2FAE60), AppStrings.t('slot_legend_economy')),
           dot(Colors.grey.shade400, AppStrings.t('slot_legend_occupied')),
+          dot(AppColors.warningOrange, AppStrings.t('slot_legend_locked')),
+          dot(Colors.blueGrey.shade300,
+              AppStrings.t('slot_legend_out_of_service')),
         ],
       ),
     );
@@ -242,24 +310,49 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
   }
 
   Widget _buildSlotCell(ParkingSlot slot) {
-    final isOccupied = slot.availability == SlotAvailability.occupied;
     final isSelected = _selected?.code == slot.code;
 
     Color borderColor;
     Color fillColor;
-    if (isOccupied) {
-      borderColor = Colors.grey.shade300;
-      fillColor = Colors.grey.shade100;
-    } else if (isSelected) {
-      borderColor = slot.tierColor;
-      fillColor = slot.tierColor;
-    } else {
-      borderColor = slot.tierColor.withOpacity(0.55);
-      fillColor = Colors.white;
+    IconData? icon;
+    Color iconColor = Colors.grey.shade400;
+
+    switch (slot.availability) {
+      case SlotAvailability.occupied:
+        borderColor = Colors.grey.shade300;
+        fillColor = Colors.grey.shade100;
+        icon = Icons.directions_car;
+        break;
+      case SlotAvailability.locked:
+        // Someone else has an active, time-limited hold on this slot mid-
+        // booking — distinct from a parked car (occupied), using the same
+        // warning-orange tone as the slot-lock countdown banner elsewhere.
+        borderColor = AppColors.warningOrange;
+        fillColor = AppColors.warningOrange.withOpacity(0.1);
+        icon = Icons.lock_clock_outlined;
+        iconColor = AppColors.warningOrange;
+        break;
+      case SlotAvailability.outOfService:
+        borderColor = Colors.blueGrey.shade200;
+        fillColor = Colors.blueGrey.shade50;
+        icon = Icons.block;
+        iconColor = Colors.blueGrey.shade300;
+        break;
+      case SlotAvailability.available:
+        if (isSelected) {
+          borderColor = slot.tierColor;
+          fillColor = slot.tierColor;
+        } else {
+          borderColor = slot.tierColor.withOpacity(0.55);
+          fillColor = Colors.white;
+        }
+        break;
     }
 
+    final isAvailable = slot.availability == SlotAvailability.available;
+
     return InkWell(
-      onTap: () => _selectSlot(slot),
+      onTap: isAvailable ? () => _selectSlot(slot) : null,
       child: Container(
         height: 90,
         margin: const EdgeInsets.symmetric(horizontal: 1.5),
@@ -271,8 +364,8 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
             right: BorderSide(color: borderColor, width: isSelected ? 2 : 1),
           ),
         ),
-        child: isOccupied
-            ? Icon(Icons.directions_car, size: 16, color: Colors.grey.shade400)
+        child: icon != null
+            ? Icon(icon, size: 16, color: iconColor)
             : Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(

@@ -16,7 +16,13 @@ const String authTokenStorageKey = 'auth_token';
 /// (if any) to every outgoing request.
 class ApiClient {
   ApiClient._internal() {
-    _dio = Dio(BaseOptions(baseUrl: _baseUrl));
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: _baseUrl,
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 15),
+      ),
+    );
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {

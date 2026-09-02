@@ -10,8 +10,16 @@ import '../utils/app_colors.dart';
 class NetworkErrorView extends StatelessWidget {
   final VoidCallback onRetry;
   final String? message;
+  final String? title;
+  final IconData? icon;
 
-  const NetworkErrorView({super.key, required this.onRetry, this.message});
+  const NetworkErrorView({
+    super.key,
+    required this.onRetry,
+    this.message,
+    this.title,
+    this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +34,13 @@ class NetworkErrorView extends StatelessWidget {
               decoration: BoxDecoration(
                   color: AppColors.warningOrange.withOpacity(0.1),
                   shape: BoxShape.circle),
-              child: Icon(Icons.wifi_off_rounded,
+              child: Icon(icon ?? Icons.wifi_off_rounded,
                   size: 40, color: AppColors.warningOrange),
             ),
             const SizedBox(height: 16),
-            const Text('Tidak Ada Koneksi Internet',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            Text(title ?? 'Tidak Ada Koneksi Internet',
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
             Text(
               message ?? 'Periksa koneksi internet Anda dan coba lagi.',

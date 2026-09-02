@@ -9,6 +9,9 @@ class ParkingLocation {
   final List<String> facilities;
   final bool isAccessible;
   final String imagePath;
+  final String? closingTime;
+  final int? totalSlots;
+  final int? availableSlots;
 
   const ParkingLocation({
     required this.id,
@@ -21,11 +24,16 @@ class ParkingLocation {
     required this.facilities,
     this.isAccessible = false,
     this.imagePath = '',
+    this.closingTime,
+    this.totalSlots,
+    this.availableSlots,
   });
 
-  /// Maps a `/locations` summary JSON object to this model. The backend
-  /// doesn't provide rating, distance, or an image yet, so those fall back
-  /// to 0/empty rather than fabricated placeholder values.
+  /// Maps a `/locations` summary or `/locations/:id` detail JSON object to
+  /// this model. The backend doesn't provide rating, distance, or an image
+  /// yet, so those fall back to 0/empty rather than fabricated placeholder
+  /// values. closingTime/totalSlots/availableSlots are only present on the
+  /// detail response — absent on the summary, they stay null.
   factory ParkingLocation.fromApi(Map<String, dynamic> json) {
     final startingPrice = json['startingPrice'];
     return ParkingLocation(
@@ -42,6 +50,9 @@ class ParkingLocation {
           .toList(),
       isAccessible: json['isAccessible'] as bool? ?? false,
       imagePath: '',
+      closingTime: json['closingTime'] as String?,
+      totalSlots: json['totalSlots'] as int?,
+      availableSlots: json['availableSlots'] as int?,
     );
   }
 

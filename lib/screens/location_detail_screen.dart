@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/review_model.dart';
+import '../services/api_exception.dart';
 import '../services/app_settings.dart';
+import '../services/locations_api_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/app_toast.dart';
 import 'parking_slot_map_screen.dart';
 
 class LocationDetailScreen extends StatefulWidget {
@@ -23,10 +26,15 @@ class LocationDetailScreen extends StatefulWidget {
 }
 
 class _LocationDetailScreenState extends State<LocationDetailScreen> {
+  final LocationsApiService _locationsApi = LocationsApiService();
+  ParkingLocation? _location;
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
     AppSettings.instance.addListener(_onChanged);
+    _loadDetail();
   }
 
   @override
@@ -37,6 +45,20 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
 
   void _onChanged() {
     if (mounted) setState(() {});
+  }
+
+  Future<void> _loadDetail() async {
+    setState(() => _isLoading = true);
+    try {
+      final json = await _locationsApi.getLocationDetail(widget.location.id);
+      if (!mounted) return;
+      setState(() => _location = ParkingLocation.fromApi(json));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   IconData _facilityIcon(String label) {
@@ -51,7 +73,15 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final location = widget.location;
+    if (_isLoading || _location == null) {
+      return const SafeArea(
+        child: Scaffold(
+          backgroundColor: Color(0xFFF7F8FA),
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+    final location = _location!;
 
     return SafeArea(
       child: Scaffold(
