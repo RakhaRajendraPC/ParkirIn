@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/parking_slot_model.dart';
-import '../models/booking_model.dart';
-import '../models/notification_model.dart';
-import '../services/slot_lock_service.dart';
-import '../services/booking_repository.dart';
-import '../services/notification_repository.dart';
+import '../services/api_exception.dart';
 import '../services/app_settings.dart';
+import '../services/bookings_api_service.dart';
 import '../utils/app_colors.dart';
-import 'booking_confirmation_screen.dart';
+import '../widgets/app_toast.dart';
+import 'payment_waiting_screen.dart';
 import '../utils/currency_formatter.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
@@ -18,6 +16,7 @@ class BookingSummaryScreen extends StatefulWidget {
   final ParkingSlot? selectedSlot;
   final String driverName;
   final String driverPhone;
+  final String vehicleId;
   final String vehiclePlate;
   final String vehicleBrand;
   final String vehicleType;
@@ -30,6 +29,7 @@ class BookingSummaryScreen extends StatefulWidget {
     this.selectedSlot,
     this.driverName = '',
     this.driverPhone = '',
+    required this.vehicleId,
     this.vehiclePlate = '',
     this.vehicleBrand = '',
     this.vehicleType = '',
@@ -40,7 +40,8 @@ class BookingSummaryScreen extends StatefulWidget {
 }
 
 class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
-  String _selectedPayment = 'QRIS';
+  final BookingsApiService _bookingsApi = BookingsApiService();
+  String _selectedPayment = 'Virtual Account BCA';
   bool _isProcessing = false;
 
   @override
@@ -91,57 +92,67 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     return '${d.day} ${months[d.month]} · $hh:$mm';
   }
 
+  /// 'Virtual Account BCA' / 'Virtual Account BRI' are the only selectable
+  /// options right now (see _buildPaymentMethod) — QRIS/GoPay UI is a
+  /// separate, later task.
+  String get _selectedVaBank =>
+      _selectedPayment == 'Virtual Account BRI' ? 'bri' : 'bca';
+
   Future<void> _pay() async {
+    final slot = widget.selectedSlot;
+    if (slot == null || _isProcessing) return;
+
     setState(() => _isProcessing = true);
-    await Future.delayed(const Duration(seconds: 2));
+    final Map<String, dynamic> booking;
+    try {
+      booking = await _bookingsApi.createBooking(
+        slotId: slot.id,
+        vehicleId: widget.vehicleId,
+        checkInPlanned: widget.checkIn,
+        checkOutPlanned: widget.checkOut,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+      if (e.statusCode == 409) {
+        // The slot lock expired or was invalidated between selection and
+        // payment — same "don't strand the user" principle as the
+        // lock-conflict handling in ParkingSlotMapScreen: surface the
+        // backend's own message, then pop back to that screen (2 hops up,
+        // past SelectVehicleScreen) so they can pick a slot again. Its own
+        // existing lock-conflict handling already refreshes the grid the
+        // next time a lock is actually attempted there, so a fresh
+        // _loadSlots() call isn't duplicated here.
+        showAppToast(context, severity: AppSeverity.warning, message: e.message);
+        final navigator = Navigator.of(context);
+        navigator.pop();
+        navigator.pop();
+      } else {
+        showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+      }
+      return;
+    }
+
     if (!mounted) return;
     setState(() => _isProcessing = false);
 
-    final bookingCode = 'PKR-${DateTime.now().millisecondsSinceEpoch % 100000}';
-
-    final newBooking = BookingModel(
-      bookingCode: bookingCode,
-      locationName: widget.location.name,
-      locationAddress: widget.location.address,
-      checkIn: widget.checkIn,
-      checkOut: widget.checkOut,
-      vehiclePlate: widget.vehiclePlate,
-      slotCode: widget.selectedSlot?.code ?? '',
-      basePrice: _pricePerNight,
-      serviceFee: _serviceFee,
-      shuttleFee: 0,
-      status: BookingStatus.dipesan,
-    );
-    BookingRepository.instance.add(newBooking);
-    SlotLockService.instance.release();
-
-    NotificationRepository.instance.add(AppNotification(
-      id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
-      type: NotificationType.bookingConfirmation,
-      title: AppStrings.t('summary_notif_title'),
-      description:
-          '${AppStrings.t('summary_notif_desc_prefix')} ${widget.selectedSlot?.code ?? '-'} di ${widget.location.name} ${AppStrings.t('summary_notif_desc_suffix')}',
-      timestamp: DateTime.now(),
-      actionLabel: AppStrings.t('summary_notif_action'),
-      bookingCode: bookingCode,
-    ));
-
-    // Clears SelectVehicleScreen and this summary screen from the stack —
-    // once a booking succeeds, back-navigation must never land the user in
-    // the middle of an already-completed booking flow (also what leaves a
-    // stale SlotLockBanner alive to misfire an expiry dialog).
-    Navigator.pushAndRemoveUntil(
+    Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => BookingConfirmationScreen(
-          bookingCode: bookingCode,
+        builder: (context) => PaymentWaitingScreen(
+          bookingCode: booking['bookingCode'] as String,
+          bank: _selectedVaBank,
           location: widget.location,
           checkIn: widget.checkIn,
           checkOut: widget.checkOut,
-          total: _total,
+          lockExpiresAt: DateTime.parse(booking['lockExpiresAt'] as String),
+          vehiclePlate: widget.vehiclePlate,
+          slotCode: slot.code,
+          basePrice: (booking['basePrice'] as num).toDouble(),
+          serviceFee: (booking['serviceFee'] as num).toDouble(),
+          total: (booking['total'] as num).toDouble(),
         ),
       ),
-      (route) => route.isFirst,
     );
   }
 
@@ -434,8 +445,11 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   }
 
   Widget _buildPaymentMethod() {
+    // Only VA is wired to the real backend for now — QRIS/GoPay UI is a
+    // separate, later task, so those tiles render disabled/greyed rather
+    // than removed (so the layout stays familiar for when they're added).
     final methods = [
-      ('QRIS', Icons.qr_code, false),
+      ('QRIS', Icons.qr_code, true),
       ('Virtual Account BCA', Icons.account_balance_outlined, false),
       ('Virtual Account BRI', Icons.account_balance_outlined, false),
       ('E-Wallet', Icons.account_balance_wallet_outlined, true),
@@ -460,11 +474,13 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
           ),
           const SizedBox(height: 8),
           ...methods.map((m) {
-            final selected = _selectedPayment == m.$1;
+            final comingSoon = m.$3;
+            final selected = !comingSoon && _selectedPayment == m.$1;
             return RadioListTile<String>(
               value: m.$1,
               groupValue: _selectedPayment,
-              onChanged: (v) => setState(() => _selectedPayment = v!),
+              onChanged:
+                  comingSoon ? null : (v) => setState(() => _selectedPayment = v!),
               activeColor: AppColors.primary,
               contentPadding: EdgeInsets.zero,
               title: Row(
@@ -481,9 +497,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                       fontSize: 13,
                       fontWeight:
                           selected ? FontWeight.w600 : FontWeight.normal,
+                      color: comingSoon ? Colors.grey.shade500 : null,
                     ),
                   ),
-                  if (m.$3) ...[
+                  if (comingSoon) ...[
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -495,7 +512,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        AppStrings.t('summary_opsional_badge'),
+                        AppStrings.t('summary_method_coming_soon_badge'),
                         style: TextStyle(
                           fontSize: 8,
                           color: Colors.grey.shade600,

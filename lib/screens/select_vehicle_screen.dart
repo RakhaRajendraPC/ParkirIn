@@ -106,6 +106,7 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
           selectedSlot: widget.selectedSlot,
           driverName: _session.name,
           driverPhone: _session.phone,
+          vehicleId: v.id,
           vehiclePlate: v.plate,
           vehicleBrand: v.brand,
           vehicleType: v.type,

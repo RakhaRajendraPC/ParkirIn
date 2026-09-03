@@ -86,6 +86,16 @@ class SlotLockService {
     }
   }
 
+  /// Resyncs the local countdown to a new server-provided expiry — e.g.
+  /// once a booking is created and the backend extends the lock's TTL to a
+  /// fresh payment window. Doesn't touch [_lockedSlotId] or emit anything
+  /// itself; the running ticker (if any) picks up the new value on its very
+  /// next tick since [remaining] always reads [_lockExpiry] fresh, so there
+  /// is nothing to restart.
+  void updateExpiresAt(DateTime expiresAt) {
+    _lockExpiry = expiresAt;
+  }
+
   String _conflictMessage(DioException e) {
     final data = e.response?.data;
     if (data is Map && data['message'] != null) {

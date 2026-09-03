@@ -204,6 +204,36 @@ class AppStrings {
     'summary_notif_desc_prefix': 'Slot',
     'summary_notif_desc_suffix': 'telah dikonfirmasi.',
     'summary_notif_action': 'Lihat QR Code',
+    'summary_method_coming_soon_badge': 'Segera Hadir',
+    'waiting_appbar_title': 'Menunggu Pembayaran',
+    'waiting_va_instruction':
+        'Selesaikan pembayaran melalui Virtual Account berikut sebelum waktu habis.',
+    'waiting_va_bank_label': 'Bank',
+    'waiting_va_number_label': 'Nomor Virtual Account',
+    'waiting_copy_btn': 'Salin Nomor',
+    'waiting_copy_success': 'Nomor VA disalin ke clipboard',
+    'waiting_status_checking': 'Memeriksa status pembayaran...',
+    'waiting_status_sub':
+        'Halaman ini akan berpindah otomatis setelah pembayaran Anda terkonfirmasi.',
+    'waiting_initiate_error_title': 'Gagal Memulai Pembayaran',
+    'waiting_initiate_retry_btn': 'Coba Lagi',
+    'waiting_timeout_title': 'Belum Ada Konfirmasi Pembayaran',
+    'waiting_timeout_msg':
+        'Kami belum menerima konfirmasi pembayaran Anda. Jika Anda sudah membayar, coba periksa status sekarang.',
+    'waiting_check_now_btn': 'Cek Status Sekarang',
+    'waiting_connection_lost_title': 'Tidak Dapat Memeriksa Status',
+    'waiting_connection_lost_msg':
+        'Tidak dapat terhubung ke server. Periksa koneksi Anda dan coba lagi.',
+    'waiting_retry_btn': 'Coba Lagi',
+    'waiting_leave_title': 'Batalkan Menunggu Pembayaran?',
+    'waiting_leave_msg':
+        'Booking Anda masih menunggu pembayaran. Jika Anda keluar sekarang, Anda bisa melanjutkan pembayaran nanti melalui Riwayat Booking selama slot masih terkunci untuk Anda.',
+    'waiting_leave_stay_btn': 'Tetap di Sini',
+    'waiting_leave_confirm_btn': 'Keluar',
+    'waiting_lock_expired_title': 'Waktu Pembayaran Habis',
+    'waiting_lock_expired_msg':
+        'Waktu untuk menyelesaikan pembayaran telah habis dan slot mungkin sudah tidak dikunci untuk Anda lagi.',
+    'waiting_lock_expired_btn': 'Kembali ke Beranda',
     'confirm_title': 'Booking Berhasil!',
     'confirm_subtitle':
         'Konfirmasi & QR Code telah dikirim untuk booking Anda.',
@@ -618,6 +648,36 @@ class AppStrings {
     'summary_notif_desc_prefix': 'Slot',
     'summary_notif_desc_suffix': 'has been confirmed.',
     'summary_notif_action': 'View QR Code',
+    'summary_method_coming_soon_badge': 'Coming Soon',
+    'waiting_appbar_title': 'Waiting for Payment',
+    'waiting_va_instruction':
+        'Complete your payment via the Virtual Account below before time runs out.',
+    'waiting_va_bank_label': 'Bank',
+    'waiting_va_number_label': 'Virtual Account Number',
+    'waiting_copy_btn': 'Copy Number',
+    'waiting_copy_success': 'VA number copied to clipboard',
+    'waiting_status_checking': 'Checking payment status...',
+    'waiting_status_sub':
+        'This page will move on automatically once your payment is confirmed.',
+    'waiting_initiate_error_title': 'Failed to Start Payment',
+    'waiting_initiate_retry_btn': 'Try Again',
+    'waiting_timeout_title': 'No Payment Confirmation Yet',
+    'waiting_timeout_msg':
+        "We haven't received your payment confirmation yet. If you've already paid, try checking the status now.",
+    'waiting_check_now_btn': 'Check Status Now',
+    'waiting_connection_lost_title': "Can't Check Status",
+    'waiting_connection_lost_msg':
+        'Unable to reach the server. Check your connection and try again.',
+    'waiting_retry_btn': 'Try Again',
+    'waiting_leave_title': 'Cancel Waiting for Payment?',
+    'waiting_leave_msg':
+        'Your booking is still awaiting payment. If you leave now, you can resume payment later from Booking History as long as the slot is still locked for you.',
+    'waiting_leave_stay_btn': 'Stay Here',
+    'waiting_leave_confirm_btn': 'Leave',
+    'waiting_lock_expired_title': 'Payment Window Expired',
+    'waiting_lock_expired_msg':
+        'The time to complete payment has run out, and the slot may no longer be locked for you.',
+    'waiting_lock_expired_btn': 'Back to Home',
     'confirm_title': 'Booking Successful!',
     'confirm_subtitle':
         'Confirmation & QR Code have been sent for your booking.',
