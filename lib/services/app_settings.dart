@@ -99,6 +99,7 @@ class AppStrings {
     'bookings_tab_dibatalkan': 'Dibatalkan',
     'bookings_tab_kedaluwarsa': 'Kedaluwarsa',
     'bookings_empty': 'Belum ada booking',
+    'bookings_load_error_title': 'Gagal Memuat Booking',
     'bookings_slot_label': 'Slot',
     'bookings_checkin_btn': 'Check-in',
     'bookings_checkout_btn': 'Check-out',
@@ -234,6 +235,14 @@ class AppStrings {
     'waiting_lock_expired_msg':
         'Waktu untuk menyelesaikan pembayaran telah habis dan slot mungkin sudah tidak dikunci untuk Anda lagi.',
     'waiting_lock_expired_btn': 'Kembali ke Beranda',
+    'overstay_appbar_title': 'Bayar Biaya Overstay',
+    'overstay_va_instruction':
+        'Selesaikan pembayaran biaya keterlambatan (overstay) melalui Virtual Account berikut.',
+    'overstay_status_sub':
+        'Anda akan kembali otomatis ke proses check-out setelah pembayaran terkonfirmasi.',
+    'overstay_leave_title': 'Batalkan Pembayaran Overstay?',
+    'overstay_leave_msg':
+        'Anda masih perlu membayar biaya overstay untuk menyelesaikan check-out. Anda dapat melanjutkan pembayaran ini nanti dari layar check-out.',
     'confirm_title': 'Booking Berhasil!',
     'confirm_subtitle':
         'Konfirmasi & QR Code telah dikirim untuk booking Anda.',
@@ -246,11 +255,12 @@ class AppStrings {
     'confirm_lihat_booking_btn': 'Lihat Booking Saya',
     'confirm_kembali_beranda_btn': 'Kembali ke Beranda',
     'checkin_appbar_title': 'Check-in',
-    'checkin_waiting_title': 'Tunjukkan QR ini di gerbang masuk',
+    'checkin_waiting_title': 'Memproses Check-in',
     'checkin_success_title': 'Check-in Berhasil',
-    'checkin_waiting_sub': 'Petugas atau kiosk akan memindai QR Code ini',
+    'checkin_waiting_sub': 'Mohon tunggu sebentar',
     'checkin_success_sub': 'Kendaraan Anda tercatat aman di area parkir',
-    'checkin_waiting_qr_status': 'Menunggu validasi gerbang...',
+    'checkin_waiting_qr_status': 'Memproses check-in...',
+    'checkin_error_title': 'Check-in Gagal',
     'checkin_success_banner': 'QR berhasil divalidasi oleh gerbang masuk',
     'checkin_photo_toggle': 'Opsional: Dokumentasikan Kondisi Kendaraan',
     'checkin_photo_note':
@@ -267,14 +277,12 @@ class AppStrings {
     'checkout_overstay_warning':
         'Anda melebihi durasi booking. Biaya tambahan {amount} akan otomatis ditambahkan sebelum portal keluar dapat digunakan.',
     'checkout_appbar_title': 'Check-out',
-    'checkout_waiting_title': 'Tunjukkan QR ini di gerbang keluar',
-    'checkout_waiting_sub': 'Petugas atau kiosk akan memindai QR Code ini',
-    'checkout_waiting_qr_status': 'Menunggu validasi gerbang...',
-    'checkout_photo_toggle': 'Opsional: Verifikasi Akhir Kondisi Kendaraan',
-    'checkout_photo_depan': 'Depan',
-    'checkout_photo_belakang': 'Belakang',
-    'checkout_photo_kiri': 'Kiri',
-    'checkout_photo_kanan': 'Kanan',
+    'checkout_status_checking': 'Memeriksa status checkout...',
+    'checkout_overstay_prompt_title': 'Biaya Overstay Harus Dibayar',
+    'checkout_overstay_prompt_msg':
+        'Anda melebihi durasi booking selama {hours} jam. Bayar biaya tambahan {amount} untuk melanjutkan check-out.',
+    'checkout_pay_overstay_btn': 'Bayar Overstay Sekarang',
+    'checkout_error_title': 'Gagal Memuat Status Checkout',
     'checkout_invoice_title': 'Invoice Final',
     'checkout_success_title': 'Check-out Berhasil',
     'checkout_success_sub': 'Lot parkir Anda telah kembali tersedia',
@@ -533,6 +541,7 @@ class AppStrings {
     'bookings_tab_dibatalkan': 'Cancelled',
     'bookings_tab_kedaluwarsa': 'Expired',
     'bookings_empty': 'No bookings yet',
+    'bookings_load_error_title': 'Failed to Load Bookings',
     'bookings_slot_label': 'Slot',
     'bookings_checkin_btn': 'Check-in',
     'bookings_checkout_btn': 'Check-out',
@@ -678,6 +687,14 @@ class AppStrings {
     'waiting_lock_expired_msg':
         'The time to complete payment has run out, and the slot may no longer be locked for you.',
     'waiting_lock_expired_btn': 'Back to Home',
+    'overstay_appbar_title': 'Pay Overstay Fee',
+    'overstay_va_instruction':
+        'Complete payment of the overstay fee via the Virtual Account below.',
+    'overstay_status_sub':
+        "You'll return to checkout automatically once payment is confirmed.",
+    'overstay_leave_title': 'Cancel Overstay Payment?',
+    'overstay_leave_msg':
+        'You still need to pay the overstay fee to complete checkout. You can resume this payment later from the checkout screen.',
     'confirm_title': 'Booking Successful!',
     'confirm_subtitle':
         'Confirmation & QR Code have been sent for your booking.',
@@ -690,12 +707,13 @@ class AppStrings {
     'confirm_lihat_booking_btn': 'View My Booking',
     'confirm_kembali_beranda_btn': 'Back to Home',
     'checkin_appbar_title': 'Check-in',
-    'checkin_waiting_title': 'Show this QR at the entrance gate',
+    'checkin_waiting_title': 'Processing Check-in',
     'checkin_success_title': 'Check-in Successful',
-    'checkin_waiting_sub': 'Staff or kiosk will scan this QR Code',
+    'checkin_waiting_sub': 'Please wait a moment',
+    'checkin_error_title': 'Check-in Failed',
     'checkin_success_sub':
         'Your vehicle is safely recorded in the parking area',
-    'checkin_waiting_qr_status': 'Waiting for gate validation...',
+    'checkin_waiting_qr_status': 'Processing check-in...',
     'checkin_success_banner': 'QR successfully validated by the entrance gate',
     'checkin_photo_toggle': 'Optional: Document Vehicle Condition',
     'checkin_photo_note':
@@ -712,14 +730,12 @@ class AppStrings {
     'checkout_overstay_warning':
         'You have exceeded the booking duration. An additional fee of {amount} will be automatically charged before the exit portal can be used.',
     'checkout_appbar_title': 'Check-out',
-    'checkout_waiting_title': 'Show this QR at the exit gate',
-    'checkout_waiting_sub': 'Staff or kiosk will scan this QR Code',
-    'checkout_waiting_qr_status': 'Waiting for gate validation...',
-    'checkout_photo_toggle': 'Optional: Final Vehicle Condition Verification',
-    'checkout_photo_depan': 'Front',
-    'checkout_photo_belakang': 'Rear',
-    'checkout_photo_kiri': 'Left',
-    'checkout_photo_kanan': 'Right',
+    'checkout_status_checking': 'Checking checkout status...',
+    'checkout_overstay_prompt_title': 'Overstay Fee Must Be Paid',
+    'checkout_overstay_prompt_msg':
+        'You exceeded your booking duration by {hours} hours. Pay the additional fee of {amount} to continue checkout.',
+    'checkout_pay_overstay_btn': 'Pay Overstay Now',
+    'checkout_error_title': 'Failed to Load Checkout Status',
     'checkout_invoice_title': 'Final Invoice',
     'checkout_success_title': 'Check-out Successful',
     'checkout_success_sub': 'Your parking lot is now available again',

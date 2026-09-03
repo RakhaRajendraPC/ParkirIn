@@ -1,60 +1,33 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../models/booking_model.dart';
-import '../models/notification_model.dart';
-import '../models/parking_location_model.dart';
 import '../services/api_exception.dart';
 import '../services/app_settings.dart';
-import '../services/booking_repository.dart';
 import '../services/bookings_api_service.dart';
-import '../services/notification_repository.dart';
-import '../services/slot_lock_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_sheet.dart';
-import '../widgets/slot_lock_banner.dart';
 import '../widgets/va_payment_card.dart';
-import 'booking_confirmation_screen.dart';
 
-/// Fourth step of the real booking flow, after BookingSummaryScreen commits
-/// to a booking: initiates the VA charge, shows the virtual account number,
-/// and polls until the webhook-driven payment confirmation lands — then
-/// hands off to BookingConfirmationScreen. A booking (menunggu_pembayaran)
-/// and a real, extended slot lock both exist for the whole time this screen
-/// is up, so it owns its own back-navigation guard rather than reusing
-/// BookingSummaryScreen's simpler exit behavior.
-class PaymentWaitingScreen extends StatefulWidget {
+/// Pushed from CheckoutScreen when an overstay fee is due. Its only job is
+/// getting that fee paid — it initiates the VA charge, shows it, and polls
+/// checkout-status until canCheckout flips true, then pops back with
+/// `true`. It deliberately does NOT call the checkout endpoint itself and
+/// has no slot-lock involvement at all (unlike PaymentWaitingScreen, there
+/// is nothing locked during checkout — the slot is actively occupied).
+class OverstayPaymentScreen extends StatefulWidget {
   final String bookingCode;
   final String bank;
-  final ParkingLocation location;
-  final DateTime checkIn;
-  final DateTime checkOut;
-  final DateTime lockExpiresAt;
-  final String vehiclePlate;
-  final String slotCode;
-  final double basePrice;
-  final double serviceFee;
-  final double total;
 
-  const PaymentWaitingScreen({
+  const OverstayPaymentScreen({
     super.key,
     required this.bookingCode,
     required this.bank,
-    required this.location,
-    required this.checkIn,
-    required this.checkOut,
-    required this.lockExpiresAt,
-    required this.vehiclePlate,
-    required this.slotCode,
-    required this.basePrice,
-    required this.serviceFee,
-    required this.total,
   });
 
   @override
-  State<PaymentWaitingScreen> createState() => _PaymentWaitingScreenState();
+  State<OverstayPaymentScreen> createState() => _OverstayPaymentScreenState();
 }
 
-class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
+class _OverstayPaymentScreenState extends State<OverstayPaymentScreen> {
   static const int _maxPollAttempts = 90; // ~6 minutes at 4s intervals
   static const int _maxConsecutiveFailures = 3;
   static const Duration _pollInterval = Duration(seconds: 4);
@@ -65,22 +38,18 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
   String? _initiateError;
   String _vaBank = '';
   String _vaNumber = '';
+  double _amount = 0;
 
   Timer? _pollTimer;
   int _pollAttempts = 0;
   int _consecutiveFailures = 0;
   bool _pollTimedOut = false;
   bool _connectionLost = false;
-  bool _leavingForConfirmation = false;
+  bool _leavingWithResult = false;
 
   @override
   void initState() {
     super.initState();
-    // The backend just extended the lock to a fresh payment window when it
-    // created this booking — resync the local countdown to that real value
-    // instead of leaving it counting down from the original, now-stale,
-    // 10-minute slot-selection expiry.
-    SlotLockService.instance.updateExpiresAt(widget.lockExpiresAt);
     _initiatePayment();
   }
 
@@ -96,7 +65,7 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
       _initiateError = null;
     });
     try {
-      final result = await _bookingsApi.initiatePayment(
+      final result = await _bookingsApi.createOverstayPayment(
         widget.bookingCode,
         method: 'va',
         bank: widget.bank,
@@ -114,9 +83,16 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
         });
         return;
       }
+      // grossAmount comes straight from Midtrans's own charge response —
+      // the backend "freezes" the overstay fee at charge time, so this is
+      // the authoritative amount actually being charged, not a re-estimate.
+      final grossAmount = result['grossAmount'];
       setState(() {
         _vaBank = (first?['bank']?.toString() ?? widget.bank).toUpperCase();
         _vaNumber = number;
+        _amount = grossAmount != null
+            ? double.tryParse(grossAmount.toString()) ?? 0
+            : 0;
         _isInitiating = false;
       });
       _startPolling();
@@ -139,13 +115,15 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
   }
 
   Future<void> _pollOnce() async {
-    if (_leavingForConfirmation) return;
+    if (_leavingWithResult) return;
     _pollAttempts++;
     try {
-      final booking = await _bookingsApi.getBooking(widget.bookingCode);
+      final status = await _bookingsApi.getCheckoutStatus(widget.bookingCode);
       _consecutiveFailures = 0;
-      if (booking['status'] == 'dipesan') {
-        await _onPaymentConfirmed();
+      if (status['canCheckout'] == true) {
+        _leavingWithResult = true;
+        _pollTimer?.cancel();
+        if (mounted) Navigator.of(context).pop(true);
         return;
       }
     } on ApiException {
@@ -163,55 +141,6 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
     }
   }
 
-  Future<void> _onPaymentConfirmed() async {
-    _leavingForConfirmation = true;
-    _pollTimer?.cancel();
-
-    // Best-effort — harmless if the webhook already released this
-    // server-side (release()'s DELETE call absorbs a 404 silently).
-    await SlotLockService.instance.release();
-
-    BookingRepository.instance.add(BookingModel(
-      bookingCode: widget.bookingCode,
-      locationName: widget.location.name,
-      locationAddress: widget.location.address,
-      checkIn: widget.checkIn,
-      checkOut: widget.checkOut,
-      vehiclePlate: widget.vehiclePlate,
-      slotCode: widget.slotCode,
-      basePrice: widget.basePrice,
-      serviceFee: widget.serviceFee,
-      shuttleFee: 0,
-      status: BookingStatus.dipesan,
-    ));
-
-    NotificationRepository.instance.add(AppNotification(
-      id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
-      type: NotificationType.bookingConfirmation,
-      title: AppStrings.t('summary_notif_title'),
-      description:
-          '${AppStrings.t('summary_notif_desc_prefix')} ${widget.slotCode} di ${widget.location.name} ${AppStrings.t('summary_notif_desc_suffix')}',
-      timestamp: DateTime.now(),
-      actionLabel: AppStrings.t('summary_notif_action'),
-      bookingCode: widget.bookingCode,
-    ));
-
-    if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingConfirmationScreen(
-          bookingCode: widget.bookingCode,
-          location: widget.location,
-          checkIn: widget.checkIn,
-          checkOut: widget.checkOut,
-          total: widget.total,
-        ),
-      ),
-      (route) => route.isFirst,
-    );
-  }
-
   void _resumePolling() {
     setState(() {
       _pollTimedOut = false;
@@ -225,28 +154,14 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
       context,
       severity: AppSeverity.warning,
       icon: Icons.warning_amber_rounded,
-      title: AppStrings.t('waiting_leave_title'),
-      body: AppStrings.t('waiting_leave_msg'),
+      title: AppStrings.t('overstay_leave_title'),
+      body: AppStrings.t('overstay_leave_msg'),
       primaryLabel: AppStrings.t('waiting_leave_stay_btn'),
       onPrimary: () => Navigator.of(context).pop(false),
       secondaryLabel: AppStrings.t('waiting_leave_confirm_btn'),
       onSecondary: () => Navigator.of(context).pop(true),
     );
     return result ?? false;
-  }
-
-  void _onLockExpired() {
-    _pollTimer?.cancel();
-    showAppSheet(
-      context,
-      severity: AppSeverity.warning,
-      icon: Icons.timer_off_outlined,
-      title: AppStrings.t('waiting_lock_expired_title'),
-      body: AppStrings.t('waiting_lock_expired_msg'),
-      barrierDismissible: false,
-      primaryLabel: AppStrings.t('waiting_lock_expired_btn'),
-      onPrimary: () => Navigator.of(context).popUntil((r) => r.isFirst),
-    );
   }
 
   @override
@@ -257,7 +172,7 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
         if (didPop) return;
         final shouldLeave = await _confirmLeave();
         if (shouldLeave && mounted) {
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(false);
         }
       },
       child: SafeArea(
@@ -271,12 +186,12 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
               icon: const Icon(Icons.arrow_back, color: Colors.black87),
               onPressed: () async {
                 if (await _confirmLeave() && mounted) {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(false);
                 }
               },
             ),
             title: Text(
-              AppStrings.t('waiting_appbar_title'),
+              AppStrings.t('overstay_appbar_title'),
               style: const TextStyle(
                 color: Colors.black87,
                 fontSize: 16,
@@ -286,14 +201,7 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
           ),
           body: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (!_isInitiating && _initiateError == null)
-                  SlotLockBanner(onExpired: _onLockExpired),
-                Expanded(child: _buildBody()),
-              ],
-            ),
+            child: _buildBody(),
           ),
         ),
       ),
@@ -431,10 +339,10 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
         children: [
           const SizedBox(height: 8),
           VaPaymentCard(
-            instruction: AppStrings.t('waiting_va_instruction'),
+            instruction: AppStrings.t('overstay_va_instruction'),
             bank: _vaBank,
             vaNumber: _vaNumber,
-            amount: widget.total,
+            amount: _amount,
           ),
           const SizedBox(height: 24),
           const SizedBox(
@@ -449,7 +357,7 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            AppStrings.t('waiting_status_sub'),
+            AppStrings.t('overstay_status_sub'),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
           ),

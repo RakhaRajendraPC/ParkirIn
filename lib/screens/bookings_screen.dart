@@ -1,13 +1,15 @@
 // lib/screens/bookings_screen.dart
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
-import '../services/booking_repository.dart';
+import '../services/api_exception.dart';
 import '../services/app_settings.dart';
+import '../services/bookings_api_service.dart';
 import '../utils/app_colors.dart';
-import 'checkin_screen.dart';
-import 'checkout_screen.dart';
+import '../widgets/network_error_view.dart';
 import 'booking_qr_screen.dart';
 import 'booking_detail_screen.dart';
+import 'checkin_screen.dart';
+import 'checkout_screen.dart';
 import '../utils/currency_formatter.dart';
 
 class BookingsScreen extends StatefulWidget {
@@ -20,19 +22,23 @@ class BookingsScreen extends StatefulWidget {
 class _BookingsScreenState extends State<BookingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final BookingRepository _repo = BookingRepository.instance;
+  final BookingsApiService _bookingsApi = BookingsApiService();
+
+  List<BookingModel> _bookings = [];
+  bool _isLoading = true;
+  bool _hasError = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _repo.addListener(_onChanged);
     AppSettings.instance.addListener(_onChanged);
+    _loadBookings();
   }
 
   @override
   void dispose() {
-    _repo.removeListener(_onChanged);
     AppSettings.instance.removeListener(_onChanged);
     _tabController.dispose();
     super.dispose();
@@ -42,8 +48,29 @@ class _BookingsScreenState extends State<BookingsScreen>
     if (mounted) setState(() {});
   }
 
+  Future<void> _loadBookings() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+    try {
+      final json = await _bookingsApi.getBookings();
+      final bookings = json.map(BookingModel.fromApi).toList();
+      if (!mounted) return;
+      setState(() => _bookings = bookings);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _hasError = true;
+        _errorMessage = e.message;
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   List<BookingModel> _byGroup(String group) =>
-      _repo.all.where((b) => b.status.tabGroup == group).toList();
+      _bookings.where((b) => b.status.tabGroup == group).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -96,15 +123,23 @@ class _BookingsScreenState extends State<BookingsScreen>
             ],
           ),
         ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildList(_byGroup('aktif')),
-            _buildList(_byGroup('selesai')),
-            _buildList(_byGroup('dibatalkan')),
-            _buildList(_byGroup('kedaluwarsa')),
-          ],
-        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _hasError
+                ? NetworkErrorView(
+                    onRetry: _loadBookings,
+                    title: AppStrings.t('bookings_load_error_title'),
+                    message: _errorMessage,
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildList(_byGroup('aktif')),
+                      _buildList(_byGroup('selesai')),
+                      _buildList(_byGroup('dibatalkan')),
+                      _buildList(_byGroup('kedaluwarsa')),
+                    ],
+                  ),
       ),
     );
   }
@@ -129,11 +164,19 @@ class _BookingsScreenState extends State<BookingsScreen>
       itemCount: bookings.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) => InkWell(
-        onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) =>
-                    BookingDetailScreen(booking: bookings[index]))),
+        onTap: () async {
+          await Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      BookingDetailScreen(booking: bookings[index])));
+          // Unconditional refetch on return — a real check-in/check-out/
+          // cancel action may have changed this booking's status while the
+          // user was in the detail screen (or screens pushed from it), and
+          // there's no cheaper way to know without threading a result
+          // through 2-3 levels of navigation.
+          if (mounted) _loadBookings();
+        },
         borderRadius: BorderRadius.circular(16),
         child: _buildBookingCard(bookings[index]),
       ),
@@ -259,10 +302,14 @@ class _BookingsScreenState extends State<BookingsScreen>
                 if (canCheckin)
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => CheckinScreen(booking: b))),
+                      onPressed: () async {
+                        await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    CheckinScreen(booking: b)));
+                        if (mounted) _loadBookings();
+                      },
                       icon: const Icon(Icons.login, size: 16),
                       label: Text(AppStrings.t('bookings_checkin_btn'),
                           style: const TextStyle(fontSize: 12)),
@@ -276,11 +323,14 @@ class _BookingsScreenState extends State<BookingsScreen>
                 if (canCheckout)
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  CheckoutScreen(booking: b))),
+                      onPressed: () async {
+                        await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    CheckoutScreen(booking: b)));
+                        if (mounted) _loadBookings();
+                      },
                       icon: const Icon(Icons.logout, size: 16),
                       label: Text(AppStrings.t('bookings_checkout_btn'),
                           style: const TextStyle(fontSize: 12)),

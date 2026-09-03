@@ -65,6 +65,13 @@ class SlotLockService {
     DateTime checkInPlanned,
     DateTime checkOutPlanned,
   ) async {
+    if (_lockedSlotId != null && _lockedSlotId != slotId) {
+      // Defensive backstop: releases a stale lock on a different slot
+      // before acquiring a new one, in case some path re-locks without the
+      // dispose()-based cleanup (SelectVehicleScreen) having released it
+      // first. Reuses release()'s own best-effort DELETE handling.
+      await release();
+    }
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/slots/$slotId/lock',
@@ -124,11 +131,17 @@ class SlotLockService {
   /// the slot frees up on its own even if this call never lands, so there's
   /// nothing a retry or an error dialog would meaningfully protect against
   /// that the TTL doesn't already cover.
+  ///
+  /// A genuine no-op when nothing is currently tracked as locked — no state
+  /// touched, no stream event, no network call. Several call sites (a
+  /// successful payment, an abandoned-selection cleanup, a 409-conflict
+  /// handler) may all call this across the lifecycle of a single locked
+  /// slot; every call after the first must do nothing at all.
   Future<void> release() async {
     final slotId = _lockedSlotId;
+    if (slotId == null) return;
     _lastReleaseWasExpiry = false;
     _clearLocalState();
-    if (slotId == null) return;
     try {
       await _dio.delete('/slots/$slotId/lock');
     } on DioException {

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
-import '../services/booking_repository.dart';
+import '../services/api_exception.dart';
+import '../services/bookings_api_service.dart';
 import '../utils/app_colors.dart';
-import '../utils/currency_formatter.dart';
 import '../widgets/app_sheet.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/coming_soon_badge.dart';
 
 class RescheduleCancelScreen extends StatefulWidget {
   final BookingModel booking;
@@ -16,11 +17,10 @@ class RescheduleCancelScreen extends StatefulWidget {
 }
 
 class _RescheduleCancelScreenState extends State<RescheduleCancelScreen> {
+  final BookingsApiService _bookingsApi = BookingsApiService();
   late DateTime _newCheckIn;
   late DateTime _newCheckOut;
-
-  bool get _isFreeCancellation =>
-      widget.booking.checkIn.difference(DateTime.now()).inHours >= 24;
+  bool _isCancelling = false;
 
   @override
   void initState() {
@@ -70,79 +70,44 @@ class _RescheduleCancelScreenState extends State<RescheduleCancelScreen> {
     });
   }
 
-  void _confirmReschedule() {
-    showAppSheet(
-      context,
-      severity: AppSeverity.neutral,
-      icon: Icons.event_available_outlined,
-      title: 'Konfirmasi Reschedule',
-      body:
-          'Jadwal booking akan diubah menjadi:\n${_fmt(_newCheckIn)} - ${_fmt(_newCheckOut)}',
-      primaryLabel: 'Konfirmasi',
-      onPrimary: () {
-        setState(() {
-          widget.booking.checkIn = _newCheckIn;
-          widget.booking.checkOut = _newCheckOut;
-        });
-        BookingRepository.instance.refresh();
-        Navigator.pop(context);
-        Navigator.pop(context);
-        showAppToast(
-          context,
-          severity: AppSeverity.success,
-          message: 'Booking berhasil dijadwalkan ulang',
-        );
-      },
-      secondaryLabel: 'Batal',
-      onSecondary: () => Navigator.pop(context),
-    );
-  }
-
   void _confirmCancel() {
-    final subtotal = widget.booking.subtotal;
-    final cancellationFee = subtotal * 0.2;
-    final refund = subtotal - cancellationFee;
-
     showAppSheet(
       context,
       severity: AppSeverity.destructive,
       icon: Icons.cancel_outlined,
       title: 'Batalkan Booking?',
-      body: _isFreeCancellation
-          ? 'Anda dapat membatalkan booking ini secara gratis (free cancellation H-24). Dana akan dikembalikan 100%.'
-          : 'Pembatalan sekarang dikenakan biaya karena kurang dari 24 jam sebelum check-in.',
-      breakdown: _isFreeCancellation
-          ? null
-          : [
-              AppSheetBreakdownItem(
-                label: 'Total dibayar',
-                value: CurrencyFormatter.rupiah(subtotal),
-              ),
-              AppSheetBreakdownItem(
-                label: 'Biaya pembatalan (20%)',
-                value: '- ${CurrencyFormatter.rupiah(cancellationFee)}',
-              ),
-              AppSheetBreakdownItem(
-                label: 'Refund diterima',
-                value: CurrencyFormatter.rupiah(refund),
-                isTotal: true,
-              ),
-            ],
+      body: 'Yakin ingin membatalkan booking ini? Tindakan ini tidak dapat '
+          'dibatalkan.',
       primaryLabel: 'Ya, Batalkan',
       onPrimary: () {
-        widget.booking.status = BookingStatus.dibatalkan;
-        BookingRepository.instance.refresh();
-        Navigator.pop(context);
-        Navigator.pop(context);
-        showAppToast(
-          context,
-          severity: AppSeverity.neutral,
-          message: 'Booking telah dibatalkan',
-        );
+        Navigator.pop(context); // dismiss this confirmation sheet
+        _performCancel();
       },
       secondaryLabel: 'Tidak Jadi',
       onSecondary: () => Navigator.pop(context),
     );
+  }
+
+  Future<void> _performCancel() async {
+    setState(() => _isCancelling = true);
+    try {
+      await _bookingsApi.cancelBooking(widget.booking.bookingCode);
+      if (!mounted) return;
+      // Mutating the shared instance means BookingDetailScreen, still
+      // holding this same BookingModel reference, reflects the new status
+      // immediately when revealed by the pop below.
+      widget.booking.status = BookingStatus.dibatalkan;
+      Navigator.pop(context);
+      showAppToast(
+        context,
+        severity: AppSeverity.neutral,
+        message: 'Booking telah dibatalkan',
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isCancelling = false);
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    }
   }
 
   @override
@@ -210,14 +175,21 @@ class _RescheduleCancelScreenState extends State<RescheduleCancelScreen> {
               width: double.infinity,
               height: 46,
               child: ElevatedButton(
-                onPressed: _confirmReschedule,
+                // No backend endpoint exists for reschedule — disabled
+                // rather than letting it claim a save that never happens.
+                onPressed: null,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
-                child: const Text('Simpan Jadwal Baru',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Simpan Jadwal Baru',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    SizedBox(width: 6),
+                    ComingSoonBadge(),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -227,26 +199,17 @@ class _RescheduleCancelScreenState extends State<RescheduleCancelScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: _isFreeCancellation
-                    ? Colors.green.withOpacity(0.06)
-                    : Colors.orange.withOpacity(0.06),
+                color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Row(
+              child: const Row(
                 children: [
-                  Icon(
-                      _isFreeCancellation
-                          ? Icons.check_circle_outline
-                          : Icons.warning_amber_rounded,
-                      color: _isFreeCancellation ? Colors.green : Colors.orange,
-                      size: 20),
-                  const SizedBox(width: 10),
+                  Icon(Icons.info_outline, color: Colors.black54, size: 20),
+                  SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      _isFreeCancellation
-                          ? 'Anda memenuhi syarat pembatalan gratis (H-24 sebelum check-in). Refund 100%.'
-                          : 'Kurang dari 24 jam sebelum check-in. Pembatalan sekarang akan dikenakan biaya sesuai kebijakan refund.',
-                      style: const TextStyle(fontSize: 12),
+                      'Booking akan dibatalkan dan slot parkir akan dilepaskan.',
+                      style: TextStyle(fontSize: 12),
                     ),
                   ),
                 ],
@@ -257,13 +220,22 @@ class _RescheduleCancelScreenState extends State<RescheduleCancelScreen> {
               width: double.infinity,
               height: 46,
               child: OutlinedButton(
-                onPressed: _confirmCancel,
+                onPressed: _isCancelling ? null : _confirmCancel,
                 style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.redAccent,
                     side: const BorderSide(color: Colors.redAccent),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
-                child: const Text('Batalkan Booking Ini',
+                child: _isCancelling
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.redAccent,
+                        ),
+                      )
+                    : const Text('Batalkan Booking Ini',
                     style: TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),

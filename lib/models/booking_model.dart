@@ -56,6 +56,13 @@ class BookingModel {
   double overstayFee;
   DateTime? actualCheckoutTime;
 
+  /// Real bookings from the backend carry their own authoritative `total`
+  /// (what was actually charged) — set via the [total] constructor param.
+  /// Mock/local bookings leave this null and fall back to the live
+  /// client-side computation below, which still needs to react to later
+  /// mutations of [overstayFee] etc. (e.g. CheckoutScreen's mock flow).
+  final double? _totalOverride;
+
   BookingModel({
     required this.bookingCode,
     required this.locationName,
@@ -70,14 +77,16 @@ class BookingModel {
     this.status = BookingStatus.dipesan,
     this.overstayFee = 0,
     this.actualCheckoutTime,
-  });
+    double? total,
+  }) : _totalOverride = total;
 
   int get durationNights => checkOut.difference(checkIn).inHours ~/ 24 == 0
       ? 1
       : (checkOut.difference(checkIn).inHours / 24).ceil();
 
   double get subtotal => basePrice * durationNights;
-  double get total => subtotal + serviceFee + shuttleFee + overstayFee;
+  double get total =>
+      _totalOverride ?? (subtotal + serviceFee + shuttleFee + overstayFee);
 
   Map<String, dynamic> toJson() => {
         'bookingCode': bookingCode,
@@ -115,6 +124,55 @@ class BookingModel {
             ? DateTime.parse(json['actualCheckoutTime'] as String)
             : null,
       );
+
+  /// Maps a `GET /bookings`/`GET /bookings/:code` JSON object — including
+  /// its nested `location`/`vehicle`/`slot` objects (see
+  /// `bookings.service.ts`'s `findAllForUser` include) — to this model.
+  /// Uses the backend's own `total`, not the client-side computed one,
+  /// since the backend is the source of truth for what was actually
+  /// charged.
+  factory BookingModel.fromApi(Map<String, dynamic> json) {
+    final location = json['location'] as Map<String, dynamic>?;
+    final vehicle = json['vehicle'] as Map<String, dynamic>?;
+    final slot = json['slot'] as Map<String, dynamic>?;
+    return BookingModel(
+      bookingCode: json['bookingCode'] as String,
+      locationName: location?['name'] as String? ?? '',
+      locationAddress: location?['address'] as String? ?? '',
+      checkIn: DateTime.parse(json['checkInPlanned'] as String),
+      checkOut: DateTime.parse(json['checkOutPlanned'] as String),
+      vehiclePlate: vehicle?['plate'] as String? ?? '',
+      slotCode: slot?['code'] as String? ?? '',
+      basePrice: (json['basePrice'] as num).toDouble(),
+      serviceFee: (json['serviceFee'] as num).toDouble(),
+      shuttleFee: 0,
+      status: _statusFromApi(json['status'] as String),
+      overstayFee: (json['overstayFee'] as num?)?.toDouble() ?? 0,
+      actualCheckoutTime: json['checkOutActual'] != null
+          ? DateTime.parse(json['checkOutActual'] as String)
+          : null,
+      total: (json['total'] as num).toDouble(),
+    );
+  }
+
+  static BookingStatus _statusFromApi(String raw) {
+    switch (raw) {
+      case 'menunggu_pembayaran':
+        return BookingStatus.menungguPembayaran;
+      case 'dipesan':
+        return BookingStatus.dipesan;
+      case 'check_in':
+        return BookingStatus.checkIn;
+      case 'check_out':
+        return BookingStatus.checkOut;
+      case 'dibatalkan':
+        return BookingStatus.dibatalkan;
+      case 'kedaluwarsa':
+        return BookingStatus.kedaluwarsa;
+      default:
+        return BookingStatus.dipesan;
+    }
+  }
 
   static List<BookingModel> mockList() {
     final now = DateTime.now();

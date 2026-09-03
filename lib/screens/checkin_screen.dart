@@ -1,11 +1,11 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/booking_model.dart';
 import '../models/notification_model.dart';
-import '../services/booking_repository.dart';
+import '../services/api_exception.dart';
 import '../services/notification_repository.dart';
 import '../services/app_settings.dart';
+import '../services/bookings_api_service.dart';
 import '../utils/app_colors.dart';
 import 'shuttle_tracking_screen.dart';
 
@@ -21,8 +21,11 @@ class CheckinScreen extends StatefulWidget {
 }
 
 class _CheckinScreenState extends State<CheckinScreen> {
+  final BookingsApiService _bookingsApi = BookingsApiService();
+
   _GateStatus _gateStatus = _GateStatus.waiting;
-  Timer? _pollTimer;
+  bool _hasError = false;
+  String? _errorMessage;
   final List<bool> _photosTaken = [false, false, false, false];
   bool _showPhotoStep = false;
 
@@ -37,11 +40,33 @@ class _CheckinScreenState extends State<CheckinScreen> {
   void initState() {
     super.initState();
     AppSettings.instance.addListener(_onChanged);
+    _performCheckin();
+  }
 
-    _pollTimer = Timer(const Duration(seconds: 6), () {
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _performCheckin() async {
+    setState(() {
+      _gateStatus = _GateStatus.waiting;
+      _hasError = false;
+    });
+    try {
+      await _bookingsApi.checkin(widget.booking.bookingCode);
       if (!mounted) return;
       setState(() {
         _gateStatus = _GateStatus.validated;
+        // Mutating this shared instance means a screen further back on the
+        // stack (e.g. BookingDetailScreen) that's still holding the same
+        // BookingModel reference reflects the new status immediately when
+        // revealed by a pop, without needing its own refetch.
         widget.booking.status = BookingStatus.checkIn;
       });
 
@@ -55,20 +80,13 @@ class _CheckinScreenState extends State<CheckinScreen> {
         actionLabel: AppStrings.t('checkin_notif_action'),
         bookingCode: widget.booking.bookingCode,
       ));
-
-      BookingRepository.instance.refresh();
-    });
-  }
-
-  @override
-  void dispose() {
-    _pollTimer?.cancel();
-    AppSettings.instance.removeListener(_onChanged);
-    super.dispose();
-  }
-
-  void _onChanged() {
-    if (mounted) setState(() {});
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _hasError = true;
+        _errorMessage = e.message;
+      });
+    }
   }
 
   void _goToShuttle() {
@@ -108,59 +126,63 @@ class _CheckinScreenState extends State<CheckinScreen> {
           children: [
             _buildBookingInfo(),
             const SizedBox(height: 20),
-            Center(
-              child: Column(
-                children: [
-                  Text(
-                    _gateStatus == _GateStatus.waiting
-                        ? AppStrings.t('checkin_waiting_title')
-                        : AppStrings.t('checkin_success_title'),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
+            if (_hasError) ...[
+              _buildErrorState(),
+            ] else ...[
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      _gateStatus == _GateStatus.waiting
+                          ? AppStrings.t('checkin_waiting_title')
+                          : AppStrings.t('checkin_success_title'),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _gateStatus == _GateStatus.waiting
+                          ? AppStrings.t('checkin_waiting_sub')
+                          : AppStrings.t('checkin_success_sub'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildQrCard(),
+              const SizedBox(height: 20),
+              if (_gateStatus == _GateStatus.validated) ...[
+                _buildSuccessBanner(),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: () =>
+                      setState(() => _showPhotoStep = !_showPhotoStep),
+                  icon: Icon(
+                    _showPhotoStep ? Icons.expand_less : Icons.expand_more,
+                    size: 18,
                   ),
+                  label: Text(
+                    AppStrings.t('checkin_photo_toggle'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                if (_showPhotoStep) ...[
                   const SizedBox(height: 4),
                   Text(
-                    _gateStatus == _GateStatus.waiting
-                        ? AppStrings.t('checkin_waiting_sub')
-                        : AppStrings.t('checkin_success_sub'),
-                    textAlign: TextAlign.center,
+                    AppStrings.t('checkin_photo_note'),
                     style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                   ),
+                  const SizedBox(height: 10),
+                  _buildPhotoGrid(),
                 ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildQrCard(),
-            const SizedBox(height: 20),
-            if (_gateStatus == _GateStatus.validated) ...[
-              _buildSuccessBanner(),
-              const SizedBox(height: 16),
-              TextButton.icon(
-                onPressed: () =>
-                    setState(() => _showPhotoStep = !_showPhotoStep),
-                icon: Icon(
-                  _showPhotoStep ? Icons.expand_less : Icons.expand_more,
-                  size: 18,
-                ),
-                label: Text(
-                  AppStrings.t('checkin_photo_toggle'),
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-              if (_showPhotoStep) ...[
-                const SizedBox(height: 4),
-                Text(
-                  AppStrings.t('checkin_photo_note'),
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 10),
-                _buildPhotoGrid(),
+                const SizedBox(height: 100),
+              ] else ...[
+                const SizedBox(height: 100),
               ],
-              const SizedBox(height: 100),
-            ] else ...[
-              const SizedBox(height: 100),
             ],
           ],
         ),
@@ -199,6 +221,44 @@ class _CheckinScreenState extends State<CheckinScreen> {
                 ),
               )
             : null,
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 40, color: AppColors.danger),
+            const SizedBox(height: 12),
+            Text(
+              AppStrings.t('checkin_error_title'),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _errorMessage ?? '',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _performCheckin,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text(AppStrings.t('waiting_retry_btn')),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

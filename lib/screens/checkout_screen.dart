@@ -1,16 +1,16 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../models/booking_model.dart';
 import '../models/notification_model.dart';
-import '../services/booking_repository.dart';
-import '../services/notification_repository.dart';
+import '../services/api_exception.dart';
 import '../services/app_settings.dart';
+import '../services/bookings_api_service.dart';
+import '../services/notification_repository.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import 'ground_transport_screen.dart';
+import 'overstay_payment_screen.dart';
 
-enum _GateStatus { waiting, validated }
+enum _CheckoutPhase { loadingStatus, needsOverstayPayment, checkingOut, invoice, error }
 
 class CheckoutScreen extends StatefulWidget {
   final BookingModel booking;
@@ -22,41 +22,76 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  _GateStatus _gateStatus = _GateStatus.waiting;
-  Timer? _pollTimer;
-  final List<bool> _photosTaken = [false, false, false, false];
-  bool _showPhotoStep = false;
+  final BookingsApiService _bookingsApi = BookingsApiService();
 
-  List<String> get _photoLabels => [
-        AppStrings.t('checkout_photo_depan'),
-        AppStrings.t('checkout_photo_belakang'),
-        AppStrings.t('checkout_photo_kiri'),
-        AppStrings.t('checkout_photo_kanan'),
-      ];
-
-  double get _overstayFee {
-    final now = DateTime.now();
-    if (now.isAfter(widget.booking.checkOut)) {
-      final extraHours = now.difference(widget.booking.checkOut).inHours;
-      final extraBlocks = (extraHours / 1).ceil();
-      return extraBlocks * 15000.0;
-    }
-    return 0;
-  }
+  _CheckoutPhase _phase = _CheckoutPhase.loadingStatus;
+  String? _errorMessage;
+  double _overstayFee = 0;
+  int _overstayHours = 0;
+  BookingModel? _finalBooking;
 
   @override
   void initState() {
     super.initState();
     AppSettings.instance.addListener(_onChanged);
+    _loadCheckoutStatus();
+  }
 
-    _pollTimer = Timer(const Duration(seconds: 6), () {
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _loadCheckoutStatus() async {
+    setState(() {
+      _phase = _CheckoutPhase.loadingStatus;
+      _errorMessage = null;
+    });
+    try {
+      final status =
+          await _bookingsApi.getCheckoutStatus(widget.booking.bookingCode);
+      if (!mounted) return;
+      if (status['canCheckout'] == true) {
+        await _performCheckout();
+        return;
+      }
+      setState(() {
+        _overstayFee = (status['overstayFee'] as num?)?.toDouble() ?? 0;
+        _overstayHours = (status['overstayHours'] as num?)?.toInt() ?? 0;
+        _phase = _CheckoutPhase.needsOverstayPayment;
+      });
+    } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
-        _gateStatus = _GateStatus.validated;
-        widget.booking.overstayFee = _overstayFee;
-        widget.booking.actualCheckoutTime = DateTime.now();
-        widget.booking.status = BookingStatus.checkOut;
+        _errorMessage = e.message;
+        _phase = _CheckoutPhase.error;
       });
+    }
+  }
+
+  Future<void> _performCheckout() async {
+    setState(() => _phase = _CheckoutPhase.checkingOut);
+    try {
+      await _bookingsApi.checkout(widget.booking.bookingCode);
+      // Re-fetch fresh rather than assembling the invoice from partial
+      // responses — by the time checkout succeeds, any overstay payment's
+      // webhook has already baked overstayFee/total into the booking row,
+      // so a full re-fetch is the correct source of truth for the invoice.
+      final fresh = await _bookingsApi.getBooking(widget.booking.bookingCode);
+      if (!mounted) return;
+      final booking = BookingModel.fromApi(fresh);
+
+      // Keep the shared instance in sync too, same reasoning as
+      // CheckinScreen — a screen further back on the stack holding this
+      // same BookingModel reference reflects the change on the next reveal.
+      widget.booking.status = booking.status;
+      widget.booking.overstayFee = booking.overstayFee;
+      widget.booking.actualCheckoutTime = booking.actualCheckoutTime;
 
       NotificationRepository.instance.add(AppNotification(
         id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
@@ -69,39 +104,59 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         bookingCode: widget.booking.bookingCode,
       ));
 
-      if (widget.booking.overstayFee > 0) {
+      if (booking.overstayFee > 0) {
         NotificationRepository.instance.add(AppNotification(
           id: 'notif_${DateTime.now().millisecondsSinceEpoch + 1}',
           type: NotificationType.overstayWarning,
           title: AppStrings.t('checkout_notif_overstay_title'),
           description: AppStrings.t('checkout_notif_overstay_desc')
               .replaceAll('{code}', widget.booking.bookingCode)
-              .replaceAll('{amount}',
-                  CurrencyFormatter.rupiah(widget.booking.overstayFee)),
+              .replaceAll(
+                  '{amount}', CurrencyFormatter.rupiah(booking.overstayFee)),
           timestamp: DateTime.now(),
           actionLabel: AppStrings.t('checkout_notif_overstay_action'),
           bookingCode: widget.booking.bookingCode,
         ));
       }
 
-      BookingRepository.instance.refresh();
-    });
+      setState(() {
+        _finalBooking = booking;
+        _phase = _CheckoutPhase.invoice;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.statusCode == 402) {
+        // Race: an overstay fee became newly due between our last
+        // checkout-status check and this call — re-check rather than
+        // treating it as a hard error.
+        await _loadCheckoutStatus();
+        return;
+      }
+      setState(() {
+        _errorMessage = e.message;
+        _phase = _CheckoutPhase.error;
+      });
+    }
   }
 
-  @override
-  void dispose() {
-    _pollTimer?.cancel();
-    AppSettings.instance.removeListener(_onChanged);
-    super.dispose();
-  }
-
-  void _onChanged() {
-    if (mounted) setState(() {});
+  Future<void> _payOverstay() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OverstayPaymentScreen(
+          bookingCode: widget.booking.bookingCode,
+          bank: 'bca',
+        ),
+      ),
+    );
+    if (result == true && mounted) {
+      await _loadCheckoutStatus();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_gateStatus == _GateStatus.validated) return _buildInvoice();
+    if (_phase == _CheckoutPhase.invoice) return _buildInvoice();
 
     return SafeArea(
       child: Scaffold(
@@ -118,180 +173,134 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            if (_overstayFee > 0) ...[
-              _buildOverstayWarning(),
+        body: _buildBody(),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    switch (_phase) {
+      case _CheckoutPhase.loadingStatus:
+      case _CheckoutPhase.checkingOut:
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
               const SizedBox(height: 16),
+              Text(
+                AppStrings.t('checkout_status_checking'),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
             ],
-            Center(
-              child: Column(
-                children: [
-                  Text(
-                    AppStrings.t('checkout_waiting_title'),
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    AppStrings.t('checkout_waiting_sub'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildQrCard(),
-            const SizedBox(height: 20),
-            TextButton.icon(
-              onPressed: () => setState(() => _showPhotoStep = !_showPhotoStep),
-              icon: Icon(
-                _showPhotoStep ? Icons.expand_less : Icons.expand_more,
-                size: 18,
-              ),
-              label: Text(
-                AppStrings.t('checkout_photo_toggle'),
-                style: const TextStyle(fontSize: 12),
-              ),
-            ),
-            if (_showPhotoStep) ...[
-              const SizedBox(height: 10),
-              _buildPhotoGrid(),
-            ],
-            const SizedBox(height: 100),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOverstayWarning() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              AppStrings.t('checkout_overstay_warning').replaceAll(
-                  '{amount}', CurrencyFormatter.rupiah(_overstayFee)),
-              style: const TextStyle(fontSize: 12, color: Colors.black87),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQrCard() {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            QrImageView(
-              data: widget.booking.bookingCode,
-              version: QrVersions.auto,
-              size: 180,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              widget.booking.bookingCode,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              AppStrings.t('checkout_waiting_qr_status'),
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPhotoGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _photoLabels.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 1.3,
-      ),
-      itemBuilder: (context, index) {
-        final done = _photosTaken[index];
-        return InkWell(
-          onTap: done ? null : () => setState(() => _photosTaken[index] = true),
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            decoration: BoxDecoration(
-              color: done ? Colors.green.withOpacity(0.06) : Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: done ? Colors.green : Colors.grey.shade300,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  done ? Icons.check_circle : Icons.camera_alt_outlined,
-                  color: done ? Colors.green : Colors.grey.shade400,
-                  size: 28,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${_photoLabels[index]} ${done ? "✓" : ""}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: done ? Colors.green.shade800 : Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
           ),
         );
-      },
+      case _CheckoutPhase.needsOverstayPayment:
+        return _buildOverstayPrompt();
+      case _CheckoutPhase.error:
+        return _buildErrorView();
+      case _CheckoutPhase.invoice:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildOverstayPrompt() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.warning_amber_rounded,
+                  size: 40, color: Colors.redAccent),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              AppStrings.t('checkout_overstay_prompt_title'),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              AppStrings.t('checkout_overstay_prompt_msg')
+                  .replaceAll('{hours}', '$_overstayHours')
+                  .replaceAll(
+                      '{amount}', CurrencyFormatter.rupiah(_overstayFee)),
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 46,
+              child: ElevatedButton.icon(
+                onPressed: _payOverstay,
+                icon: const Icon(Icons.payment, size: 18),
+                label: Text(AppStrings.t('checkout_pay_overstay_btn')),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 40, color: AppColors.danger),
+            const SizedBox(height: 16),
+            Text(
+              AppStrings.t('checkout_error_title'),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _errorMessage ?? '',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 44,
+              child: ElevatedButton.icon(
+                onPressed: _loadCheckoutStatus,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(AppStrings.t('waiting_retry_btn')),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildInvoice() {
-    final b = widget.booking;
+    final b = _finalBooking!;
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F8FA),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../models/parking_slot_model.dart';
 import '../services/api_exception.dart';
+import '../services/slot_lock_service.dart';
 import '../services/user_session.dart';
 import '../services/vehicles_api_service.dart';
 import '../services/app_settings.dart';
@@ -49,6 +50,14 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
   @override
   void dispose() {
     AppSettings.instance.removeListener(_onChanged);
+    // Fires whenever this screen leaves the stack for any reason: the user
+    // backs out to re-pick a slot (the actual bug this fixes — the old
+    // slot's lock would otherwise linger until its TTL expired), the
+    // successful-payment flow's pushAndRemoveUntil sweeps it away (lock
+    // already released by then, so this safely no-ops), or the 409-conflict
+    // handler pops it (lock already invalid, also a no-op). Fire-and-forget
+    // — dispose() can't be async.
+    SlotLockService.instance.release();
     super.dispose();
   }
 
