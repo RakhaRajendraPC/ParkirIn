@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
+import '../widgets/stub_icon.dart';
 import 'add_payment_method_screen.dart';
 
 class SavedPaymentMethod {
@@ -35,19 +36,19 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       SavedPaymentMethod(
           label: 'BCA Debit •••• 4821',
           subtitle: 'Kartu Debit',
-          icon: Icons.credit_card,
+          icon: Icons.credit_card_rounded,
           color: AppColors.primary,
           isDefault: true),
       SavedPaymentMethod(
           label: 'GoPay',
           subtitle: 'E-Wallet · 0812-3456-7890',
-          icon: Icons.account_balance_wallet_outlined,
-          color: Colors.teal),
+          icon: Icons.account_balance_wallet_rounded,
+          color: const Color(0xFF0EA5A4)),
       SavedPaymentMethod(
           label: 'QRIS',
           subtitle: 'Bayar via aplikasi bank/e-wallet apapun',
-          icon: Icons.qr_code,
-          color: Colors.orange),
+          icon: Icons.qr_code_rounded,
+          color: const Color(0xFFFF8A00)),
     ];
     AppSettings.instance.addListener(_onChanged);
   }
@@ -84,30 +85,39 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           elevation: 0,
           title: Text(AppStrings.t('payment_appbar_title'),
               style: const TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF16181F),
+                  fontWeight: FontWeight.w800,
                   fontSize: 17)),
         ),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             ..._methods.asMap().entries.map((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildCard(e.value, e.key),
-                )),
-            const SizedBox(height: 8),
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildCard(e.value, e.key))),
+            const SizedBox(height: 6),
             SizedBox(
               width: double.infinity,
-              height: 48,
-              child: OutlinedButton.icon(
+              height: 52,
+              child: OutlinedButton(
                 onPressed: () => _showAddSheet(context),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(AppStrings.t('payment_tambah_btn')),
                 style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12))),
+                  foregroundColor: AppColors.primary,
+                  side: BorderSide(
+                      color: AppColors.primary.withOpacity(0.4), width: 1.3),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.add_rounded, size: 18),
+                    const SizedBox(width: 6),
+                    Text(AppStrings.t('payment_tambah_btn'),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13)),
+                  ],
+                ),
               ),
             ),
           ],
@@ -118,77 +128,81 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   Widget _buildCard(SavedPaymentMethod m, int index) {
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: m.isDefault ? Border.all(color: AppColors.primary) : null,
+        borderRadius: BorderRadius.circular(16),
+        border: m.isDefault ? Border.all(color: m.color, width: 1.3) : null,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
+          BoxShadow(
+              color: m.color.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 6))
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: m.color.withOpacity(0.1), shape: BoxShape.circle),
-            child: Icon(m.icon, color: m.color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(m.label,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 13)),
-                    if (m.isDefault) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(4)),
-                        child: Text(AppStrings.t('payment_utama_badge'),
-                            style: const TextStyle(
-                                fontSize: 8,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold)),
-                      ),
+      child: Padding(
+        padding: const EdgeInsets.all(13),
+        child: Row(
+          children: [
+            StubIcon(icon: m.icon, color: m.color, size: 42),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(m.label,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                              color: Color(0xFF16181F))),
+                      if (m.isDefault) ...[
+                        const SizedBox(width: 7),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                              color: m.color,
+                              borderRadius: BorderRadius.circular(5)),
+                          child: Text(AppStrings.t('payment_utama_badge'),
+                              style: const TextStyle(
+                                  fontSize: 8,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800)),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(m.subtitle,
-                    style:
-                        TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(m.subtitle,
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                ],
+              ),
+            ),
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade400),
+              onSelected: (v) {
+                if (v == 'default') _setDefault(index);
+                if (v == 'remove') _remove(index);
+              },
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              itemBuilder: (context) => [
+                if (!m.isDefault)
+                  PopupMenuItem(
+                      value: 'default',
+                      child: Text(AppStrings.t('payment_jadikan_utama'),
+                          style: const TextStyle(fontSize: 13))),
+                PopupMenuItem(
+                    value: 'remove',
+                    child: Text(AppStrings.t('payment_hapus'),
+                        style: const TextStyle(
+                            fontSize: 13, color: Colors.redAccent))),
               ],
             ),
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.black38),
-            onSelected: (v) {
-              if (v == 'default') _setDefault(index);
-              if (v == 'remove') _remove(index);
-            },
-            itemBuilder: (context) => [
-              if (!m.isDefault)
-                PopupMenuItem(
-                    value: 'default',
-                    child: Text(AppStrings.t('payment_jadikan_utama'),
-                        style: const TextStyle(fontSize: 13))),
-              PopupMenuItem(
-                  value: 'remove',
-                  child: Text(AppStrings.t('payment_hapus'),
-                      style: const TextStyle(
-                          fontSize: 13, color: Colors.redAccent))),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -197,46 +211,70 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         final options = <(String, IconData, Color, PaymentMethodType)>[
           (
             AppStrings.t('payment_kartu'),
-            Icons.credit_card,
+            Icons.credit_card_rounded,
             AppColors.primary,
             PaymentMethodType.card
           ),
           (
             AppStrings.t('payment_ewallet'),
-            Icons.account_balance_wallet_outlined,
-            Colors.teal,
+            Icons.account_balance_wallet_rounded,
+            const Color(0xFF0EA5A4),
             PaymentMethodType.ewallet
           ),
           (
             AppStrings.t('payment_va'),
-            Icons.account_balance_outlined,
-            Colors.purple,
+            Icons.account_balance_rounded,
+            const Color(0xFF7C3AED),
             PaymentMethodType.virtualAccount
           ),
         ];
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: options
-                .map((o) => ListTile(
-                      leading: Icon(o.$2, color: o.$3),
-                      title: Text(o.$1, style: const TextStyle(fontSize: 13)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                    child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 18),
+                ...options.map((o) => InkWell(
+                      borderRadius: BorderRadius.circular(14),
                       onTap: () async {
                         Navigator.pop(context);
                         await Navigator.push<bool>(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  AddPaymentMethodScreen(type: o.$4)),
-                        );
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    AddPaymentMethodScreen(type: o.$4)));
                       },
-                    ))
-                .toList(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            StubIcon(icon: o.$2, color: o.$3, size: 40),
+                            const SizedBox(width: 13),
+                            Text(o.$1,
+                                style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF16181F))),
+                          ],
+                        ),
+                      ),
+                    )),
+              ],
+            ),
           ),
         );
       },

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
+import '../utils/currency_formatter.dart';
+import '../widgets/stub_icon.dart';
 import 'checkin_screen.dart';
 import 'checkout_screen.dart';
 import 'reschedule_cancel_screen.dart';
@@ -37,17 +39,17 @@ class BookingDetailScreen extends StatelessWidget {
   Color _statusColor(BookingStatus status) {
     switch (status) {
       case BookingStatus.menungguPembayaran:
-        return Colors.orange;
+        return const Color(0xFFF59E0B);
       case BookingStatus.dipesan:
         return primaryBlue;
       case BookingStatus.checkIn:
-        return Colors.teal;
+        return const Color(0xFF0EA5A4);
       case BookingStatus.checkOut:
-        return Colors.green;
+        return const Color(0xFF16A34A);
       case BookingStatus.dibatalkan:
-        return Colors.redAccent;
+        return const Color(0xFFDC2626);
       case BookingStatus.kedaluwarsa:
-        return Colors.grey.shade600;
+        return Colors.grey.shade500;
     }
   }
 
@@ -63,8 +65,8 @@ class BookingDetailScreen extends StatelessWidget {
           elevation: 0,
           title: const Text('Detail Booking',
               style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF16181F),
+                  fontWeight: FontWeight.w800,
                   fontSize: 17)),
         ),
         body: ListView(
@@ -73,68 +75,78 @@ class BookingDetailScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.04), blurRadius: 8)
-                ],
-              ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                        color: statusColor.withOpacity(0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6))
+                  ]),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8)),
-                        child: Text(booking.status.label,
-                            style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: statusColor)),
-                      ),
+                      BarAccentLabel(
+                          text: booking.status.label, color: statusColor),
                       Text(booking.bookingCode,
                           style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                              fontWeight: FontWeight.w600)),
+                              fontSize: 11,
+                              color: Colors.grey.shade400,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'monospace',
+                              letterSpacing: 0.3)),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(booking.locationName,
-                      style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 2),
-                  Text(booking.locationAddress,
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  const SizedBox(height: 13),
+                  Row(
+                    children: [
+                      StubIcon(
+                          icon: Icons.local_parking_rounded,
+                          color: statusColor,
+                          size: 44),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(booking.locationName,
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF16181F))),
+                            const SizedBox(height: 2),
+                            Text(booking.locationAddress,
+                                style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: Colors.grey.shade600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 14),
             if (booking.status == BookingStatus.kedaluwarsa) ...[
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(13),
                 decoration: BoxDecoration(
                     color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(14)),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline,
+                    Icon(Icons.info_rounded,
                         size: 16, color: Colors.grey.shade600),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        'Booking ini dibatalkan otomatis oleh sistem karena tidak ada check-in dalam batas waktu yang ditentukan.',
-                        style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade700),
-                      ),
-                    ),
+                        child: Text(
+                            'Booking ini dibatalkan otomatis oleh sistem karena tidak ada check-in dalam batas waktu yang ditentukan.',
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.grey.shade700))),
                   ],
                 ),
               ),
@@ -142,25 +154,32 @@ class BookingDetailScreen extends StatelessWidget {
             ],
             SizedBox(
               width: double.infinity,
-              height: 46,
-              child: OutlinedButton.icon(
+              height: 50,
+              child: OutlinedButton(
                 onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
                             BookingQrScreen(booking: booking))),
-                icon: const Icon(Icons.qr_code, size: 18),
-                label: const Text('Lihat QR Code & Cetak Struk'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryBlue,
-                  side: const BorderSide(color: primaryBlue),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    foregroundColor: primaryBlue,
+                    side: BorderSide(color: primaryBlue.withOpacity(0.4)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.qr_code_2_rounded, size: 18),
+                    const SizedBox(width: 8),
+                    const Text('Lihat QR Code & Cetak Struk',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13)),
+                  ],
                 ),
               ),
             ),
             const SizedBox(height: 14),
-            _buildInfoCard('Jadwal', [
+            _buildInfoCard('JADWAL', [
               ('Check-in', _fmt(booking.checkIn)),
               ('Check-out', _fmt(booking.checkOut)),
               ('Durasi', '${booking.durationNights} malam'),
@@ -168,14 +187,13 @@ class BookingDetailScreen extends StatelessWidget {
                 ('Check-out aktual', _fmt(booking.actualCheckoutTime!)),
             ]),
             const SizedBox(height: 14),
-            _buildInfoCard('Kendaraan', [
+            _buildInfoCard('KENDARAAN', [
               ('Plat Nomor', booking.vehiclePlate),
-              if (booking.slotCode.isNotEmpty)
-                ('Slot Parkir', booking.slotCode),
+              if (booking.slotCode.isNotEmpty) ('Slot Parkir', booking.slotCode)
             ]),
             const SizedBox(height: 14),
             _buildBillingCard(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 22),
             if (booking.status == BookingStatus.dipesan)
               ..._buildDipesanActions(context),
             if (booking.status == BookingStatus.checkIn)
@@ -190,23 +208,23 @@ class BookingDetailScreen extends StatelessWidget {
 
   Widget _buildInfoCard(String title, List<(String, String)> rows) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
-        ],
-      ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4))
+          ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          const SizedBox(height: 8),
+          BarAccentLabel(text: title, color: primaryBlue),
+          const SizedBox(height: 10),
           ...rows.map((r) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -215,7 +233,9 @@ class BookingDetailScreen extends StatelessWidget {
                             fontSize: 12, color: Colors.grey.shade600)),
                     Text(r.$2,
                         style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w600)),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF16181F))),
                   ],
                 ),
               )),
@@ -226,27 +246,28 @@ class BookingDetailScreen extends StatelessWidget {
 
   Widget _buildBillingCard() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
-        ],
-      ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4))
+          ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Rincian Biaya',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          const SizedBox(height: 8),
+          BarAccentLabel(text: 'RINCIAN BIAYA', color: primaryBlue),
+          const SizedBox(height: 10),
           _billRow('Tarif dasar', booking.subtotal),
           _billRow('Biaya layanan', booking.serviceFee),
           if (booking.overstayFee > 0)
             _billRow('Biaya keterlambatan', booking.overstayFee, warn: true),
-          const Padding(
-              padding: EdgeInsets.symmetric(vertical: 6),
-              child: Divider(height: 1)),
+          const SizedBox(height: 5),
+          const PerforationDivider(),
+          const SizedBox(height: 9),
           _billRow('Total', booking.total, bold: true),
         ],
       ),
@@ -256,20 +277,21 @@ class BookingDetailScreen extends StatelessWidget {
   Widget _billRow(String label, double amount,
       {bool bold = false, bool warn = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
               style: TextStyle(
-                  fontSize: bold ? 13 : 12,
-                  fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
-          Text('Rp ${amount.toStringAsFixed(0)}',
+                  fontSize: bold ? 13.5 : 12,
+                  fontWeight: bold ? FontWeight.w800 : FontWeight.normal)),
+          Text(CurrencyFormatter.rupiah(amount),
               style: TextStyle(
-                fontSize: bold ? 13 : 12,
-                fontWeight: bold ? FontWeight.bold : FontWeight.w500,
-                color: warn ? Colors.redAccent : Colors.black87,
-              )),
+                  fontSize: bold ? 13.5 : 12,
+                  fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
+                  color: warn
+                      ? const Color(0xFFDC2626)
+                      : (bold ? primaryBlue : const Color(0xFF16181F)))),
         ],
       ),
     );
@@ -279,35 +301,45 @@ class BookingDetailScreen extends StatelessWidget {
     return [
       SizedBox(
         width: double.infinity,
-        height: 46,
-        child: OutlinedButton.icon(
+        height: 52,
+        child: ElevatedButton(
           onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
                   builder: (context) => CheckinScreen(booking: booking))),
-          icon: const Icon(Icons.login, size: 18),
-          label: const Text('Check-in Sekarang'),
-          style: OutlinedButton.styleFrom(
-              foregroundColor: primaryBlue,
-              side: const BorderSide(color: primaryBlue),
+          style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12))),
+                  borderRadius: BorderRadius.circular(16))),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.login_rounded, size: 18),
+              const SizedBox(width: 8),
+              Text('CHECK-IN SEKARANG'.toUpperCase(),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w800, letterSpacing: 0.3))
+            ],
+          ),
         ),
       ),
       const SizedBox(height: 10),
-      SizedBox(
-        width: double.infinity,
-        height: 44,
+      Center(
         child: TextButton.icon(
           onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
                   builder: (context) =>
                       RescheduleCancelScreen(booking: booking))),
-          icon: const Icon(Icons.edit_calendar_outlined,
-              size: 16, color: Colors.black54),
-          label: const Text('Reschedule / Batalkan Booking',
-              style: TextStyle(fontSize: 12, color: Colors.black54)),
+          icon: Icon(Icons.edit_calendar_rounded,
+              size: 15, color: Colors.grey.shade500),
+          label: Text('Reschedule / Batalkan Booking',
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w600)),
         ),
       ),
     ];
@@ -316,19 +348,28 @@ class BookingDetailScreen extends StatelessWidget {
   Widget _buildCheckoutAction(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 46,
-      child: OutlinedButton.icon(
+      height: 52,
+      child: ElevatedButton(
         onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (context) => CheckoutScreen(booking: booking))),
-        icon: const Icon(Icons.logout, size: 18),
-        label: const Text('Check-out Sekarang'),
-        style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.orange,
-            side: const BorderSide(color: Colors.orange),
+        style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFFF8A00),
+            foregroundColor: Colors.white,
+            elevation: 0,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12))),
+                borderRadius: BorderRadius.circular(16))),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.logout_rounded, size: 18),
+            const SizedBox(width: 8),
+            const Text('CHECK-OUT SEKARANG',
+                style:
+                    TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.3))
+          ],
+        ),
       ),
     );
   }
@@ -336,19 +377,28 @@ class BookingDetailScreen extends StatelessWidget {
   Widget _buildRateButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 46,
-      child: ElevatedButton.icon(
+      height: 52,
+      child: ElevatedButton(
         onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (context) => RatingReviewScreen(booking: booking))),
-        icon: const Icon(Icons.star_outline, size: 18),
-        label: const Text('Beri Rating & Ulasan'),
         style: ElevatedButton.styleFrom(
             backgroundColor: Colors.amber.shade700,
             foregroundColor: Colors.white,
+            elevation: 0,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12))),
+                borderRadius: BorderRadius.circular(16))),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.star_rounded, size: 18),
+            const SizedBox(width: 8),
+            const Text('BERI RATING & ULASAN',
+                style:
+                    TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.3))
+          ],
+        ),
       ),
     );
   }

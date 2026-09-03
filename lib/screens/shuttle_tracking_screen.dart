@@ -5,6 +5,7 @@ import '../models/notification_model.dart';
 import '../services/notification_repository.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
+import '../widgets/stub_icon.dart';
 
 enum ShuttleUnitStatus { berangkat, standby }
 

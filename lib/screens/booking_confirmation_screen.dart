@@ -4,6 +4,7 @@ import '../models/parking_location_model.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/stub_icon.dart';
 import 'bookings_screen.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
@@ -13,14 +14,13 @@ class BookingConfirmationScreen extends StatefulWidget {
   final DateTime checkOut;
   final double total;
 
-  const BookingConfirmationScreen({
-    super.key,
-    required this.bookingCode,
-    required this.location,
-    required this.checkIn,
-    required this.checkOut,
-    required this.total,
-  });
+  const BookingConfirmationScreen(
+      {super.key,
+      required this.bookingCode,
+      required this.location,
+      required this.checkIn,
+      required this.checkOut,
+      required this.total});
 
   @override
   State<BookingConfirmationScreen> createState() =>
@@ -73,51 +73,54 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         body: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
-              child:
-                  const Icon(Icons.check_circle, color: Colors.green, size: 40),
-            ),
-            const SizedBox(height: 16),
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                    color: const Color(0xFF16A34A).withOpacity(0.1),
+                    shape: BoxShape.circle),
+                child: const Icon(Icons.check_circle_rounded,
+                    color: Color(0xFF16A34A), size: 42)),
+            const SizedBox(height: 18),
             Text(AppStrings.t('confirm_title'),
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                style: const TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF16181F),
+                    letterSpacing: -0.3)),
             const SizedBox(height: 4),
-            Text(
-              AppStrings.t('confirm_subtitle'),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 24),
+            Text(AppStrings.t('confirm_subtitle'),
+                style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
+            const SizedBox(height: 26),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.05), blurRadius: 10)
-                ],
-              ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                        color: AppColors.primary.withOpacity(0.1),
+                        blurRadius: 22,
+                        offset: const Offset(0, 10))
+                  ]),
               child: Column(
                 children: [
                   QrImageView(
-                    data: widget.bookingCode,
-                    version: QrVersions.auto,
-                    size: 180,
-                    backgroundColor: Colors.white,
-                  ),
-                  const SizedBox(height: 12),
+                      data: widget.bookingCode,
+                      version: QrVersions.auto,
+                      size: 180,
+                      backgroundColor: Colors.white),
+                  const SizedBox(height: 14),
                   Text(widget.bookingCode,
                       style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2)),
-                  const SizedBox(height: 4),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.6,
+                          fontFamily: 'monospace',
+                          color: Color(0xFF16181F))),
+                  const SizedBox(height: 5),
                   Text(AppStrings.t('confirm_qr_note'),
                       style:
                           TextStyle(fontSize: 11, color: Colors.grey.shade600),
@@ -129,32 +132,35 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.04), blurRadius: 8)
-                ],
-              ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4))
+                  ]),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(widget.location.name,
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 2),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: Color(0xFF16181F))),
+                  const SizedBox(height: 3),
                   Text(widget.location.address,
                       style:
                           TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                  const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Divider(height: 1)),
+                  const SizedBox(height: 12),
+                  const PerforationDivider(),
+                  const SizedBox(height: 12),
                   _infoRow(
                       AppStrings.t('confirm_masuk'), _fmtDate(widget.checkIn)),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
                   _infoRow(AppStrings.t('confirm_keluar'),
                       _fmtDate(widget.checkOut)),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
                   _infoRow(AppStrings.t('confirm_total_dibayar'),
                       CurrencyFormatter.rupiah(widget.total),
                       highlight: true),
@@ -163,61 +169,58 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             ),
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
                   color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(14)),
               child: Row(
                 children: [
-                  Icon(Icons.notifications_active_outlined,
+                  Icon(Icons.notifications_active_rounded,
                       color: AppColors.primary, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      AppStrings.t('confirm_reminder_note'),
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                  ),
+                      child: Text(AppStrings.t('confirm_reminder_note'),
+                          style: const TextStyle(fontSize: 11.5))),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 26),
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 54,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
+                onPressed: () => Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
                         builder: (context) => const BookingsScreen()),
-                    (route) => route.isFirst,
-                  );
-                },
+                    (route) => route.isFirst),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(AppStrings.t('confirm_lihat_booking_btn'),
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
+                child: Text(
+                    AppStrings.t('confirm_lihat_booking_btn').toUpperCase(),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, letterSpacing: 0.3)),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 50,
               child: OutlinedButton(
                 onPressed: () =>
                     Navigator.popUntil(context, (route) => route.isFirst),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black87,
-                  side: BorderSide(color: Colors.grey.shade300),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(AppStrings.t('confirm_kembali_beranda_btn')),
+                    foregroundColor: Colors.grey.shade700,
+                    side: BorderSide(color: Colors.grey.shade200),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
+                child: Text(AppStrings.t('confirm_kembali_beranda_btn'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 13)),
               ),
             ),
           ],
@@ -234,10 +237,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
         Text(value,
             style: TextStyle(
-              fontSize: highlight ? 14 : 12,
-              fontWeight: FontWeight.w700,
-              color: highlight ? AppColors.primary : Colors.black87,
-            )),
+                fontSize: highlight ? 14.5 : 12,
+                fontWeight: FontWeight.w800,
+                color:
+                    highlight ? AppColors.primary : const Color(0xFF16181F))),
       ],
     );
   }

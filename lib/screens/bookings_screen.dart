@@ -11,6 +11,7 @@ import 'booking_detail_screen.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/app_logo_badge.dart';
 import '../widgets/app_header_avatar.dart';
+import '../widgets/stub_icon.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -127,179 +128,226 @@ class _BookingsScreenState extends State<BookingsScreen>
   }
 
   Widget _buildBookingCard(BookingModel b) {
-    final statusColor = switch (b.status) {
-      BookingStatus.menungguPembayaran => Colors.orange,
+    final statusAccent = switch (b.status) {
+      BookingStatus.menungguPembayaran => const Color(0xFFF59E0B),
       BookingStatus.dipesan => AppColors.primary,
-      BookingStatus.checkIn => Colors.teal,
-      BookingStatus.checkOut => Colors.green,
-      BookingStatus.dibatalkan => Colors.redAccent,
-      BookingStatus.kedaluwarsa => Colors.grey.shade600,
+      BookingStatus.checkIn => const Color(0xFF0EA5A4),
+      BookingStatus.checkOut => const Color(0xFF16A34A),
+      BookingStatus.dibatalkan => const Color(0xFFDC2626),
+      BookingStatus.kedaluwarsa => Colors.grey.shade500,
     };
     final canCheckin = b.status == BookingStatus.dipesan;
     final canCheckout = b.status == BookingStatus.checkIn;
 
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2))
+              color: statusAccent.withOpacity(0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 8))
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6)),
-                child: Text(b.status.label,
-                    style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: statusColor)),
-              ),
-              Text(b.bookingCode,
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w600)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(b.locationName,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          const SizedBox(height: 2),
-          Text(b.locationAddress,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-          if (b.slotCode.isNotEmpty) ...[
-            const SizedBox(height: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
               children: [
-                Icon(Icons.local_parking,
-                    size: 12, color: Colors.grey.shade500),
-                const SizedBox(width: 4),
-                Text('${AppStrings.t('bookings_slot_label')} ${b.slotCode}',
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500)),
+                StubIcon(
+                    icon: Icons.local_parking_rounded,
+                    color: statusAccent,
+                    size: 42),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      BarAccentLabel(text: b.status.label, color: statusAccent),
+                      const SizedBox(height: 5),
+                      Text(b.locationName,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14.5,
+                              color: Color(0xFF16181F))),
+                    ],
+                  ),
+                ),
+                Text(
+                  b.bookingCode,
+                  style: TextStyle(
+                      fontSize: 10.5,
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'monospace',
+                      letterSpacing: 0.3),
+                ),
               ],
             ),
-          ],
-          if (b.status == BookingStatus.kedaluwarsa) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8)),
-              child: Row(
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.only(left: 54),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline,
-                      size: 13, color: Colors.grey.shade600),
-                  const SizedBox(width: 6),
-                  Expanded(
-                      child: Text(AppStrings.t('bookings_expired_note'),
-                          style: TextStyle(
-                              fontSize: 10, color: Colors.grey.shade600))),
+                  Text(b.locationAddress,
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                  if (b.slotCode.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.grid_view_rounded,
+                            size: 12, color: Colors.grey.shade400),
+                        const SizedBox(width: 4),
+                        Text(
+                            '${AppStrings.t('bookings_slot_label')} ${b.slotCode}',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade500,
+                                fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
-          ],
-          const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Divider(height: 1)),
-          Row(
-            children: [
-              Icon(Icons.calendar_today_outlined,
-                  size: 13, color: Colors.grey.shade500),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  '${b.checkIn.day}/${b.checkIn.month} - ${b.checkOut.day}/${b.checkOut.month} · ${b.durationNights} ${AppStrings.t('search_malam')}',
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w500),
+            if (b.status == BookingStatus.kedaluwarsa) ...[
+              const SizedBox(height: 10),
+              Container(
+                margin: const EdgeInsets.only(left: 54),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded,
+                        size: 13, color: Colors.grey.shade500),
+                    const SizedBox(width: 6),
+                    Expanded(
+                        child: Text(AppStrings.t('bookings_expired_note'),
+                            style: TextStyle(
+                                fontSize: 10, color: Colors.grey.shade600))),
+                  ],
                 ),
               ),
-              Text(CurrencyFormatter.rupiah(b.total),
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary)),
             ],
-          ),
-          if (canCheckin || canCheckout) ...[
+            const SizedBox(height: 13),
+            const PerforationDivider(),
             const SizedBox(height: 12),
             Row(
               children: [
-                if (canCheckin)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => CheckinScreen(booking: b))),
-                      icon: const Icon(Icons.login, size: 16),
-                      label: Text(AppStrings.t('bookings_checkin_btn'),
-                          style: const TextStyle(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: BorderSide(color: AppColors.primary),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10))),
-                    ),
+                Icon(Icons.calendar_today_rounded,
+                    size: 13, color: Colors.grey.shade400),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '${b.checkIn.day}/${b.checkIn.month} - ${b.checkOut.day}/${b.checkOut.month} · ${b.durationNights} ${AppStrings.t('search_malam')}',
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF16181F)),
                   ),
-                if (canCheckout)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  CheckoutScreen(booking: b))),
-                      icon: const Icon(Icons.logout, size: 16),
-                      label: Text(AppStrings.t('bookings_checkout_btn'),
-                          style: const TextStyle(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.orange,
-                          side: const BorderSide(color: Colors.orange),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10))),
-                    ),
-                  ),
+                ),
+                Text(CurrencyFormatter.rupiah(b.total),
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: statusAccent)),
               ],
             ),
-          ],
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 36,
-            child: OutlinedButton.icon(
-              onPressed: () => Navigator.push(
+            if (canCheckin || canCheckout) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  if (canCheckin)
+                    Expanded(
+                      child: _softActionButton(
+                        icon: Icons.login_rounded,
+                        label: AppStrings.t('bookings_checkin_btn'),
+                        color: AppColors.primary,
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    CheckinScreen(booking: b))),
+                      ),
+                    ),
+                  if (canCheckin && canCheckout) const SizedBox(width: 8),
+                  if (canCheckout)
+                    Expanded(
+                      child: _softActionButton(
+                        icon: Icons.logout_rounded,
+                        label: AppStrings.t('bookings_checkout_btn'),
+                        color: const Color(0xFFFF8A00),
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    CheckoutScreen(booking: b))),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) => BookingQrScreen(booking: b))),
-              icon: const Icon(Icons.qr_code, size: 16),
-              label: Text(AppStrings.t('bookings_qr_btn'),
-                  style: const TextStyle(fontSize: 12)),
-              style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black87,
-                  side: BorderSide(color: Colors.grey.shade300),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10))),
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.qr_code_2_rounded,
+                        size: 15, color: Colors.grey.shade600),
+                    const SizedBox(width: 6),
+                    Text(AppStrings.t('bookings_qr_btn'),
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey.shade700)),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _softActionButton(
+      {required IconData icon,
+      required String label,
+      required Color color,
+      required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+            color: color.withOpacity(0.09),
+            borderRadius: BorderRadius.circular(12)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 12.5, fontWeight: FontWeight.w700, color: color)),
+          ],
+        ),
       ),
     );
   }

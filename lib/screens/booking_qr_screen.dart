@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/booking_model.dart';
 import '../services/receipt_generator.dart';
+import '../utils/currency_formatter.dart';
+import '../widgets/stub_icon.dart';
 
 class BookingQrScreen extends StatefulWidget {
   final BookingModel booking;
@@ -19,17 +21,17 @@ class _BookingQrScreenState extends State<BookingQrScreen> {
   Color get _statusColor {
     switch (widget.booking.status) {
       case BookingStatus.menungguPembayaran:
-        return Colors.orange;
+        return const Color(0xFFF59E0B);
       case BookingStatus.dipesan:
         return primaryBlue;
       case BookingStatus.checkIn:
-        return Colors.teal;
+        return const Color(0xFF0EA5A4);
       case BookingStatus.checkOut:
-        return Colors.green;
+        return const Color(0xFF16A34A);
       case BookingStatus.dibatalkan:
-        return Colors.redAccent;
+        return const Color(0xFFDC2626);
       case BookingStatus.kedaluwarsa:
-        return Colors.grey.shade600;
+        return Colors.grey.shade500;
     }
   }
 
@@ -75,8 +77,8 @@ class _BookingQrScreenState extends State<BookingQrScreen> {
           elevation: 0,
           title: const Text('QR Code Booking',
               style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF16181F),
+                  fontWeight: FontWeight.w800,
                   fontSize: 16)),
         ),
         body: ListView(
@@ -86,124 +88,136 @@ class _BookingQrScreenState extends State<BookingQrScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.06), blurRadius: 12)
-                ],
-              ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                        color: _statusColor.withOpacity(0.1),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10))
+                  ]),
               child: Column(
                 children: [
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
                     decoration: BoxDecoration(
                         color: _statusColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(9)),
                     child: Text(b.status.label,
                         style: TextStyle(
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: _statusColor)),
+                            fontWeight: FontWeight.w800,
+                            color: _statusColor,
+                            letterSpacing: 0.4)),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade200),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                        border: Border.all(color: Colors.grey.shade100),
+                        borderRadius: BorderRadius.circular(18)),
                     child: QrImageView(
-                      data: b.bookingCode,
-                      version: QrVersions.auto,
-                      size: 200,
-                      backgroundColor: Colors.white,
-                    ),
+                        data: b.bookingCode,
+                        version: QrVersions.auto,
+                        size: 196,
+                        backgroundColor: Colors.white),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   Text(b.bookingCode,
                       style: const TextStyle(
                           fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5)),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Tunjukkan QR Code ini saat check-in & check-out',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                  ),
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.8,
+                          fontFamily: 'monospace',
+                          color: Color(0xFF16181F))),
+                  const SizedBox(height: 5),
+                  Text('Tunjukkan QR Code ini saat check-in & check-out',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withOpacity(0.04), blurRadius: 8)
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4))
                   ]),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(b.locationName,
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 2),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: Color(0xFF16181F))),
+                  const SizedBox(height: 3),
                   Text(b.locationAddress,
                       style:
                           TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                  const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Divider(height: 1)),
+                  const SizedBox(height: 12),
+                  const PerforationDivider(),
+                  const SizedBox(height: 12),
                   _infoRow('Masuk', _fmtDate(b.checkIn)),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
                   _infoRow('Keluar', _fmtDate(b.checkOut)),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
                   _infoRow('Kendaraan', b.vehiclePlate),
                   if (b.slotCode.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    _infoRow('Slot Parkir', b.slotCode),
+                    const SizedBox(height: 7),
+                    _infoRow('Slot Parkir', b.slotCode)
                   ],
-                  const SizedBox(height: 6),
-                  _infoRow('Total', 'Rp ${b.total.toStringAsFixed(0)}',
+                  const SizedBox(height: 7),
+                  _infoRow('Total', CurrencyFormatter.rupiah(b.total),
                       highlight: true),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
+              height: 54,
+              child: ElevatedButton(
                 onPressed: _isGeneratingReceipt ? null : _printReceipt,
-                icon: _isGeneratingReceipt
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryBlue,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
+                child: _isGeneratingReceipt
                     ? const SizedBox(
-                        width: 16,
-                        height: 16,
+                        width: 18,
+                        height: 18,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : const Icon(Icons.receipt_long_outlined),
-                label: Text(_isGeneratingReceipt
-                    ? 'Menyiapkan Struk...'
-                    : 'Cetak / Bagikan Struk'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryBlue,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.receipt_long_rounded, size: 18),
+                          const SizedBox(width: 8),
+                          const Text('CETAK / BAGIKAN STRUK',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12.5,
+                                  letterSpacing: 0.3)),
+                        ],
+                      ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
-              'Struk berisi QR Code yang sama, bisa disimpan sebagai PDF atau dicetak di printer thermal.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-            ),
+                'Struk berisi QR Code yang sama, bisa disimpan sebagai PDF atau dicetak di printer thermal.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
           ],
         ),
       ),
@@ -218,10 +232,9 @@ class _BookingQrScreenState extends State<BookingQrScreen> {
             style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
         Text(value,
             style: TextStyle(
-              fontSize: highlight ? 14 : 12,
-              fontWeight: FontWeight.w700,
-              color: highlight ? primaryBlue : Colors.black87,
-            )),
+                fontSize: highlight ? 14.5 : 12,
+                fontWeight: FontWeight.w800,
+                color: highlight ? primaryBlue : const Color(0xFF16181F))),
       ],
     );
   }
