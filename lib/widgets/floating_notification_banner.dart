@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
-import '../services/notification_repository.dart';
+import '../services/notifications_api_service.dart';
 import '../screens/notifications_screen.dart';
 import 'app_toast.dart';
 
@@ -29,7 +29,12 @@ class NotificationBannerHost {
           if (entry.mounted) entry.remove();
         },
         onTap: () {
-          NotificationRepository.instance.markAsRead(notification.id);
+          // Best-effort — the notifications list itself re-fetches fresh
+          // read-state on its own next load, so a failure here isn't
+          // worth surfacing an error for.
+          NotificationsApiService().markAsRead(notification.id).catchError(
+                (_) {},
+              );
           navigatorKey.currentState?.push(
             MaterialPageRoute(
                 builder: (context) => const NotificationsScreen()),

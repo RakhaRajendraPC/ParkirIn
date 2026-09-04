@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../models/notification_model.dart';
 import '../services/api_exception.dart';
 import '../services/app_settings.dart';
 import '../services/bookings_api_service.dart';
 import '../utils/app_colors.dart';
+import '../utils/currency_formatter.dart';
 import '../widgets/app_sheet.dart';
+import '../widgets/floating_notification_banner.dart';
 import '../widgets/va_payment_card.dart';
 
 /// Pushed from CheckoutScreen when an overstay fee is due. Its only job is
@@ -95,6 +98,24 @@ class _OverstayPaymentScreenState extends State<OverstayPaymentScreen> {
             : 0;
         _isInitiating = false;
       });
+
+      // Optimistic/local — matches the real backend's overstayWarning
+      // notification, which fires at this exact moment (a new overstay
+      // Payment row being created), not later when the fee is eventually
+      // paid. There's no push channel to react to the server-side row
+      // instead, so this screen shows it itself since it already knows its
+      // own action just succeeded.
+      NotificationBannerHost.show(AppNotification(
+        id: 'notif_${DateTime.now().millisecondsSinceEpoch}',
+        type: NotificationType.overstayWarning,
+        title: 'Biaya Overstay Perlu Dibayar',
+        description:
+            'Booking ${widget.bookingCode} melebihi durasi parkir. Biaya tambahan sebesar ${CurrencyFormatter.rupiah(_amount)} perlu dibayar sebelum check-out.',
+        timestamp: DateTime.now(),
+        actionLabel: 'Lihat Booking',
+        bookingCode: widget.bookingCode,
+      ));
+
       _startPolling();
     } on ApiException catch (e) {
       if (!mounted) return;

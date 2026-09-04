@@ -87,6 +87,24 @@ extension NotificationTypeX on NotificationType {
   }
 
   bool get isPhase2 => this == NotificationType.flightStatusChange;
+
+  /// The backend has no actionLabel column — every real notification's
+  /// action is a fixed label per type, so it's derived here the same way
+  /// label/icon/color already are, rather than being stored server-side.
+  String? get defaultActionLabel {
+    switch (this) {
+      case NotificationType.bookingConfirmation:
+      case NotificationType.checkinConfirmation:
+      case NotificationType.checkoutConfirmation:
+      case NotificationType.overstayWarning:
+        return 'Lihat Booking';
+      case NotificationType.shuttleArriving:
+        return 'Lacak Shuttle';
+      case NotificationType.checkinReminder:
+      case NotificationType.flightStatusChange:
+        return null;
+    }
+  }
 }
 
 class AppNotification {
@@ -143,4 +161,27 @@ class AppNotification {
         bookingCode: json['bookingCode'] as String?,
         isRead: json['isRead'] as bool? ?? false,
       );
+
+  /// Maps a `GET /notifications` row to this model. `category` isn't
+  /// read — it's always derived from `type` via [NotificationTypeX.category]
+  /// on the client, so the backend's stored value is redundant here.
+  /// `actionLabel` likewise has no backend field, see
+  /// [NotificationTypeX.defaultActionLabel].
+  factory AppNotification.fromApi(Map<String, dynamic> json) {
+    final type = NotificationType.values.firstWhere(
+      (e) => e.name == json['type'],
+      orElse: () => NotificationType.bookingConfirmation,
+    );
+    final booking = json['booking'] as Map<String, dynamic>?;
+    return AppNotification(
+      id: json['id'] as String,
+      type: type,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      timestamp: DateTime.parse(json['createdAt'] as String),
+      actionLabel: type.defaultActionLabel,
+      bookingCode: booking?['bookingCode'] as String?,
+      isRead: json['isRead'] as bool? ?? false,
+    );
+  }
 }

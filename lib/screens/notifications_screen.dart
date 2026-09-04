@@ -1,12 +1,15 @@
 // lib/screens/notifications_screen.dart
 import 'package:flutter/material.dart';
+import '../models/booking_model.dart';
 import '../models/notification_model.dart';
-import '../services/notification_repository.dart';
-//import '../services/notification_preferences.dart';
-import '../services/booking_repository.dart';
+import '../services/api_exception.dart';
 import '../services/app_settings.dart';
+import '../services/bookings_api_service.dart';
+import '../services/notification_preferences.dart';
+import '../services/notifications_api_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/network_error_view.dart';
 import 'booking_detail_screen.dart';
 import 'shuttle_tracking_screen.dart';
 
@@ -18,22 +21,29 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  final NotificationRepository _repo = NotificationRepository.instance;
+  final NotificationsApiService _notificationsApi = NotificationsApiService();
+  final BookingsApiService _bookingsApi = BookingsApiService();
   AlertCategory _selected = AlertCategory.all;
   bool _selectionMode = false;
   final Set<String> _selectedIds = {};
 
+  List<AppNotification> _notifications = [];
+  bool _isLoading = true;
+  bool _hasError = false;
+  String? _errorMessage;
+
   @override
   void initState() {
     super.initState();
-    _repo.addListener(_onChanged);
     AppSettings.instance.addListener(_onChanged);
+    NotificationPreferences.instance.addListener(_onChanged);
+    _loadNotifications();
   }
 
   @override
   void dispose() {
-    _repo.removeListener(_onChanged);
     AppSettings.instance.removeListener(_onChanged);
+    NotificationPreferences.instance.removeListener(_onChanged);
     super.dispose();
   }
 
@@ -41,8 +51,43 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _loadNotifications() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+    try {
+      final json = await _notificationsApi.getNotifications();
+      final notifications = json.map(AppNotification.fromApi).toList();
+      if (!mounted) return;
+      setState(() => _notifications = notifications);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _hasError = true;
+        _errorMessage = e.message;
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Same "respect the user's category on/off preferences" filtering the
+  /// mock repository's `visible` getter used to apply, now over the
+  /// real fetched list.
+  List<AppNotification> get _visible {
+    final prefs = NotificationPreferences.instance;
+    final list = _notifications
+        .where((n) => prefs.isCategoryEnabled(n.type.category))
+        .toList();
+    list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return list;
+  }
+
+  int get _unreadCount => _visible.where((n) => !n.isRead).length;
+
   List<AppNotification> get _filtered {
-    final base = _repo.visible;
+    final base = _visible;
     if (_selected == AlertCategory.all) return base;
     return base.where((n) => n.type.category == _selected).toList();
   }
@@ -110,48 +155,119 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
   }
 
-  void _bulkMarkRead() {
-    _repo.markMultipleAsRead(_selectedIds);
+  Future<void> _bulkMarkRead() async {
+    final ids = Set<String>.from(_selectedIds);
     _toggleSelectionMode();
+    try {
+      await _notificationsApi.markMultipleAsRead(ids);
+      if (!mounted) return;
+      setState(() {
+        for (final n in _notifications) {
+          if (ids.contains(n.id)) n.isRead = true;
+        }
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    }
   }
 
-  void _bulkDelete() {
-    _repo.removeMultiple(_selectedIds);
-    _toggleSelectionMode();
+  Future<void> _markAllAsRead() async {
+    try {
+      await _notificationsApi.markAllAsRead();
+      if (!mounted) return;
+      setState(() {
+        for (final n in _notifications) {
+          n.isRead = true;
+        }
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    }
   }
 
-  void _handleNotificationTap(AppNotification item) {
+  Future<void> _deleteNotification(String id) async {
+    try {
+      await _notificationsApi.deleteNotification(id);
+      if (!mounted) return;
+      setState(() => _notifications.removeWhere((n) => n.id == id));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    }
+  }
+
+  Future<void> _bulkDelete() async {
+    final ids = Set<String>.from(_selectedIds);
+    _toggleSelectionMode();
+    try {
+      await _notificationsApi.deleteMultiple(ids);
+      if (!mounted) return;
+      setState(() => _notifications.removeWhere((n) => ids.contains(n.id)));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    }
+  }
+
+  Future<void> _handleNotificationTap(AppNotification item) async {
     if (_selectionMode) {
       _toggleSelect(item.id);
       return;
     }
-    _repo.markAsRead(item.id);
+    if (item.isRead) return;
+    try {
+      await _notificationsApi.markAsRead(item.id);
+      if (!mounted) return;
+      setState(() => item.isRead = true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showAppToast(context, severity: AppSeverity.destructive, message: e.message);
+    }
   }
 
-  void _handleActionTap(AppNotification item) {
-    final booking = item.bookingCode != null
-        ? BookingRepository.instance.findByCode(item.bookingCode!)
-        : null;
-    _repo.markAsRead(item.id);
+  Future<void> _handleActionTap(AppNotification item) async {
+    BookingModel? booking;
+    if (item.bookingCode != null) {
+      try {
+        final json = await _bookingsApi.getBooking(item.bookingCode!);
+        booking = BookingModel.fromApi(json);
+      } on ApiException {
+        booking = null;
+      }
+    }
+    if (!item.isRead) {
+      try {
+        await _notificationsApi.markAsRead(item.id);
+        if (mounted) setState(() => item.isRead = true);
+      } on ApiException {
+        // Non-critical — the user is navigating on regardless.
+      }
+    }
+    if (!mounted) return;
 
-    if (item.type == NotificationType.shuttleArriving && booking != null) {
+    final resolvedBooking = booking;
+    if (item.type == NotificationType.shuttleArriving &&
+        resolvedBooking != null) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => ShuttleTrackingScreen(
-            bookingCode: booking.bookingCode,
-            pickupPointName: 'Titik Jemput A - ${booking.locationName}',
+            bookingCode: resolvedBooking.bookingCode,
+            pickupPointName: 'Titik Jemput A - ${resolvedBooking.locationName}',
             destinationName: 'Terminal Keberangkatan',
-            userSlotCode: booking.slotCode,
-            venueAddress: booking.locationAddress,
+            userSlotCode: resolvedBooking.slotCode,
+            venueAddress: resolvedBooking.locationAddress,
           ),
         ),
       );
-    } else if (booking != null) {
+    } else if (resolvedBooking != null) {
       Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => BookingDetailScreen(booking: booking)));
+              builder: (context) =>
+                  BookingDetailScreen(booking: resolvedBooking)));
     } else {
       showAppToast(
         context,
@@ -197,9 +313,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           ],
         ),
-        body: RefreshIndicator(
-          onRefresh: () async =>
-              await Future.delayed(const Duration(milliseconds: 400)),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _hasError
+                ? NetworkErrorView(
+                    onRetry: _loadNotifications,
+                    title: AppStrings.t('notif_load_error_title'),
+                    message: _errorMessage,
+                  )
+                : RefreshIndicator(
+          onRefresh: _loadNotifications,
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -243,7 +366,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   selected: _selectedIds.contains(item.id),
                                   onTap: () => _handleNotificationTap(item),
                                   onActionTap: () => _handleActionTap(item),
-                                  onDismiss: () => _repo.remove(item.id),
+                                  onDismiss: () => _deleteNotification(item.id),
                                 ),
                               );
                             },
@@ -305,7 +428,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildHeader() {
-    final unread = _repo.unreadCount;
+    final unread = _unreadCount;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -363,7 +486,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
             if (unread > 0)
               TextButton(
-                onPressed: () => _repo.markAllAsRead(),
+                onPressed: _markAllAsRead,
                 style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     minimumSize: Size.zero),

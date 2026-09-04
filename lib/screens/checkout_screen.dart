@@ -103,21 +103,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         actionLabel: AppStrings.t('checkout_notif_success_action'),
         bookingCode: widget.booking.bookingCode,
       ));
-
-      if (booking.overstayFee > 0) {
-        NotificationRepository.instance.add(AppNotification(
-          id: 'notif_${DateTime.now().millisecondsSinceEpoch + 1}',
-          type: NotificationType.overstayWarning,
-          title: AppStrings.t('checkout_notif_overstay_title'),
-          description: AppStrings.t('checkout_notif_overstay_desc')
-              .replaceAll('{code}', widget.booking.bookingCode)
-              .replaceAll(
-                  '{amount}', CurrencyFormatter.rupiah(booking.overstayFee)),
-          timestamp: DateTime.now(),
-          actionLabel: AppStrings.t('checkout_notif_overstay_action'),
-          bookingCode: widget.booking.bookingCode,
-        ));
-      }
+      // The overstay-specific notification is no longer fired here — the
+      // real backend event it corresponded to already happened earlier, at
+      // payment-creation time in OverstayPaymentScreen, not at checkout
+      // completion. Firing a second "late fee charged" banner at this point
+      // would be a stale duplicate of something the user already saw.
 
       setState(() {
         _finalBooking = booking;
