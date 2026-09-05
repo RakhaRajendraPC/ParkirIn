@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/user_session.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
-import '../widgets/app_toast.dart';
+import '../widgets/coming_soon_badge.dart';
 
 class MyDetailsScreen extends StatefulWidget {
   const MyDetailsScreen({super.key});
@@ -18,7 +18,6 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
   late final TextEditingController _emailCtrl;
   late final TextEditingController _phoneCtrl;
   final _idCtrl = TextEditingController(text: '3171xxxxxxxxxxxx');
-  bool _isSaving = false;
 
   @override
   void initState() {
@@ -41,24 +40,6 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
 
   void _onChanged() {
     if (mounted) setState(() {});
-  }
-
-  Future<void> _save() async {
-    setState(() => _isSaving = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-
-    _session.name = _nameCtrl.text.trim();
-    _session.email = _emailCtrl.text.trim();
-    _session.phone = _phoneCtrl.text.trim();
-    _session.save();
-
-    setState(() => _isSaving = false);
-    showAppToast(
-      context,
-      severity: AppSeverity.success,
-      message: AppStrings.t('mydetails_saved_snackbar'),
-    );
   }
 
   @override
@@ -119,13 +100,20 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
             _buildSection(AppStrings.t('mydetails_section_keamanan'), [
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.lock_outline, color: AppColors.primary),
-                title: Text(AppStrings.t('mydetails_ubah_password'),
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600)),
-                trailing:
-                    const Icon(Icons.chevron_right, color: Colors.black26),
-                onTap: () => _showChangePasswordSheet(context),
+                leading: Icon(Icons.lock_outline, color: Colors.grey.shade400),
+                title: Row(
+                  children: [
+                    Text(AppStrings.t('mydetails_ubah_password'),
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600)),
+                    const SizedBox(width: 6),
+                    const ComingSoonBadge(),
+                  ],
+                ),
+                // No backend endpoint exists for changing a password yet —
+                // disabled rather than opening a sheet whose "save" was a
+                // no-op that silently discarded whatever was typed.
+                onTap: null,
               ),
             ]),
             const SizedBox(height: 24),
@@ -133,20 +121,21 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: _isSaving ? null : _save,
+                // No profile-update endpoint exists yet — disabled rather
+                // than faking a successful save of local-only state.
+                onPressed: null,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : Text(AppStrings.t('mydetails_simpan_btn'),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(AppStrings.t('mydetails_simpan_btn'),
                         style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(width: 6),
+                    const ComingSoonBadge(),
+                  ],
+                ),
               ),
             ),
           ],
@@ -195,57 +184,4 @@ class _MyDetailsScreenState extends State<MyDetailsScreen> {
     );
   }
 
-  void _showChangePasswordSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 20,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppStrings.t('mydetails_ubah_password'),
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                    labelText: AppStrings.t('mydetails_password_lama'),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)))),
-            const SizedBox(height: 12),
-            TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                    labelText: AppStrings.t('mydetails_password_baru'),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)))),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12))),
-                child: Text(AppStrings.t('mydetails_simpan_password_btn')),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

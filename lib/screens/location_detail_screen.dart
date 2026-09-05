@@ -4,6 +4,7 @@ import '../models/review_model.dart';
 import '../services/api_exception.dart';
 import '../services/app_settings.dart';
 import '../services/locations_api_service.dart';
+import '../services/reviews_api_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/app_toast.dart';
@@ -27,14 +28,19 @@ class LocationDetailScreen extends StatefulWidget {
 
 class _LocationDetailScreenState extends State<LocationDetailScreen> {
   final LocationsApiService _locationsApi = LocationsApiService();
+  final ReviewsApiService _reviewsApi = ReviewsApiService();
   ParkingLocation? _location;
   bool _isLoading = true;
+
+  List<LocationReview> _reviews = [];
+  bool _isLoadingReviews = true;
 
   @override
   void initState() {
     super.initState();
     AppSettings.instance.addListener(_onChanged);
     _loadDetail();
+    _loadReviews();
   }
 
   @override
@@ -58,6 +64,23 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
       showAppToast(context, severity: AppSeverity.destructive, message: e.message);
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    setState(() => _isLoadingReviews = true);
+    try {
+      final json = await _reviewsApi.getLocationReviews(widget.location.id);
+      if (!mounted) return;
+      setState(() {
+        _reviews = json.map(LocationReview.fromApi).toList();
+      });
+    } on ApiException catch (_) {
+      // Silent — the reviews section just falls back to its empty state.
+      // A destructive toast here would compete with the more important
+      // location-detail load above for the user's attention.
+    } finally {
+      if (mounted) setState(() => _isLoadingReviews = false);
     }
   }
 
@@ -353,7 +376,20 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   }
 
   Widget _buildReviewsSection() {
-    final reviews = LocationReview.mockForLocation(widget.location.id);
+    if (_isLoadingReviews) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    final reviews = _reviews;
     final avgRating = reviews.isEmpty
         ? 0.0
         : reviews.map((r) => r.rating).reduce((a, b) => a + b) / reviews.length;
@@ -368,19 +404,20 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
               AppStrings.t('loc_reviews_title'),
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
-            Row(
-              children: [
-                const Icon(Icons.star, size: 16, color: Colors.amber),
-                const SizedBox(width: 4),
-                Text(
-                  '${avgRating.toStringAsFixed(1)} (${reviews.length} ${AppStrings.t('loc_reviews_suffix')})',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+            if (reviews.isNotEmpty)
+              Row(
+                children: [
+                  const Icon(Icons.star, size: 16, color: Colors.amber),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${avgRating.toStringAsFixed(1)} (${reviews.length} ${AppStrings.t('loc_reviews_suffix')})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
         const SizedBox(height: 12),
@@ -455,15 +492,17 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            r.comment,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade700,
-              height: 1.4,
+          if (r.comment.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              r.comment,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade700,
+                height: 1.4,
+              ),
             ),
-          ),
+          ],
           if (r.tags.isNotEmpty) ...[
             const SizedBox(height: 8),
             Wrap(

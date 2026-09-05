@@ -5,6 +5,7 @@ import 'screens/profile_screen.dart';
 import 'screens/bookings_screen.dart';
 import 'screens/splash_onboarding_screen.dart';
 import 'services/app_settings.dart';
+import 'services/auth_api_service.dart';
 import 'services/booking_repository.dart';
 import 'services/notification_repository.dart';
 import 'services/user_session.dart';
@@ -16,8 +17,27 @@ void main() async {
   await BookingRepository.instance.load();
   await NotificationRepository.instance.load();
   await UserSession.instance.load();
-  await FavoritesService.instance.load();
+  await _refreshUserSessionFromBackend();
+  await FavoritesService.instance.load().catchError((_) {});
   runApp(const ParkirInApp());
+}
+
+/// Best-effort refresh of the cached UserSession against the real backend —
+/// covers "already logged in, app relaunched" (no login/register call
+/// happens in that case to supply fresh data otherwise). A missing/expired
+/// token or being offline at launch just means whatever load() already
+/// populated from cache stays as-is; login/logout redirects are handled
+/// elsewhere, not here.
+Future<void> _refreshUserSessionFromBackend() async {
+  try {
+    final me = await AuthApiService().getMe();
+    UserSession.instance.name = me['name'] as String? ?? UserSession.instance.name;
+    UserSession.instance.email = me['email'] as String? ?? UserSession.instance.email;
+    UserSession.instance.phone = me['phone'] as String? ?? UserSession.instance.phone;
+    UserSession.instance.save();
+  } catch (_) {
+    // No valid token / offline at launch — keep the cached values.
+  }
 }
 
 class ParkirInApp extends StatefulWidget {

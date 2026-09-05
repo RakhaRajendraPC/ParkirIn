@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_api_service.dart';
+import '../services/favorites_service.dart';
 import '../services/user_session.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
@@ -214,26 +215,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
-          Stack(
-            children: [
-              const CircleAvatar(
-                radius: 40,
-                backgroundImage:
-                    NetworkImage('https://i.pravatar.cc/150?img=12'),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.amber,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.star, color: Colors.white, size: 14),
-                ),
-              ),
-            ],
+          const CircleAvatar(
+            radius: 40,
+            backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=12'),
           ),
           const SizedBox(height: 12),
           Text(
@@ -244,29 +228,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(
             _session.email,
             style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF4DE),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.star, size: 14, color: Colors.amber),
-                const SizedBox(width: 4),
-                Text(
-                  AppStrings.t('profile_gold_member'),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFB8860B),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -378,6 +339,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _performLogout(BuildContext context) async {
     await AuthApiService().logout();
+    // Clear cached favorites so the next login (possibly a different
+    // account) doesn't briefly show this account's data before its own
+    // load() completes.
+    FavoritesService.instance.reset();
     if (!context.mounted) return;
     Navigator.pushAndRemoveUntil(
       context,

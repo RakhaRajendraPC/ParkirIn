@@ -2,11 +2,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '/main.dart';
 import '../services/auth_api_service.dart';
+import '../services/favorites_service.dart';
+import '../services/user_session.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/coming_soon_badge.dart';
 import 'otp_verification_screen.dart';
 import 'terms_privacy_screen.dart';
-import 'forgot_password_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -37,17 +39,34 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  /// Populates UserSession from a login/register response's embedded user
+  /// object — that data is already returned by both calls, so this needs
+  /// no extra network round-trip.
+  void _applyUserFromResponse(Map<String, dynamic> response) {
+    final user = response['user'] as Map<String, dynamic>?;
+    if (user == null) return;
+    UserSession.instance.name = user['name'] as String? ?? UserSession.instance.name;
+    UserSession.instance.email = user['email'] as String? ?? UserSession.instance.email;
+    UserSession.instance.phone = user['phone'] as String? ?? UserSession.instance.phone;
+    UserSession.instance.save();
+    // Best-effort refresh for this account — a prior session's reset() may
+    // have cleared the cache, or a different account's data may still be
+    // cached from before this login.
+    FavoritesService.instance.load(force: true).catchError((_) {});
+  }
+
   Future<void> _submit() async {
     setState(() => _isLoading = true);
     try {
       if (!_isLogin) {
         final phone = _phoneCtrl.text.trim();
-        await _authApiService.register(
+        final response = await _authApiService.register(
           name: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           phone: phone,
           password: _passwordCtrl.text,
         );
+        _applyUserFromResponse(response);
         // Trigger the actual OTP send so a code exists to verify next.
         await _authApiService.sendOtp(phone);
         if (!mounted) return;
@@ -58,10 +77,11 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         );
       } else {
-        await _authApiService.login(
+        final response = await _authApiService.login(
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
         );
+        _applyUserFromResponse(response);
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
@@ -166,14 +186,23 @@ class _AuthScreenState extends State<AuthScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const ForgotPasswordScreen()),
-                    ),
-                    child: const Text(
-                      'Lupa Password?',
-                      style: TextStyle(fontSize: 12, color: primaryBlue),
+                    // No backend endpoint exists for password reset — the
+                    // whole flow (OTP + set-new-password) is fake, never
+                    // actually calls the backend, so it's disabled here
+                    // rather than letting a user believe they changed their
+                    // password when nothing was sent to the server.
+                    onPressed: null,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Lupa Password?',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade500),
+                        ),
+                        const SizedBox(width: 6),
+                        const ComingSoonBadge(),
+                      ],
                     ),
                   ),
                 ),

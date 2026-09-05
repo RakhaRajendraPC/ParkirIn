@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../services/favorites_service.dart';
 import '../services/locations_api_service.dart';
-import '../services/api_exception.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/empty_search_view.dart';
@@ -43,7 +42,18 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   @override
   void initState() {
     super.initState();
+    _favorites.addListener(_onFavoritesChanged);
     _loadLocations();
+  }
+
+  @override
+  void dispose() {
+    _favorites.removeListener(_onFavoritesChanged);
+    super.dispose();
+  }
+
+  void _onFavoritesChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadLocations() async {
@@ -430,7 +440,18 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             top: 8,
             right: 8,
             child: IconButton(
-              onPressed: () => setState(() => _favorites.toggle(loc.id)),
+              onPressed: () {
+                _favorites.toggle(loc).catchError((Object e) {
+                  if (!mounted) return;
+                  showAppToast(
+                    context,
+                    severity: AppSeverity.destructive,
+                    message: e is ApiException
+                        ? e.message
+                        : 'Gagal memperbarui favorit',
+                  );
+                });
+              },
               icon: Icon(
                 _favorites.isFavorite(loc.id)
                     ? Icons.favorite

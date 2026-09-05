@@ -107,7 +107,6 @@ class AppStrings {
     'bookings_expired_note':
         'Dibatalkan otomatis karena tidak check-in sesuai batas waktu',
     'profile_appbar_title': 'Profile',
-    'profile_gold_member': 'Gold Member',
     'profile_my_details_title': 'Detail Saya',
     'profile_my_details_sub': 'Info pribadi, KTP, kata sandi',
     'profile_payment_title': 'Metode Pembayaran',
@@ -550,7 +549,6 @@ class AppStrings {
     'bookings_expired_note':
         'Automatically cancelled due to missed check-in deadline',
     'profile_appbar_title': 'Profile',
-    'profile_gold_member': 'Gold Member',
     'profile_my_details_title': 'My Details',
     'profile_my_details_sub': 'Personal info, ID, password',
     'profile_payment_title': 'Payment Methods',

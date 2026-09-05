@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
+import '../services/api_exception.dart';
+import '../services/reviews_api_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_toast.dart';
 
@@ -16,6 +18,7 @@ class _RatingReviewScreenState extends State<RatingReviewScreen> {
   int _rating = 0;
   final _reviewCtrl = TextEditingController();
   bool _isSubmitting = false;
+  final _reviewsApi = ReviewsApiService();
 
   final List<String> _tags = [
     'Bersih',
@@ -36,15 +39,42 @@ class _RatingReviewScreenState extends State<RatingReviewScreen> {
       return;
     }
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-    Navigator.pop(context);
-    showAppToast(
-      context,
-      severity: AppSeverity.success,
-      message: 'Terima kasih atas ulasan Anda!',
-    );
+    try {
+      await _reviewsApi.submitReview(
+        widget.booking.bookingCode,
+        rating: _rating,
+        comment: _reviewCtrl.text.trim(),
+        tags: _selectedTags.toList(),
+      );
+      if (!mounted) return;
+      Navigator.pop(context);
+      showAppToast(
+        context,
+        severity: AppSeverity.success,
+        message: 'Terima kasih atas ulasan Anda!',
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.statusCode == 409) {
+        // Defensive fallback for the race window between BookingDetailScreen's
+        // proactive existence check and this submit — the backend is the
+        // final authority on whether a review already exists.
+        Navigator.pop(context);
+        showAppToast(
+          context,
+          severity: AppSeverity.warning,
+          message: 'Anda sudah memberi ulasan untuk booking ini.',
+        );
+        return;
+      }
+      showAppToast(
+        context,
+        severity: AppSeverity.destructive,
+        message: e.message,
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override

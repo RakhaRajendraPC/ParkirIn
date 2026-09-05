@@ -15,36 +15,21 @@ class LocationReview {
     this.tags = const [],
   });
 
-  static List<LocationReview> mockForLocation(String locationId) {
-    final now = DateTime.now();
-    return [
-      LocationReview(
-        userName: 'Dewi Anggraini',
-        userAvatarSeed: '45',
-        rating: 5,
-        comment:
-            'Lokasinya bersih, petugas ramah, dan shuttle datangnya cepat banget. Recommended!',
-        date: now.subtract(const Duration(days: 3)),
-        tags: const ['Bersih', 'Shuttle Cepat'],
-      ),
-      LocationReview(
-        userName: 'Rian Pratama',
-        userAvatarSeed: '22',
-        rating: 4,
-        comment:
-            'Overall bagus, cuma agak jauh dari terminal kalau dapat slot ekonomis.',
-        date: now.subtract(const Duration(days: 10)),
-        tags: const ['Aman'],
-      ),
-      LocationReview(
-        userName: 'Siti Nurhaliza',
-        userAvatarSeed: '31',
-        rating: 5,
-        comment:
-            'Sudah 3 kali pakai selalu puas. Proses check-in/check-out cepat pakai QR.',
-        date: now.subtract(const Duration(days: 18)),
-        tags: const ['Mudah Diakses', 'Petugas Ramah'],
-      ),
-    ];
+  /// Maps a `GET /locations/:id/reviews` entry — `{ id, rating, comment,
+  /// tags, createdAt, user: { name } }` (see `reviews.service.ts`'s
+  /// `findAllForLocation`). The backend stores no avatar, so a stable
+  /// pseudo-random pravatar seed is derived from the review's own id purely
+  /// for visual variety, not real data.
+  factory LocationReview.fromApi(Map<String, dynamic> json) {
+    final user = json['user'] as Map<String, dynamic>?;
+    final id = json['id'] as String? ?? '';
+    return LocationReview(
+      userName: user?['name'] as String? ?? 'Pengguna ParkirIn',
+      userAvatarSeed: '${(id.hashCode.abs() % 70) + 1}',
+      rating: json['rating'] as int,
+      comment: json['comment'] as String? ?? '',
+      date: DateTime.parse(json['createdAt'] as String),
+      tags: (json['tags'] as List<dynamic>? ?? []).cast<String>(),
+    );
   }
 }
