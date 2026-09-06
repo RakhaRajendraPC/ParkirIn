@@ -316,10 +316,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         width: double.infinity,
         height: 46,
         child: OutlinedButton.icon(
-          onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => CheckinScreen(booking: booking))),
+          onPressed: () async {
+            await Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => CheckinScreen(booking: booking)));
+            if (mounted) setState(() {});
+          },
           icon: const Icon(Icons.login, size: 18),
           label: const Text('Check-in Sekarang'),
           style: OutlinedButton.styleFrom(
@@ -334,11 +337,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         width: double.infinity,
         height: 44,
         child: TextButton.icon(
-          onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      RescheduleCancelScreen(booking: booking))),
+          onPressed: () async {
+            await Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        RescheduleCancelScreen(booking: booking)));
+            if (mounted) setState(() {});
+          },
           icon: const Icon(Icons.edit_calendar_outlined,
               size: 16, color: Colors.black54),
           label: const Text('Reschedule / Batalkan Booking',
@@ -353,10 +359,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       width: double.infinity,
       height: 46,
       child: OutlinedButton.icon(
-        onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => CheckoutScreen(booking: booking))),
+        onPressed: () async {
+          await Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => CheckoutScreen(booking: booking)));
+          if (mounted) setState(() {});
+        },
         icon: const Icon(Icons.logout, size: 18),
         label: const Text('Check-out Sekarang'),
         style: OutlinedButton.styleFrom(

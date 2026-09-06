@@ -10,6 +10,7 @@ import 'auth_screen.dart';
 import 'delete_account_screen.dart';
 import 'favorites_screen.dart';
 import 'help_center_screen.dart';
+import 'invoice_history_screen.dart';
 import 'language_settings_screen.dart';
 import 'my_details_screen.dart';
 import 'payment_methods_screen.dart';
@@ -120,6 +121,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const PaymentMethodsScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildMenuTile(
+                icon: Icons.receipt_long_outlined,
+                iconColor: AppColors.primary,
+                title: AppStrings.t('profile_invoice_title'),
+                subtitle: AppStrings.t('profile_invoice_sub'),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const InvoiceHistoryScreen(),
                   ),
                 ),
               ),

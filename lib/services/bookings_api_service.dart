@@ -159,4 +159,28 @@ class BookingsApiService {
       throw mapDioError(e);
     }
   }
+
+  /// PATCH /bookings/:code/reschedule. Only allowed while status is
+  /// `dipesan`, and only for a same-duration date shift — the backend
+  /// throws `400` if the new range's length doesn't match the original,
+  /// `409` if the new range overlaps another confirmed booking on the same
+  /// slot or if the booking isn't in `dipesan` status.
+  Future<Map<String, dynamic>> rescheduleBooking(
+    String bookingCode, {
+    required DateTime newCheckInPlanned,
+    required DateTime newCheckOutPlanned,
+  }) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/bookings/$bookingCode/reschedule',
+        data: {
+          'newCheckInPlanned': newCheckInPlanned.toIso8601String(),
+          'newCheckOutPlanned': newCheckOutPlanned.toIso8601String(),
+        },
+      );
+      return res.data!;
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
 }
