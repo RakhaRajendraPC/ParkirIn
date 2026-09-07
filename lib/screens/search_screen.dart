@@ -57,6 +57,7 @@ class _SearchScreenState extends State<SearchScreen> {
           badgeText: 'PARK & FLY',
           badgeIcon: Icons.local_parking,
           title: 'Parkir Aman\nSampai Pulang',
+          subtitle: 'Lahan parkir 24 jam dengan pengawasan CCTV & satpam.',
           accent: AppColors.primary,
         ),
         const BannerSlide(
@@ -64,6 +65,8 @@ class _SearchScreenState extends State<SearchScreen> {
           badgeText: 'GRATIS SHUTTLE',
           badgeIcon: Icons.directions_bus_filled,
           title: 'Antar-Jemput\nLangsung ke Terminal',
+          subtitle:
+              'Layanan shuttle gratis dan cepat setiap 15 menit ke terminal.',
           accent: Color(0xFFFF8A00),
         ),
         const BannerSlide(
@@ -71,6 +74,8 @@ class _SearchScreenState extends State<SearchScreen> {
           badgeText: 'PROMO PENGGUNA BARU',
           badgeIcon: Icons.local_offer_rounded,
           title: 'Diskon 20%\nBooking Pertama',
+          subtitle:
+              'Berlaku untuk semua lokasi parkir inap yang ada di bandara.',
           accent: Color(0xFF4B4FE0),
         ),
       ];
@@ -97,11 +102,12 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              HeroBannerCarousel(slides: _banners),
-              if (_activeBooking != null) ...[
-                const SizedBox(height: 14),
-                _buildActiveBookingBanner(),
-              ],
+              HeroBannerCarousel(
+                slides: _banners,
+                flushBottom: _activeBooking !=
+                    null, // sudut bawah rata jika ada kartu di bawahnya
+              ),
+              if (_activeBooking != null) _buildActiveBookingBanner(),
               const SizedBox(height: 22),
               _buildTitle(),
               const SizedBox(height: 16),
@@ -131,8 +137,15 @@ class _SearchScreenState extends State<SearchScreen> {
     if (b == null) return const SizedBox.shrink();
 
     final isParked = b.status == BookingStatus.checkIn;
+    final statusLabel = isParked
+        ? AppStrings.t('search_active_booking_parked')
+        : AppStrings.t('search_active_booking_waiting');
+
     return InkWell(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(18),
+        bottomRight: Radius.circular(18),
+      ),
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
@@ -140,52 +153,97 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-              colors: [AppColors.primary, AppColors.primary.withOpacity(0.82)]),
-          borderRadius: BorderRadius.circular(18),
+            colors: [AppColors.primary, AppColors.primary.withOpacity(0.85)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(18),
+            bottomRight: Radius.circular(18),
+          ),
           boxShadow: [
             BoxShadow(
-                color: AppColors.primary.withOpacity(0.28),
-                blurRadius: 18,
-                offset: const Offset(0, 8))
+              color: AppColors.primary.withOpacity(0.28),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            StubIcon(
-              icon: isParked
-                  ? Icons.local_parking
-                  : Icons.confirmation_number_outlined,
-              color: Colors.white,
-              size: 42,
-              onWhiteBase: false,
+            Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'ACTIVE BOOKING',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const Spacer(),
+                const Icon(Icons.north_east_rounded,
+                    color: Colors.white70, size: 18),
+              ],
             ),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isParked
-                        ? AppStrings.t('search_active_booking_parked')
-                        : AppStrings.t('search_active_booking_waiting'),
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${b.locationName} · ${AppStrings.t('bookings_slot_label')} ${b.slotCode}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 11),
-                  ),
-                ],
+            const SizedBox(height: 6),
+            Text(
+              statusLabel,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 19,
+                letterSpacing: -0.3,
               ),
             ),
-            const Icon(Icons.north_east_rounded,
-                color: Colors.white70, size: 18),
+            const SizedBox(height: 14),
+            const _DashedDivider(),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    b.locationName,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.85), fontSize: 12.5),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.4), width: 1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${AppStrings.t('bookings_slot_label').toUpperCase()} ${b.slotCode}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -693,6 +751,36 @@ class _FeatureCard extends StatelessWidget {
               style: TextStyle(
                   fontSize: 11, color: Colors.grey.shade600, height: 1.4)),
         ],
+      ),
+    );
+  }
+}
+
+class _DashedDivider extends StatelessWidget {
+  const _DashedDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 1,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const dashWidth = 5.0;
+          const dashGap = 4.0;
+          final count = (constraints.maxWidth / (dashWidth + dashGap)).floor();
+          return Row(
+            children: List.generate(count, (_) {
+              return Padding(
+                padding: const EdgeInsets.only(right: dashGap),
+                child: Container(
+                  width: dashWidth,
+                  height: 1,
+                  color: Colors.white.withOpacity(0.35),
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
 import '../services/favorites_service.dart';
+import '../services/app_settings.dart';
+import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/empty_search_view.dart';
+import '../widgets/stub_icon.dart';
 import 'location_detail_screen.dart';
 import 'map_view_screen.dart';
 import 'advanced_filter_screen.dart';
@@ -24,11 +27,28 @@ class SearchResultsScreen extends StatefulWidget {
 }
 
 class _SearchResultsScreenState extends State<SearchResultsScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final FavoritesService _favorites = FavoritesService.instance;
   String _sortBy = 'Terdekat';
   bool _onlyAccessible = false;
   SearchFilterResult? _advancedFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    _favorites.addListener(_onChanged);
+    AppSettings.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    _favorites.removeListener(_onChanged);
+    AppSettings.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
 
   List<ParkingLocation> get _results {
     var list = List<ParkingLocation>.from(ParkingLocation.mockList());
@@ -79,24 +99,21 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+            icon:
+                const Icon(Icons.arrow_back_rounded, color: Color(0xFF16181F)),
             onPressed: () => Navigator.maybePop(context),
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                widget.airportName,
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '$_nights malam · ${_results.length} lokasi ditemukan',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-              ),
+              Text(widget.airportName,
+                  style: const TextStyle(
+                      color: Color(0xFF16181F),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800)),
+              Text('$_nights malam · ${_results.length} lokasi ditemukan',
+                  style:
+                      TextStyle(color: Colors.grey.shade500, fontSize: 10.5)),
             ],
           ),
         ),
@@ -112,7 +129,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       }),
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                       itemCount: _results.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) =>
@@ -127,7 +144,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
   Widget _buildFilterBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: Row(
         children: [
           Expanded(
@@ -142,19 +159,18 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       label: Text(s),
                       selected: selected,
                       onSelected: (_) => setState(() => _sortBy = s),
-                      selectedColor: primaryBlue,
+                      selectedColor: AppColors.primary,
                       backgroundColor: Colors.white,
                       labelStyle: TextStyle(
-                        fontSize: 11,
-                        color: selected ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.w600,
-                      ),
+                          fontSize: 11.5,
+                          color: selected ? Colors.white : Colors.grey.shade700,
+                          fontWeight: FontWeight.w700),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: selected ? primaryBlue : Colors.grey.shade300,
-                        ),
-                      ),
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                              color: selected
+                                  ? AppColors.primary
+                                  : Colors.grey.shade200)),
                       showCheckmark: false,
                     ),
                   );
@@ -162,237 +178,221 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               ),
             ),
           ),
-          IconButton(
-            onPressed: () => setState(() => _onlyAccessible = !_onlyAccessible),
-            icon: Icon(
-              Icons.accessible,
-              color: _onlyAccessible ? primaryBlue : Colors.grey.shade400,
-            ),
-            tooltip: 'Ramah kursi roda / lansia',
-          ),
-          IconButton(
-            onPressed: () async {
-              final result = await Navigator.push<SearchFilterResult>(
+          _iconToggle(
+              Icons.accessible_rounded,
+              _onlyAccessible,
+              () => setState(() => _onlyAccessible = !_onlyAccessible),
+              'Ramah kursi roda / lansia'),
+          const SizedBox(width: 6),
+          _iconToggle(Icons.tune_rounded, _advancedFilter != null, () async {
+            final result = await Navigator.push<SearchFilterResult>(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      AdvancedFilterScreen(initialFilter: _advancedFilter),
-                ),
-              );
-              if (result != null) setState(() => _advancedFilter = result);
-            },
-            icon: const Icon(Icons.tune, color: primaryBlue),
-            tooltip: 'Filter Lanjutan',
-          ),
-          IconButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MapViewScreen(
-                  checkIn: widget.checkIn,
-                  checkOut: widget.checkOut,
-                ),
-              ),
-            ),
-            icon: const Icon(Icons.map_outlined, color: primaryBlue),
-            tooltip: 'Lihat di Peta',
-          ),
+                    builder: (context) =>
+                        AdvancedFilterScreen(initialFilter: _advancedFilter)));
+            if (result != null) setState(() => _advancedFilter = result);
+          }, 'Filter Lanjutan'),
+          const SizedBox(width: 6),
+          _iconToggle(
+              Icons.map_rounded,
+              false,
+              () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => MapViewScreen(
+                          checkIn: widget.checkIn, checkOut: widget.checkOut))),
+              'Lihat di Peta'),
         ],
       ),
     );
   }
 
+  Widget _iconToggle(
+      IconData icon, bool active, VoidCallback onTap, String tooltip) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(11),
+        child: Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            color: active ? AppColors.primary.withOpacity(0.1) : Colors.white,
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(
+                color: active ? AppColors.primary : Colors.grey.shade200),
+          ),
+          child: Icon(icon,
+              size: 18,
+              color: active ? AppColors.primary : Colors.grey.shade500),
+        ),
+      ),
+    );
+  }
+
   Widget _buildLocationCard(ParkingLocation loc) {
+    final isFav = _favorites.isFavorite(loc.id);
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () {
-        Navigator.push(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => LocationDetailScreen(
-              location: loc,
-              checkIn: widget.checkIn,
-              checkOut: widget.checkOut,
-            ),
-          ),
-        );
-      },
+              builder: (context) => LocationDetailScreen(
+                  location: loc,
+                  checkIn: widget.checkIn,
+                  checkOut: widget.checkOut))),
       child: Stack(
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
+                    color: Colors.black.withOpacity(0.035),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6))
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: primaryBlue.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: loc.imagePath.isNotEmpty
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      loc.imagePath.isNotEmpty
                           ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                loc.imagePath,
-                                fit: BoxFit.cover,
-                                width: 70,
-                                height: 70,
-                              ),
-                            )
-                          : Icon(
-                              loc.isIndoor
-                                  ? Icons.warehouse
-                                  : Icons.local_parking,
-                              color: primaryBlue,
-                              size: 30,
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.asset(loc.imagePath,
+                                  fit: BoxFit.cover, width: 64, height: 64))
+                          : StubIcon(
+                              icon: loc.isIndoor
+                                  ? Icons.warehouse_rounded
+                                  : Icons.local_parking_rounded,
+                              color: AppColors.primary,
+                              size: 64),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 30),
+                              child: Text(loc.name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                      color: Color(0xFF16181F))),
                             ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(right: 32),
-                            child: Text(
-                              loc.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            loc.address,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(Icons.star,
-                                  size: 14, color: Colors.amber),
-                              const SizedBox(width: 2),
-                              Text(
-                                '${loc.rating}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Icon(
-                                Icons.directions_car,
-                                size: 13,
-                                color: Colors.grey.shade500,
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                '${loc.distanceKm} km',
+                            const SizedBox(height: 3),
+                            Text(loc.address,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                              if (loc.isAccessible) ...[
+                                    fontSize: 11, color: Colors.grey.shade600)),
+                            const SizedBox(height: 7),
+                            Row(
+                              children: [
+                                const Icon(Icons.star_rounded,
+                                    size: 15, color: Colors.amber),
+                                const SizedBox(width: 2),
+                                Text('${loc.rating}',
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800)),
                                 const SizedBox(width: 10),
-                                Icon(
-                                  Icons.accessible,
-                                  size: 14,
-                                  color: Colors.teal.shade400,
-                                ),
+                                Icon(Icons.directions_car_rounded,
+                                    size: 13, color: Colors.grey.shade400),
+                                const SizedBox(width: 2),
+                                Text('${loc.distanceKm} km',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade600)),
+                                if (loc.isAccessible) ...[
+                                  const SizedBox(width: 8),
+                                  Icon(Icons.accessible_rounded,
+                                      size: 15, color: const Color(0xFF0EA5A4)),
+                                ],
                               ],
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(height: 1),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(color: Colors.black87),
-                        children: [
-                          TextSpan(
-                            text: CurrencyFormatter.rupiah(loc.pricePerNight),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
                             ),
-                          ),
-                          TextSpan(
-                            text: ' / malam',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryBlue,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Pilih',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 13),
+                  const PerforationDivider(),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(color: Color(0xFF16181F)),
+                          children: [
+                            TextSpan(
+                                text:
+                                    CurrencyFormatter.rupiah(loc.pricePerNight),
+                                style: const TextStyle(
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.w800)),
+                            TextSpan(
+                                text: ' / malam',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey.shade500)),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 9),
+                        decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(11)),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Text('PILIH',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.3)),
+                            SizedBox(width: 4),
+                            Icon(Icons.north_east_rounded,
+                                color: Colors.white, size: 13),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              onPressed: () => setState(() => _favorites.toggle(loc.id)),
-              icon: Icon(
-                _favorites.isFavorite(loc.id)
-                    ? Icons.favorite
-                    : Icons.favorite_border,
-                color: _favorites.isFavorite(loc.id)
-                    ? Colors.redAccent
-                    : Colors.grey.shade400,
-                size: 20,
+            top: 10,
+            right: 10,
+            child: InkWell(
+              onTap: () => _favorites.toggle(loc.id),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.06), blurRadius: 6)
+                    ]),
+                child: Icon(
+                    isFav
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color:
+                        isFav ? const Color(0xFFE1306C) : Colors.grey.shade400,
+                    size: 17),
               ),
             ),
           ),

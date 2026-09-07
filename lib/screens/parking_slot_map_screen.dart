@@ -4,6 +4,7 @@ import '../models/parking_slot_model.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/stub_icon.dart';
 import 'select_vehicle_screen.dart';
 
 class ParkingSlotMapScreen extends StatefulWidget {
@@ -11,12 +12,11 @@ class ParkingSlotMapScreen extends StatefulWidget {
   final DateTime checkIn;
   final DateTime checkOut;
 
-  const ParkingSlotMapScreen({
-    super.key,
-    required this.location,
-    required this.checkIn,
-    required this.checkOut,
-  });
+  const ParkingSlotMapScreen(
+      {super.key,
+      required this.location,
+      required this.checkIn,
+      required this.checkOut});
 
   @override
   State<ParkingSlotMapScreen> createState() => _ParkingSlotMapScreenState();
@@ -54,16 +54,13 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
   void _continue() {
     if (_selected == null) return;
     Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SelectVehicleScreen(
-          location: widget.location,
-          checkIn: widget.checkIn,
-          checkOut: widget.checkOut,
-          selectedSlot: _selected!,
-        ),
-      ),
-    );
+        context,
+        MaterialPageRoute(
+            builder: (context) => SelectVehicleScreen(
+                location: widget.location,
+                checkIn: widget.checkIn,
+                checkOut: widget.checkOut,
+                selectedSlot: _selected!)));
   }
 
   @override
@@ -79,11 +76,12 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
             children: [
               Text(AppStrings.t('slot_map_title'),
                   style: const TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF16181F),
+                      fontWeight: FontWeight.w800,
                       fontSize: 15)),
               Text(widget.location.name,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
+                  style:
+                      TextStyle(color: Colors.grey.shade500, fontSize: 10.5)),
             ],
           ),
         ),
@@ -97,9 +95,8 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
                 boundaryMargin: const EdgeInsets.all(80),
                 constrained: false,
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: _buildParkingLot(),
-                ),
+                    padding: const EdgeInsets.all(20),
+                    child: _buildParkingLot()),
               ),
             ),
             if (_selected != null) _buildSelectedPreview(),
@@ -110,27 +107,30 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.white, boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2))
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 16,
+                  offset: const Offset(0, -4))
             ]),
             child: SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 54,
               child: ElevatedButton(
                 onPressed: _selected == null ? null : _continue,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey.shade300,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade300,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
                 child: Text(
                   _selected == null
-                      ? AppStrings.t('slot_select_first')
-                      : '${AppStrings.t('slot_continue_with')} ${_selected!.code}',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                      ? AppStrings.t('slot_select_first').toUpperCase()
+                      : '${AppStrings.t('slot_continue_with').toUpperCase()} ${_selected!.code}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.3,
+                      fontSize: 13),
                 ),
               ),
             ),
@@ -146,19 +146,23 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-              width: 10,
-              height: 10,
+              width: 9,
+              height: 9,
               decoration: BoxDecoration(
                   color: color, borderRadius: BorderRadius.circular(3))),
           const SizedBox(width: 5),
-          Text(label, style: const TextStyle(fontSize: 11)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700)),
         ],
       );
     }
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
       color: Colors.white,
       child: Wrap(
         spacing: 16,
@@ -180,8 +184,7 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: List.generate(_rowGroups.length * 2 - 1, (i) {
           if (i.isEven) {
-            final group = _rowGroups[i ~/ 2];
-            return _buildRowGroup(group);
+            return _buildRowGroup(_rowGroups[i ~/ 2]);
           } else {
             return _buildHorizontalAksesJalan();
           }
@@ -192,9 +195,8 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
 
   Widget _buildRowGroup(List<ParkingRow> group) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: group.map((row) => _buildParkingRow(row)).toList(),
-    );
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: group.map((row) => _buildParkingRow(row)).toList());
   }
 
   Widget _buildParkingRow(ParkingRow row) {
@@ -203,15 +205,13 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 32,
-            child: Center(
-              child: Text(row.label,
-                  style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87)),
-            ),
-          ),
+              width: 32,
+              child: Center(
+                  child: Text(row.label,
+                      style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF16181F))))),
           for (int b = 0; b < row.blocks.length; b++) ...[
             Expanded(child: _buildSlotBlock(row.blocks[b])),
             if (b < row.blocks.length - 1) _buildVerticalAksesJalan(),
@@ -235,10 +235,9 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
 
   Widget _hatchBar() {
     return SizedBox(
-      height: 6,
-      width: double.infinity,
-      child: CustomPaint(painter: _DashedLinePainter()),
-    );
+        height: 6,
+        width: double.infinity,
+        child: CustomPaint(painter: _DashedLinePainter()));
   }
 
   Widget _buildSlotCell(ParkingSlot slot) {
@@ -267,22 +266,20 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
         decoration: BoxDecoration(
           color: fillColor,
           border: Border(
-            left: BorderSide(color: borderColor, width: isSelected ? 2 : 1),
-            right: BorderSide(color: borderColor, width: isSelected ? 2 : 1),
-          ),
+              left: BorderSide(color: borderColor, width: isSelected ? 2 : 1),
+              right: BorderSide(color: borderColor, width: isSelected ? 2 : 1)),
         ),
         child: isOccupied
-            ? Icon(Icons.directions_car, size: 16, color: Colors.grey.shade400)
+            ? Icon(Icons.directions_car_rounded,
+                size: 16, color: Colors.grey.shade400)
             : Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Text(
-                  slot.code,
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : Colors.grey.shade700,
-                  ),
-                ),
+                child: Text(slot.code,
+                    style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color:
+                            isSelected ? Colors.white : Colors.grey.shade700)),
               ),
       ),
     );
@@ -295,14 +292,12 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
         children: [
           const SizedBox(width: 32),
           Expanded(
-            child: Center(
-              child: Text(AppStrings.t('slot_akses_jalan'),
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic)),
-            ),
-          ),
+              child: Center(
+                  child: Text(AppStrings.t('slot_akses_jalan'),
+                      style: TextStyle(
+                          fontSize: 10.5,
+                          color: Colors.grey.shade500,
+                          fontStyle: FontStyle.italic)))),
         ],
       ),
     );
@@ -312,15 +307,13 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
     return SizedBox(
       width: 44,
       child: Center(
-        child: RotatedBox(
-          quarterTurns: 3,
-          child: Text(AppStrings.t('slot_akses_jalan'),
-              style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade600,
-                  fontStyle: FontStyle.italic)),
-        ),
-      ),
+          child: RotatedBox(
+              quarterTurns: 3,
+              child: Text(AppStrings.t('slot_akses_jalan'),
+                  style: TextStyle(
+                      fontSize: 10.5,
+                      color: Colors.grey.shade500,
+                      fontStyle: FontStyle.italic)))),
     );
   }
 
@@ -328,63 +321,66 @@ class _ParkingSlotMapScreenState extends State<ParkingSlotMapScreen> {
     final slot = _selected!;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: slot.tierColor),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8)
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: slot.tierColor.withOpacity(0.15),
-                shape: BoxShape.circle),
-            child: Icon(Icons.local_parking, color: slot.tierColor),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text('Slot ${slot.code}',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14)),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                          color: slot.tierColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(4)),
-                      child: Text(slot.tierLabel,
-                          style: TextStyle(
-                              fontSize: 9,
-                              color: slot.tierColor,
-                              fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-                Text(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+                color: slot.tierColor.withOpacity(0.14),
+                blurRadius: 18,
+                offset: const Offset(0, 8))
+          ]),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            StubIcon(
+                icon: Icons.local_parking_rounded,
+                color: slot.tierColor,
+                size: 46),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text('Slot ${slot.code}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14.5,
+                              color: Color(0xFF16181F))),
+                      const SizedBox(width: 7),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                            color: slot.tierColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(6)),
+                        child: Text(slot.tierLabel,
+                            style: TextStyle(
+                                fontSize: 9,
+                                color: slot.tierColor,
+                                fontWeight: FontWeight.w800)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
                     '${AppStrings.t('slot_baris_label')} ${slot.rowLabel} · ± ${slot.distanceFromEntrance.toStringAsFixed(0)} ${AppStrings.t('slot_dari_pintu_masuk')}',
-                    style:
-                        TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-              ],
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Text(
-              '${CurrencyFormatter.rupiah(slot.price)}${AppStrings.t('slot_per_malam')}',
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: slot.tierColor)),
-        ],
+            Text(
+                '${CurrencyFormatter.rupiah(slot.price)}${AppStrings.t('slot_per_malam')}',
+                style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: slot.tierColor)),
+          ],
+        ),
       ),
     );
   }

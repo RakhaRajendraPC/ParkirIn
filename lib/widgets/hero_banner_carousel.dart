@@ -3,35 +3,52 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class BannerSlide {
-  final String imagePath;
+  final String? imagePath;
   final String badgeText;
-  final IconData badgeIcon;
+  final IconData? badgeIcon;
   final String title;
+  final String subtitle;
   final Color accent;
 
   const BannerSlide({
-    required this.imagePath,
+    this.imagePath,
     required this.badgeText,
-    required this.badgeIcon,
+    this.badgeIcon,
     required this.title,
+    required this.subtitle,
     required this.accent,
   });
 }
 
-/// Carousel banner hero dengan auto-scroll, indikator halaman custom
-/// (garis pipih, bukan dot bulat generik), dan overlay judul per slide.
-/// Kalau gambar belum tersedia di assets, otomatis fallback ke gradient
-/// polos supaya tidak crash.
 class HeroBannerCarousel extends StatefulWidget {
   final List<BannerSlide> slides;
 
-  const HeroBannerCarousel({super.key, required this.slides});
+  /// When true, the banner's bottom corners are squared off so it can
+  /// sit flush against a card directly beneath it (e.g. active booking).
+  final bool flushBottom;
+
+  const HeroBannerCarousel({
+    super.key,
+    required this.slides,
+    this.flushBottom = false,
+  });
 
   @override
   State<HeroBannerCarousel> createState() => _HeroBannerCarouselState();
 }
 
 class _HeroBannerCarouselState extends State<HeroBannerCarousel> {
+  static const double _bannerHeight = 180;
+  static const Duration _autoScrollInterval = Duration(seconds: 6);
+  static const Duration _pageAnimDuration = Duration(milliseconds: 600);
+
+  static const double _padH = 18;
+  static const double _badgeTop = 14;
+  static const double _titleTop = 52;
+  static const double _titleBlockH = 62;
+  static const double _subtitleTop = _titleTop + _titleBlockH + 4;
+  static const double _topRadius = 18;
+
   final PageController _controller = PageController();
   int _currentPage = 0;
   Timer? _autoTimer;
@@ -39,13 +56,18 @@ class _HeroBannerCarouselState extends State<HeroBannerCarousel> {
   @override
   void initState() {
     super.initState();
-    _autoTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (!mounted || widget.slides.length < 2) return;
+    _startTimer();
+  }
+
+  void _startTimer() {
+    if (widget.slides.length < 2) return;
+    _autoTimer = Timer.periodic(_autoScrollInterval, (_) {
+      if (!mounted) return;
       final next = (_currentPage + 1) % widget.slides.length;
       _controller.animateToPage(
         next,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
+        duration: _pageAnimDuration,
+        curve: Curves.easeInOutQuad,
       );
     });
   }
@@ -59,121 +81,222 @@ class _HeroBannerCarouselState extends State<HeroBannerCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    if (widget.slides.isEmpty) return const SizedBox.shrink();
+
+    final radius = BorderRadius.only(
+      topLeft: const Radius.circular(_topRadius),
+      topRight: const Radius.circular(_topRadius),
+      bottomLeft: Radius.circular(widget.flushBottom ? 0 : _topRadius),
+      bottomRight: Radius.circular(widget.flushBottom ? 0 : _topRadius),
+    );
+
+    return SizedBox(
+      height: _bannerHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ClipRRect(
+            borderRadius: radius,
+            child: PageView.builder(
+              controller: _controller,
+              itemCount: widget.slides.length,
+              onPageChanged: (i) => setState(() => _currentPage = i),
+              itemBuilder: (context, i) => _buildSlide(widget.slides[i]),
+            ),
+          ),
+          _buildIndicators(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIndicators() {
+    return Positioned(
+      bottom: 12,
+      right: 18,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(widget.slides.length, (i) {
+          final active = i == _currentPage;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            margin: const EdgeInsets.only(left: 4),
+            width: active ? 16 : 5,
+            height: 5,
+            decoration: BoxDecoration(
+              color: active ? Colors.white : Colors.white.withOpacity(0.45),
+              borderRadius: BorderRadius.circular(3),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildSlide(BannerSlide slide) {
+    return Stack(
+      fit: StackFit.expand,
       children: [
-        SizedBox(
-          height: 140,
-          child: PageView.builder(
-            controller: _controller,
-            itemCount: widget.slides.length,
-            onPageChanged: (i) => setState(() => _currentPage = i),
-            itemBuilder: (context, i) => _buildSlide(widget.slides[i]),
+        // 1. Background
+        slide.imagePath != null
+            ? Image.asset(
+                slide.imagePath!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildFallbackBackground(slide),
+              )
+            : _buildFallbackBackground(slide),
+
+        // 2. Gradient overlay for legibility
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withOpacity(0.15),
+                  Colors.black.withOpacity(0.68),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment:
-              MainAxisAlignment.center, // <-- Mengetengahkan indikator
-          children: List.generate(widget.slides.length, (i) {
-            final active = i == _currentPage;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              margin: const EdgeInsets.symmetric(horizontal: 2.5),
-              width: active ? 20 : 6,
-              height: 5,
-              decoration: BoxDecoration(
-                color: active ? widget.slides[i].accent : Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(3),
+
+        // 3. Watermark icon
+        if (slide.badgeIcon != null)
+          Positioned(
+            top: -14,
+            right: -14,
+            child: Icon(
+              slide.badgeIcon,
+              size: 108,
+              color: Colors.white.withOpacity(0.08),
+            ),
+          ),
+
+        // 4. Badge — icon in its own square, text in a separate pill
+        Positioned(
+          top: _badgeTop,
+          left: _padH,
+          right: _padH,
+          child: _buildBadge(slide),
+        ),
+
+        // 5. Title
+        Positioned(
+          top: _titleTop,
+          left: _padH,
+          right: 56,
+          height: _titleBlockH,
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Text(
+              slide.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                height: 1.14,
+                letterSpacing: -0.5,
               ),
-            );
-          }),
+            ),
+          ),
+        ),
+
+        // 6. Subtitle — lighter weight, slightly muted
+        Positioned(
+          top: _subtitleTop,
+          left: _padH,
+          right: 56,
+          bottom: 16,
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Text(
+              slide.subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.72),
+                fontSize: 12,
+                fontWeight: FontWeight.w300,
+                height: 1.35,
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildSlide(BannerSlide slide) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              slide.imagePath,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [slide.accent, slide.accent.withOpacity(0.7)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            ),
+  Widget _buildBadge(BannerSlide slide) {
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (slide.badgeIcon != null) ...[
             Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withOpacity(0.55),
-                    Colors.black.withOpacity(0.05),
-                    Colors.transparent
-                  ],
-                  begin: Alignment.bottomLeft,
-                  end: Alignment.topRight,
-                  stops: const [0, 0.5, 1],
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                slide.badgeIcon,
+                size: 13,
+                color: Colors.white.withOpacity(0.95),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.28),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                slide.badgeText.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.92),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.1,
                 ),
               ),
             ),
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: slide.accent,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(slide.badgeIcon, color: Colors.white, size: 13),
-                        const SizedBox(width: 4),
-                        Text(
-                          slide.badgeText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    slide.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFallbackBackground(BannerSlide slide) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            slide.accent.withOpacity(0.85),
+            slide.accent.withOpacity(0.5),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
       ),
     );
