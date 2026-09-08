@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/auth_api_service.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import 'set_new_password_screen.dart';
 
 class ResetPasswordOtpScreen extends StatefulWidget {
-  final String contact;
+  final String phone;
 
-  const ResetPasswordOtpScreen({super.key, required this.contact});
+  const ResetPasswordOtpScreen({super.key, required this.phone});
 
   @override
   State<ResetPasswordOtpScreen> createState() => _ResetPasswordOtpScreenState();
@@ -17,10 +18,12 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
   final List<TextEditingController> _ctrls =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _nodes = List.generate(6, (_) => FocusNode());
+  final _authApi = AuthApiService();
 
   int _secondsLeft = 60;
   Timer? _timer;
   bool _isVerifying = false;
+  bool _isResending = false;
   String? _error;
 
   @override
@@ -70,15 +73,36 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
       _isVerifying = true;
       _error = null;
     });
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isVerifying = false);
+    try {
+      final resetToken =
+          await _authApi.verifyForgotPassword(widget.phone, _otpCode);
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                SetNewPasswordScreen(resetToken: resetToken)),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _isVerifying = false);
+    }
+  }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-          builder: (context) => SetNewPasswordScreen(contact: widget.contact)),
-    );
+  Future<void> _resend() async {
+    setState(() => _isResending = true);
+    try {
+      await _authApi.forgotPassword(widget.phone);
+      if (!mounted) return;
+      _startTimer();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _isResending = false);
+    }
   }
 
   void _onOtpChanged(int index, String value) {
@@ -119,7 +143,7 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
                     TextSpan(
                         text: '${AppStrings.t('resetotp_subtitle_prefix')} '),
                     TextSpan(
-                        text: widget.contact,
+                        text: widget.phone,
                         style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.black87)),
@@ -173,12 +197,19 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey.shade600))
                     : TextButton(
-                        onPressed: _startTimer,
-                        child: Text(AppStrings.t('resetotp_resend_btn'),
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600)),
+                        onPressed: _isResending ? null : _resend,
+                        child: _isResending
+                            ? SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: AppColors.primary),
+                              )
+                            : Text(AppStrings.t('resetotp_resend_btn'),
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600)),
                       ),
               ),
               const Spacer(),

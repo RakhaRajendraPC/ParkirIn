@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import '../services/auth_api_service.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
+import 'auth_screen.dart';
 
 class SetNewPasswordScreen extends StatefulWidget {
-  final String contact;
+  final String resetToken;
 
-  const SetNewPasswordScreen({super.key, required this.contact});
+  const SetNewPasswordScreen({super.key, required this.resetToken});
 
   @override
   State<SetNewPasswordScreen> createState() => _SetNewPasswordScreenState();
@@ -14,10 +16,12 @@ class SetNewPasswordScreen extends StatefulWidget {
 class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
   final _pass1Ctrl = TextEditingController();
   final _pass2Ctrl = TextEditingController();
+  final _authApi = AuthApiService();
   bool _obscure1 = true;
   bool _obscure2 = true;
   bool _isLoading = false;
   String? _error;
+  bool _tokenExpired = false;
 
   @override
   void initState() {
@@ -50,10 +54,27 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
       _isLoading = true;
       _error = null;
     });
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    try {
+      await _authApi.resetPassword(
+        resetToken: widget.resetToken,
+        newPassword: _pass1Ctrl.text,
+      );
+      if (!mounted) return;
+      _showSuccessDialog();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _tokenExpired = e.statusCode == 400;
+        _error = _tokenExpired
+            ? AppStrings.t('newpass_error_token_expired')
+            : e.message;
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
+  void _showSuccessDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -71,8 +92,12 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
         content: Text(AppStrings.t('newpass_success_msg')),
         actions: [
           FilledButton(
-            onPressed: () =>
-                Navigator.popUntil(context, (route) => route.isFirst),
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const AuthScreen()),
+                (route) => false,
+              );
+            },
             style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
             child: Text(AppStrings.t('newpass_success_btn')),
           ),
@@ -119,12 +144,24 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                     style:
                         const TextStyle(color: Colors.redAccent, fontSize: 12)),
               ],
+              if (_tokenExpired) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context)
+                        .popUntil((route) => route.isFirst),
+                    child: Text(AppStrings.t('forgot_kembali_login'),
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade700)),
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
+                  onPressed: _isLoading || _tokenExpired ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

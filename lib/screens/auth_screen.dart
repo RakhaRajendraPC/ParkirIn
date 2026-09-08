@@ -6,7 +6,7 @@ import '../services/favorites_service.dart';
 import '../services/user_session.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_toast.dart';
-import '../widgets/coming_soon_badge.dart';
+import 'forgot_password_screen.dart';
 import 'otp_verification_screen.dart';
 import 'terms_privacy_screen.dart';
 
@@ -186,23 +186,17 @@ class _AuthScreenState extends State<AuthScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    // No backend endpoint exists for password reset — the
-                    // whole flow (OTP + set-new-password) is fake, never
-                    // actually calls the backend, so it's disabled here
-                    // rather than letting a user believe they changed their
-                    // password when nothing was sent to the server.
-                    onPressed: null,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Lupa Password?',
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade500),
-                        ),
-                        const SizedBox(width: 6),
-                        const ComingSoonBadge(),
-                      ],
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen()),
+                    ),
+                    child: const Text(
+                      'Lupa Password?',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: primaryBlue,
+                          fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),

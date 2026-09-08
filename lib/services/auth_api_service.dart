@@ -84,6 +84,48 @@ class AuthApiService {
     await _storage.delete(key: authTokenStorageKey);
   }
 
+  /// POST /auth/forgot-password. Throws [ApiException] with
+  /// `statusCode == 404` if no account has this phone number.
+  Future<void> forgotPassword(String phone) async {
+    try {
+      await _dio.post('/auth/forgot-password', data: {'phone': phone});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  /// POST /auth/forgot-password/verify. Returns the short-lived reset token
+  /// on success. Throws [ApiException] with `statusCode == 400` on a
+  /// wrong/expired code.
+  Future<String> verifyForgotPassword(String phone, String code) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/forgot-password/verify',
+        data: {'phone': phone, 'code': code},
+      );
+      return res.data!['resetToken'] as String;
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  /// POST /auth/reset-password. Throws [ApiException] with
+  /// `statusCode == 400` if the reset token is invalid, expired, or
+  /// already used.
+  Future<void> resetPassword({
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    try {
+      await _dio.post(
+        '/auth/reset-password',
+        data: {'resetToken': resetToken, 'newPassword': newPassword},
+      );
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
   Future<Map<String, dynamic>> _storeTokenAndReturn(
     Map<String, dynamic> data,
   ) async {

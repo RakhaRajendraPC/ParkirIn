@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../services/auth_api_service.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import 'reset_password_otp_screen.dart';
 
-enum _ContactMethod { email, phone }
+final RegExp _phonePattern = RegExp(r'^[0-9]{9,15}$');
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -13,9 +14,8 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  _ContactMethod _method = _ContactMethod.email;
-  final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _authApi = AuthApiService();
   bool _isLoading = false;
   String? _error;
 
@@ -27,7 +27,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
     _phoneCtrl.dispose();
     AppSettings.instance.removeListener(_onChanged);
     super.dispose();
@@ -38,26 +37,33 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _submit() async {
-    final contact = _method == _ContactMethod.email
-        ? _emailCtrl.text.trim()
-        : _phoneCtrl.text.trim();
-    if (contact.isEmpty) {
-      setState(() => _error = AppStrings.t('forgot_not_found_error'));
+    final phone = _phoneCtrl.text.trim();
+    if (!_phonePattern.hasMatch(phone)) {
+      setState(() => _error = AppStrings.t('forgot_invalid_phone_error'));
       return;
     }
     setState(() {
       _isLoading = true;
       _error = null;
     });
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => ResetPasswordOtpScreen(contact: contact)),
-    );
+    try {
+      await _authApi.forgotPassword(phone);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ResetPasswordOtpScreen(phone: phone)),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.statusCode == 404
+            ? AppStrings.t('forgot_not_found_error')
+            : e.message;
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -92,17 +98,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     fontSize: 12, color: Colors.grey.shade600, height: 1.5),
               ),
               const SizedBox(height: 24),
-              _buildMethodToggle(),
-              const SizedBox(height: 16),
-              if (_method == _ContactMethod.email)
-                _buildField(AppStrings.t('forgot_email_label'), _emailCtrl,
-                    Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress)
-              else
-                _buildField(AppStrings.t('forgot_phone_label'), _phoneCtrl,
-                    Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                    hint: AppStrings.t('forgot_phone_hint')),
+              _buildField(AppStrings.t('forgot_phone_label'), _phoneCtrl,
+                  Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  hint: AppStrings.t('forgot_phone_hint')),
               if (_error != null) ...[
                 const SizedBox(height: 8),
                 Text(_error!,
@@ -144,54 +143,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildMethodToggle() {
-    Widget chip(String label, IconData icon, _ContactMethod method) {
-      final selected = _method == method;
-      return Expanded(
-        child: InkWell(
-          onTap: () => setState(() {
-            _method = method;
-            _error = null;
-          }),
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: selected ? AppColors.primary : Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                  color: selected ? AppColors.primary : Colors.grey.shade300),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon,
-                    size: 16,
-                    color: selected ? Colors.white : Colors.grey.shade600),
-                const SizedBox(width: 6),
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: selected ? Colors.white : Colors.grey.shade700)),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Row(
-      children: [
-        chip(AppStrings.t('forgot_toggle_email'), Icons.email_outlined,
-            _ContactMethod.email),
-        const SizedBox(width: 10),
-        chip(AppStrings.t('forgot_toggle_phone'), Icons.phone_outlined,
-            _ContactMethod.phone),
-      ],
     );
   }
 

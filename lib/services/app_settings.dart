@@ -485,6 +485,7 @@ class AppStrings {
     'forgot_kirim_kode_btn': 'Kirim Kode Verifikasi',
     'forgot_kembali_login': 'Kembali ke Halaman Masuk',
     'forgot_not_found_error': 'Akun dengan kontak ini tidak ditemukan',
+    'forgot_invalid_phone_error': 'Masukkan nomor HP yang valid',
     'resetotp_title': 'Verifikasi Kode',
     'resetotp_subtitle_prefix': 'Kode verifikasi telah dikirim ke',
     'resetotp_verify_btn': 'Verifikasi',
@@ -499,6 +500,8 @@ class AppStrings {
     'newpass_simpan_btn': 'Simpan Password Baru',
     'newpass_error_short': 'Password minimal 8 karakter',
     'newpass_error_mismatch': 'Konfirmasi password tidak cocok',
+    'newpass_error_token_expired':
+        'Kode reset kadaluarsa atau tidak valid. Silakan ulangi dari awal.',
     'newpass_success_title': 'Password Berhasil Diubah',
     'newpass_success_msg':
         'Silakan masuk kembali menggunakan password baru Anda.',
@@ -934,6 +937,7 @@ class AppStrings {
     'forgot_kirim_kode_btn': 'Send Verification Code',
     'forgot_kembali_login': 'Back to Sign In',
     'forgot_not_found_error': 'No account found with this contact',
+    'forgot_invalid_phone_error': 'Enter a valid phone number',
     'resetotp_title': 'Verify Code',
     'resetotp_subtitle_prefix': 'A verification code has been sent to',
     'resetotp_verify_btn': 'Verify',
@@ -948,6 +952,8 @@ class AppStrings {
     'newpass_simpan_btn': 'Save New Password',
     'newpass_error_short': 'Password must be at least 8 characters',
     'newpass_error_mismatch': "Password confirmation doesn't match",
+    'newpass_error_token_expired':
+        'Reset code expired or invalid. Please start over.',
     'newpass_success_title': 'Password Changed Successfully',
     'newpass_success_msg': 'Please sign in again using your new password.',
     'newpass_success_btn': 'Sign In Now',
