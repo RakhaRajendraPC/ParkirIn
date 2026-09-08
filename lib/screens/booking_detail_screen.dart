@@ -211,6 +211,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             const SizedBox(height: 14),
             _buildBillingCard(),
             const SizedBox(height: 20),
+            if (booking.status == BookingStatus.menungguPembayaran)
+              _buildCancelOnlyAction(context),
             if (booking.status == BookingStatus.dipesan)
               ..._buildDipesanActions(context),
             if (booking.status == BookingStatus.checkIn)
@@ -306,6 +308,26 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 color: warn ? Colors.redAccent : Colors.black87,
               )),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCancelOnlyAction(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 44,
+      child: TextButton.icon(
+        onPressed: () async {
+          await Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      RescheduleCancelScreen(booking: booking)));
+          if (mounted) setState(() {});
+        },
+        icon: const Icon(Icons.cancel_outlined, size: 16, color: Colors.redAccent),
+        label: const Text('Batalkan Booking',
+            style: TextStyle(fontSize: 12, color: Colors.redAccent)),
       ),
     );
   }

@@ -92,9 +92,18 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     return '${d.day} ${months[d.month]} · $hh:$mm';
   }
 
-  /// 'Virtual Account BCA' / 'Virtual Account BRI' are the only selectable
-  /// options right now (see _buildPaymentMethod) — QRIS/GoPay UI is a
-  /// separate, later task.
+  /// 'Virtual Account BCA'/'BRI', 'QRIS', and 'GoPay' are the selectable
+  /// options — 'Kartu Debit/Kredit' stays disabled since the backend
+  /// explicitly rejects card payments.
+  bool get _isQrisSelected => _selectedPayment == 'QRIS';
+  bool get _isGopaySelected => _selectedPayment == 'GoPay';
+
+  String get _selectedMethod {
+    if (_isQrisSelected) return 'qris';
+    if (_isGopaySelected) return 'ewallet';
+    return 'va';
+  }
+
   String get _selectedVaBank =>
       _selectedPayment == 'Virtual Account BRI' ? 'bri' : 'bca';
 
@@ -141,7 +150,8 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       MaterialPageRoute(
         builder: (context) => PaymentWaitingScreen(
           bookingCode: booking['bookingCode'] as String,
-          bank: _selectedVaBank,
+          method: _selectedMethod,
+          bank: (_isQrisSelected || _isGopaySelected) ? null : _selectedVaBank,
           location: widget.location,
           checkIn: widget.checkIn,
           checkOut: widget.checkOut,
@@ -445,14 +455,16 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   }
 
   Widget _buildPaymentMethod() {
-    // Only VA is wired to the real backend for now — QRIS/GoPay UI is a
-    // separate, later task, so those tiles render disabled/greyed rather
-    // than removed (so the layout stays familiar for when they're added).
+    // VA, QRIS, and GoPay are all wired to the real backend now — Kartu
+    // Debit/Kredit stays disabled/greyed since the backend explicitly
+    // rejects card payments. Labeled 'GoPay' specifically rather than the
+    // generic 'E-Wallet' it used to say, since GoPay is the only e-wallet
+    // channel actually implemented — not a multi-provider selector.
     final methods = [
-      ('QRIS', Icons.qr_code, true),
+      ('QRIS', Icons.qr_code, false),
       ('Virtual Account BCA', Icons.account_balance_outlined, false),
       ('Virtual Account BRI', Icons.account_balance_outlined, false),
-      ('E-Wallet', Icons.account_balance_wallet_outlined, true),
+      ('GoPay', Icons.account_balance_wallet_outlined, false),
       ('Kartu Debit/Kredit', Icons.credit_card, true),
     ];
 

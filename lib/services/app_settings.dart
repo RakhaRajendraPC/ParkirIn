@@ -209,6 +209,14 @@ class AppStrings {
     'waiting_appbar_title': 'Menunggu Pembayaran',
     'waiting_va_instruction':
         'Selesaikan pembayaran melalui Virtual Account berikut sebelum waktu habis.',
+    'waiting_qris_instruction':
+        'Pindai kode QR berikut menggunakan aplikasi e-wallet Anda sebelum waktu habis.',
+    'waiting_gopay_instruction':
+        'Buka aplikasi GoPay untuk membayar langsung, atau pindai kode QR di bawah sebelum waktu habis.',
+    'waiting_gopay_open_app_btn': 'Buka Aplikasi GoPay',
+    'waiting_gopay_open_app_failed':
+        'Tidak dapat membuka aplikasi GoPay. Gunakan kode QR di bawah.',
+    'waiting_gopay_qr_failed': 'Gagal memuat kode QR',
     'waiting_va_bank_label': 'Bank',
     'waiting_va_number_label': 'Nomor Virtual Account',
     'waiting_copy_btn': 'Salin Nomor',
@@ -664,6 +672,14 @@ class AppStrings {
     'waiting_appbar_title': 'Waiting for Payment',
     'waiting_va_instruction':
         'Complete your payment via the Virtual Account below before time runs out.',
+    'waiting_qris_instruction':
+        'Scan the QR code below using your e-wallet app before time runs out.',
+    'waiting_gopay_instruction':
+        'Open the GoPay app to pay directly, or scan the QR code below before time runs out.',
+    'waiting_gopay_open_app_btn': 'Open GoPay App',
+    'waiting_gopay_open_app_failed':
+        'Could not open the GoPay app. Use the QR code below instead.',
+    'waiting_gopay_qr_failed': 'Failed to load QR code',
     'waiting_va_bank_label': 'Bank',
     'waiting_va_number_label': 'Virtual Account Number',
     'waiting_copy_btn': 'Copy Number',

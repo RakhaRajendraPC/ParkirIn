@@ -11,6 +11,8 @@ import '../services/notification_repository.dart';
 import '../services/slot_lock_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_sheet.dart';
+import '../widgets/gopay_payment_card.dart';
+import '../widgets/qris_payment_card.dart';
 import '../widgets/slot_lock_banner.dart';
 import '../widgets/va_payment_card.dart';
 import 'booking_confirmation_screen.dart';
@@ -24,7 +26,8 @@ import 'booking_confirmation_screen.dart';
 /// BookingSummaryScreen's simpler exit behavior.
 class PaymentWaitingScreen extends StatefulWidget {
   final String bookingCode;
-  final String bank;
+  final String method;
+  final String? bank;
   final ParkingLocation location;
   final DateTime checkIn;
   final DateTime checkOut;
@@ -38,7 +41,8 @@ class PaymentWaitingScreen extends StatefulWidget {
   const PaymentWaitingScreen({
     super.key,
     required this.bookingCode,
-    required this.bank,
+    this.method = 'va',
+    this.bank,
     required this.location,
     required this.checkIn,
     required this.checkOut,
@@ -65,6 +69,12 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
   String? _initiateError;
   String _vaBank = '';
   String _vaNumber = '';
+  String _qrString = '';
+  String _gopayDeeplinkUrl = '';
+  String _gopayQrCodeUrl = '';
+
+  bool get _isQris => widget.method == 'qris';
+  bool get _isGopay => widget.method == 'ewallet';
 
   Timer? _pollTimer;
   int _pollAttempts = 0;
@@ -98,9 +108,48 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
     try {
       final result = await _bookingsApi.initiatePayment(
         widget.bookingCode,
-        method: 'va',
+        method: widget.method,
         bank: widget.bank,
       );
+
+      if (_isQris) {
+        final qrString = result['qrString']?.toString() ?? '';
+        if (!mounted) return;
+        if (qrString.isEmpty) {
+          setState(() {
+            _isInitiating = false;
+            _initiateError = 'Kode QRIS tidak diterima dari server.';
+          });
+          return;
+        }
+        setState(() {
+          _qrString = qrString;
+          _isInitiating = false;
+        });
+        _startPolling();
+        return;
+      }
+
+      if (_isGopay) {
+        final deeplinkUrl = result['deeplinkUrl']?.toString() ?? '';
+        final qrCodeUrl = result['qrCodeUrl']?.toString() ?? '';
+        if (!mounted) return;
+        if (deeplinkUrl.isEmpty && qrCodeUrl.isEmpty) {
+          setState(() {
+            _isInitiating = false;
+            _initiateError = 'Instruksi pembayaran GoPay tidak diterima dari server.';
+          });
+          return;
+        }
+        setState(() {
+          _gopayDeeplinkUrl = deeplinkUrl;
+          _gopayQrCodeUrl = qrCodeUrl;
+          _isInitiating = false;
+        });
+        _startPolling();
+        return;
+      }
+
       final vaNumbers = result['vaNumbers'] as List<dynamic>?;
       final first = (vaNumbers != null && vaNumbers.isNotEmpty)
           ? vaNumbers.first as Map<String, dynamic>
@@ -115,7 +164,8 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
         return;
       }
       setState(() {
-        _vaBank = (first?['bank']?.toString() ?? widget.bank).toUpperCase();
+        _vaBank =
+            (first?['bank']?.toString() ?? widget.bank ?? '').toUpperCase();
         _vaNumber = number;
         _isInitiating = false;
       });
@@ -430,12 +480,24 @@ class _PaymentWaitingScreenState extends State<PaymentWaitingScreen> {
       child: Column(
         children: [
           const SizedBox(height: 8),
-          VaPaymentCard(
-            instruction: AppStrings.t('waiting_va_instruction'),
-            bank: _vaBank,
-            vaNumber: _vaNumber,
-            amount: widget.total,
-          ),
+          if (_isQris)
+            QrisPaymentCard(
+              qrString: _qrString,
+              amount: widget.total,
+            )
+          else if (_isGopay)
+            GopayPaymentCard(
+              deeplinkUrl: _gopayDeeplinkUrl,
+              qrCodeUrl: _gopayQrCodeUrl,
+              amount: widget.total,
+            )
+          else
+            VaPaymentCard(
+              instruction: AppStrings.t('waiting_va_instruction'),
+              bank: _vaBank,
+              vaNumber: _vaNumber,
+              amount: widget.total,
+            ),
           const SizedBox(height: 24),
           const SizedBox(
             width: 28,

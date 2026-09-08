@@ -153,8 +153,11 @@ class _RescheduleCancelScreenState extends State<RescheduleCancelScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text('Reschedule / Batalkan',
-              style: TextStyle(
+          title: Text(
+              widget.booking.status == BookingStatus.dipesan
+                  ? 'Reschedule / Batalkan'
+                  : 'Batalkan Booking',
+              style: const TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.bold,
                   fontSize: 16)),
@@ -180,60 +183,66 @@ class _RescheduleCancelScreenState extends State<RescheduleCancelScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            const Text('Ubah Jadwal (Reschedule)',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(
-              'Durasi menginap tetap ${_originalDuration.inHours ~/ 24} malam — '
-              'geser tanggal check-in, check-out menyesuaikan otomatis.',
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.04), blurRadius: 8)
-                  ]),
-              child: Column(
-                children: [
-                  _dateTile('Check-in Baru', _newCheckIn,
-                      onTap: _pickNewCheckIn),
-                  const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Divider(height: 1)),
-                  _dateTile('Check-out Baru (otomatis)', _newCheckOut),
-                ],
+            // Reschedule only applies to a confirmed (dipesan) booking — the
+            // backend itself rejects it for any other status, and an unpaid
+            // booking has no reason to shift dates rather than just being
+            // cancelled outright.
+            if (widget.booking.status == BookingStatus.dipesan) ...[
+              const SizedBox(height: 20),
+              const Text('Ubah Jadwal (Reschedule)',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(
+                'Durasi menginap tetap ${_originalDuration.inHours ~/ 24} malam — '
+                'geser tanggal check-in, check-out menyesuaikan otomatis.',
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
               ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: ElevatedButton(
-                onPressed: _isRescheduling ? null : _performReschedule,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12))),
-                child: _isRescheduling
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Simpan Jadwal Baru',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.04), blurRadius: 8)
+                    ]),
+                child: Column(
+                  children: [
+                    _dateTile('Check-in Baru', _newCheckIn,
+                        onTap: _pickNewCheckIn),
+                    const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Divider(height: 1)),
+                    _dateTile('Check-out Baru (otomatis)', _newCheckOut),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: _isRescheduling ? null : _performReschedule,
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12))),
+                  child: _isRescheduling
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Simpan Jadwal Baru',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
             const SizedBox(height: 32),
             const Text('Batalkan Booking',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
