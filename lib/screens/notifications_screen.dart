@@ -8,8 +8,10 @@ import '../services/bookings_api_service.dart';
 import '../services/notification_preferences.dart';
 import '../services/notifications_api_service.dart';
 import '../utils/app_colors.dart';
+import '../widgets/app_header_avatar.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/network_error_view.dart';
+import '../widgets/parkirin_header_bar.dart';
 import 'booking_detail_screen.dart';
 import 'shuttle_tracking_screen.dart';
 
@@ -277,6 +279,149 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Widget _buildFilterBarWithSelect() {
+    Widget chip(String label, AlertCategory value) {
+      final selected = _selected == value;
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: ChoiceChip(
+          label: Text(label),
+          selected: selected,
+          onSelected: (_) => setState(() => _selected = value),
+          selectedColor: AppColors.primary,
+          backgroundColor: Colors.white,
+          labelStyle: TextStyle(
+            color: selected ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+                color: selected ? AppColors.primary : Colors.grey.shade300),
+          ),
+          showCheckmark: false,
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                chip(AppStrings.t('notif_filter_semua'), AlertCategory.all),
+                chip(AppStrings.t('notif_filter_reminder'),
+                    AlertCategory.reminder),
+                chip(AppStrings.t('notif_filter_shuttle'),
+                    AlertCategory.shuttle),
+                chip(AppStrings.t('notif_filter_booking'),
+                    AlertCategory.booking),
+                chip(AppStrings.t('notif_filter_flight'), AlertCategory.flight),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        InkWell(
+          onTap: _toggleSelectionMode,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _selectionMode ? AppColors.primary : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: _selectionMode
+                      ? AppColors.primary
+                      : Colors.grey.shade300),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _selectionMode ? Icons.close : Icons.checklist,
+                  size: 14,
+                  color: _selectionMode ? Colors.white : Colors.black87,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _selectionMode
+                      ? AppStrings.t('notif_batal')
+                      : AppStrings.t('notif_pilih'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _selectionMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUnreadStrip() {
+    final unread = _unreadCount;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+              color: Colors.redAccent, borderRadius: BorderRadius.circular(20)),
+          child: Text(
+            '$unread ${AppStrings.t('notif_new_badge_suffix')}',
+            style: const TextStyle(
+                color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+          ),
+        ),
+        TextButton(
+          onPressed: _markAllAsRead,
+          style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              minimumSize: Size.zero),
+          child: Text(
+            AppStrings.t('notif_mark_all_read'),
+            style: TextStyle(
+                fontSize: 11,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.notifications_off_outlined,
+                size: 56, color: Colors.grey.shade300),
+            const SizedBox(height: 12),
+            Text(AppStrings.t('notif_empty_title'),
+                style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(AppStrings.t('notif_empty_sub'),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final grouped = _grouped;
@@ -285,34 +430,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F8FA),
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leadingWidth: 56,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Icon(Icons.airport_shuttle, color: AppColors.primary),
-          ),
-          title: Text(
-            AppStrings.t('search_appbar_title'),
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          centerTitle: true,
-          actions: const [
-            Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: Color(0xFFEDEDED),
-                child: Icon(Icons.person, color: Colors.grey, size: 18),
-              ),
-            ),
-          ],
-        ),
+        appBar: const ParkirInHeaderBar(actions: [AppHeaderAvatar()]),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _hasError
@@ -322,64 +440,73 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     message: _errorMessage,
                   )
                 : RefreshIndicator(
-          onRefresh: _loadNotifications,
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                  child: _buildHeader(),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  child: _buildFilterChips(),
-                ),
-              ),
-              if (!hasNotifications)
-                SliverFillRemaining(
-                    hasScrollBody: false, child: _buildEmptyState())
-              else
-                ...grouped.entries.expand((entry) => [
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                          child: Text(_groupLabel(entry.key),
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade600)),
-                        ),
-                      ),
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final item = entry.value[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _NotificationCard(
-                                  item: item,
-                                  selectionMode: _selectionMode,
-                                  selected: _selectedIds.contains(item.id),
-                                  onTap: () => _handleNotificationTap(item),
-                                  onActionTap: () => _handleActionTap(item),
-                                  onDismiss: () => _deleteNotification(item.id),
-                                ),
-                              );
-                            },
-                            childCount: entry.value.length,
+                    onRefresh: _loadNotifications,
+                    child: CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                            child: _buildFilterBarWithSelect(),
                           ),
                         ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                    ]),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            ],
-          ),
-        ),
+                        if (_unreadCount > 0 && !_selectionMode)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                              child: _buildUnreadStrip(),
+                            ),
+                          ),
+                        if (!hasNotifications)
+                          SliverFillRemaining(
+                              hasScrollBody: false, child: _buildEmptyState())
+                        else
+                          ...grouped.entries.expand((entry) => [
+                                SliverToBoxAdapter(
+                                  child: Padding(
+                                    padding:
+                                        const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                                    child: Text(_groupLabel(entry.key),
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey.shade600)),
+                                  ),
+                                ),
+                                SliverPadding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 16),
+                                  sliver: SliverList(
+                                    delegate: SliverChildBuilderDelegate(
+                                      (context, index) {
+                                        final item = entry.value[index];
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 12),
+                                          child: _NotificationCard(
+                                            item: item,
+                                            selectionMode: _selectionMode,
+                                            selected:
+                                                _selectedIds.contains(item.id),
+                                            onTap: () =>
+                                                _handleNotificationTap(item),
+                                            onActionTap: () =>
+                                                _handleActionTap(item),
+                                            onDismiss: () =>
+                                                _deleteNotification(item.id),
+                                          ),
+                                        );
+                                      },
+                                      childCount: entry.value.length,
+                                    ),
+                                  ),
+                                ),
+                                const SliverToBoxAdapter(
+                                    child: SizedBox(height: 8)),
+                              ]),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      ],
+                    ),
+                  ),
         bottomNavigationBar: _selectionMode && _selectedIds.isNotEmpty
             ? SafeArea(
                 child: Container(
@@ -426,146 +553,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
     );
   }
-
-  Widget _buildHeader() {
-    final unread = _unreadCount;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  Text(
-                    AppStrings.t('notif_title'),
-                    style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  if (unread > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                          color: Colors.redAccent,
-                          borderRadius: BorderRadius.circular(20)),
-                      child: Text(
-                          '$unread ${AppStrings.t('notif_new_badge_suffix')}',
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600)),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(AppStrings.t('notif_subtitle'),
-                  style: const TextStyle(fontSize: 13, color: Colors.black54)),
-            ],
-          ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            TextButton.icon(
-              onPressed: _toggleSelectionMode,
-              style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  minimumSize: Size.zero),
-              icon: Icon(_selectionMode ? Icons.close : Icons.checklist,
-                  size: 14),
-              label: Text(
-                  _selectionMode
-                      ? AppStrings.t('notif_batal')
-                      : AppStrings.t('notif_pilih'),
-                  style: const TextStyle(fontSize: 11)),
-            ),
-            if (unread > 0)
-              TextButton(
-                onPressed: _markAllAsRead,
-                style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    minimumSize: Size.zero),
-                child: Text(
-                  AppStrings.t('notif_mark_all_read'),
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600),
-                ),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFilterChips() {
-    Widget chip(String label, AlertCategory value) {
-      final selected = _selected == value;
-      return Padding(
-        padding: const EdgeInsets.only(right: 8),
-        child: ChoiceChip(
-          label: Text(label),
-          selected: selected,
-          onSelected: (_) => setState(() => _selected = value),
-          selectedColor: AppColors.primary,
-          backgroundColor: Colors.white,
-          labelStyle: TextStyle(
-              color: selected ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w600,
-              fontSize: 12),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(
-                  color: selected ? AppColors.primary : Colors.grey.shade300)),
-          showCheckmark: false,
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          chip(AppStrings.t('notif_filter_semua'), AlertCategory.all),
-          chip(AppStrings.t('notif_filter_reminder'), AlertCategory.reminder),
-          chip(AppStrings.t('notif_filter_shuttle'), AlertCategory.shuttle),
-          chip(AppStrings.t('notif_filter_booking'), AlertCategory.booking),
-          chip(AppStrings.t('notif_filter_flight'), AlertCategory.flight),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.notifications_off_outlined,
-                size: 56, color: Colors.grey.shade300),
-            const SizedBox(height: 12),
-            Text(AppStrings.t('notif_empty_title'),
-                style: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(AppStrings.t('notif_empty_sub'),
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _NotificationCard extends StatelessWidget {
@@ -588,123 +575,194 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = item.type;
-    final highlight = type == NotificationType.shuttleArriving ||
-        type == NotificationType.overstayWarning;
 
     final card = InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withOpacity(0.06) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: highlight
-              ? Border(left: BorderSide(color: type.color, width: 4))
-              : (selected ? Border.all(color: AppColors.primary) : null),
+          color: selected ? AppColors.primary.withOpacity(0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: selected
+              ? Border.all(color: AppColors.primary, width: 1.2)
+              : null,
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2))
+              color: type.color.withOpacity(item.isRead ? 0.06 : 0.14),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (selectionMode) ...[
-              Checkbox(
-                  value: selected,
-                  onChanged: (_) => onTap(),
-                  activeColor: AppColors.primary),
-              const SizedBox(width: 4),
-            ],
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  color: type.color.withOpacity(0.1), shape: BoxShape.circle),
-              child: Icon(type.icon, color: type.color, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- Baris atas: ikon stub + meta + checkbox seleksi ---
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(type.label,
+                  if (selectionMode) ...[
+                    Checkbox(
+                      value: selected,
+                      onChanged: (_) => onTap(),
+                      activeColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4)),
+                    ),
+                    const SizedBox(width: 2),
+                  ],
+                  // Ikon "stub" kotak bersudut, warna solid, dengan lekukan
+                  // kecil di sudut kanan-bawah — meniru robekan tiket.
+                  _StubIcon(
+                      icon: type.icon,
+                      color: type.color,
+                      isUnread: !item.isRead),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Marker garis vertikal pendek + label kategori,
+                            // bukan pill — kesan editorial/tag, bukan chip UI generik.
+                            Container(width: 3, height: 11, color: type.color),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                type.label,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: type.color,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ),
+                            if (type.isPhase2) ...[
+                              const SizedBox(width: 6),
+                              Text(
+                                'FASE 2',
+                                style: TextStyle(
+                                    fontSize: 8.5,
+                                    color: Colors.grey.shade400,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.4),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          item.relativeTime,
                           style: TextStyle(
                               fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: type.color,
-                              letterSpacing: 0.5)),
-                      if (type.isPhase2) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 1),
-                          decoration: BoxDecoration(
-                              color: Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(4)),
-                          child: Text(AppStrings.t('notif_phase2_badge'),
-                              style: TextStyle(
-                                  fontSize: 8, color: Colors.grey.shade600)),
+                              color: Colors.grey.shade400,
+                              fontWeight: FontWeight.w500),
                         ),
                       ],
-                      const SizedBox(width: 6),
-                      Text(item.relativeTime,
-                          style: const TextStyle(
-                              fontSize: 10, color: Colors.black38)),
-                      const Spacer(),
-                      if (!item.isRead)
-                        Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                                color: Colors.redAccent,
-                                shape: BoxShape.circle)),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(item.title,
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight:
-                              item.isRead ? FontWeight.w600 : FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Text(item.description,
-                      style: const TextStyle(
-                          fontSize: 12, color: Colors.black54, height: 1.4)),
-                  if (item.bookingCode != null) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                        '${AppStrings.t('notif_booking_code_label')}${item.bookingCode}',
-                        style: TextStyle(
-                            fontSize: 10, color: Colors.grey.shade500)),
-                  ],
-                  if (item.actionLabel != null && !selectionMode) ...[
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 32,
-                      child: OutlinedButton(
-                        onPressed: onActionTap,
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppColors.primary),
-                          foregroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                        ),
-                        child: Text(item.actionLabel!,
-                            style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600)),
-                      ),
                     ),
-                  ],
+                  ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+
+              // --- Judul & deskripsi, sedikit indent sejajar teks di atas ---
+              Padding(
+                padding: EdgeInsets.only(left: selectionMode ? 54 : 54),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF16181F),
+                        height: 1.2,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.description,
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          color: Colors.grey.shade600,
+                          height: 1.45),
+                    ),
+                  ],
+                ),
+              ),
+
+              // --- Perforasi ala robekan tiket, muncul kalau ada kode booking / CTA ---
+              if (item.bookingCode != null ||
+                  (item.actionLabel != null && !selectionMode)) ...[
+                const SizedBox(height: 12),
+                CustomPaint(
+                  size: const Size(double.infinity, 1),
+                  painter: _PerforationPainter(color: Colors.grey.shade200),
+                ),
+                const SizedBox(height: 10),
+              ],
+
+              // --- Kode booking (gaya kode tiket, monospace) + tombol aksi ---
+              if (item.bookingCode != null ||
+                  (item.actionLabel != null && !selectionMode))
+                Row(
+                  children: [
+                    if (item.bookingCode != null)
+                      Expanded(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.confirmation_num_outlined,
+                                size: 13, color: Colors.grey.shade400),
+                            const SizedBox(width: 5),
+                            Text(
+                              item.bookingCode!,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: Colors.grey.shade500,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'monospace',
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      const Spacer(),
+                    if (item.actionLabel != null && !selectionMode)
+                      InkWell(
+                        onTap: onActionTap,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              item.actionLabel!.toUpperCase(),
+                              style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: type.color,
+                                  letterSpacing: 0.3),
+                            ),
+                            const SizedBox(width: 2),
+                            Icon(Icons.north_east_rounded,
+                                size: 13, color: type.color),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -716,13 +774,108 @@ class _NotificationCard extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 22),
         decoration: BoxDecoration(
-            color: Colors.redAccent, borderRadius: BorderRadius.circular(14)),
-        child: const Icon(Icons.delete_outline, color: Colors.white),
+            color: Colors.red.shade400,
+            borderRadius: BorderRadius.circular(20)),
+        child: const Icon(Icons.delete_outline_rounded,
+            color: Colors.white, size: 22),
       ),
       onDismissed: (_) => onDismiss(),
       child: card,
     );
   }
+}
+
+/// Ikon "stub" — kotak bersudut dengan satu sudut dipotong miring, meniru
+/// gunting di ujung tiket boarding pass. Titik unread ditempel menyatu di
+/// sudut, bukan mengambang terpisah di pojok card.
+class _StubIcon extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final bool isUnread;
+
+  const _StubIcon(
+      {required this.icon, required this.color, required this.isUnread});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ClipPath(
+            clipper: _StubClipper(),
+            child: Container(
+              width: 44,
+              height: 44,
+              color: color,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.only(bottom: 3, right: 3),
+              child: Icon(icon, color: Colors.white, size: 19),
+            ),
+          ),
+          if (isUnread)
+            Positioned(
+              top: -3,
+              right: -3,
+              child: Container(
+                width: 11,
+                height: 11,
+                decoration: BoxDecoration(
+                  color: Colors.red.shade500,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StubClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    const cut = 10.0;
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width, size.height - cut)
+      ..lineTo(size.width - cut, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+/// Garis putus-putus tipis, meniru perforasi sobekan tiket sebagai
+/// pembatas antara isi notifikasi dan bagian kode booking/aksi.
+class _PerforationPainter extends CustomPainter {
+  final Color color;
+
+  const _PerforationPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+    const dashWidth = 4.0;
+    const dashSpace = 4.0;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + dashWidth, 0), paint);
+      x += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

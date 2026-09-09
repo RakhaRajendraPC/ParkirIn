@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_api_service.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
+import '../widgets/stub_icon.dart';
 import 'set_new_password_screen.dart';
 
 class ResetPasswordOtpScreen extends StatefulWidget {
@@ -124,40 +125,38 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                    color: AppColors.primaryLight, shape: BoxShape.circle),
-                child: Icon(Icons.sms_outlined,
-                    color: AppColors.primary, size: 32),
-              ),
-              const SizedBox(height: 20),
+              StubIcon(
+                  icon: Icons.sms_rounded, color: AppColors.primary, size: 60),
+              const SizedBox(height: 22),
               Text(AppStrings.t('resetotp_title'),
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
+                      fontSize: 21,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF16181F),
+                      letterSpacing: -0.3)),
+              const SizedBox(height: 7),
               RichText(
                 text: TextSpan(
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
                   children: [
                     TextSpan(
                         text: '${AppStrings.t('resetotp_subtitle_prefix')} '),
                     TextSpan(
                         text: widget.phone,
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87)),
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF16181F))),
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(
                     6,
                     (i) => SizedBox(
                           width: 44,
-                          height: 52,
+                          height: 54,
                           child: TextField(
                             controller: _ctrls[i],
                             focusNode: _nodes[i],
@@ -165,19 +164,20 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
                             keyboardType: TextInputType.number,
                             maxLength: 1,
                             style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF16181F)),
                             decoration: InputDecoration(
                               counterText: '',
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: const Color(0xFFF7F8FA),
                               border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide:
-                                      BorderSide(color: Colors.grey.shade300)),
+                                  borderRadius: BorderRadius.circular(13),
+                                  borderSide: BorderSide.none),
                               focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(13),
                                   borderSide: BorderSide(
-                                      color: AppColors.primary, width: 2)),
+                                      color: AppColors.primary, width: 1.8)),
                             ),
                             onChanged: (v) => _onOtpChanged(i, v),
                           ),
@@ -189,13 +189,14 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
                     style:
                         const TextStyle(color: Colors.redAccent, fontSize: 12)),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: 26),
               Center(
                 child: _secondsLeft > 0
                     ? Text(
                         '${AppStrings.t('resetotp_resend_prefix')} 00:${_secondsLeft.toString().padLeft(2, '0')}',
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade600))
+                            fontSize: 12, color: Colors.grey.shade500),
+                      )
                     : TextButton(
                         onPressed: _isResending ? null : _resend,
                         child: _isResending
@@ -209,20 +210,21 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
                                 style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.primary,
-                                    fontWeight: FontWeight.w600)),
+                                    fontWeight: FontWeight.w800)),
                       ),
               ),
               const Spacer(),
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 54,
                 child: ElevatedButton(
                   onPressed: _isVerifying ? null : _verify,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(16)),
                   ),
                   child: _isVerifying
                       ? const SizedBox(
@@ -230,8 +232,9 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2))
-                      : Text(AppStrings.t('resetotp_verify_btn'),
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
+                      : Text(AppStrings.t('resetotp_verify_btn').toUpperCase(),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w800, letterSpacing: 0.5)),
                 ),
               ),
             ],

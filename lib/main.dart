@@ -10,6 +10,8 @@ import 'services/booking_repository.dart';
 import 'services/notification_repository.dart';
 import 'services/user_session.dart';
 import 'services/favorites_service.dart';
+import 'utils/app_colors.dart';
+import 'widgets/material_symbol.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,7 +74,7 @@ class _ParkirInAppState extends State<ParkirInApp> {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        fontFamily: 'Roboto',
+        fontFamily: 'Outfit',
         scaffoldBackgroundColor: const Color(0xFFF7F8FA),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF1E5EFF),
@@ -111,11 +113,10 @@ class _RootShellState extends State<RootShell> {
   ];
 
   final List<_NavItem> _navItems = const [
-    _NavItem(icon: Icons.search, labelKey: 'nav_search'),
-    _NavItem(
-        icon: Icons.confirmation_number_outlined, labelKey: 'nav_bookings'),
-    _NavItem(icon: Icons.notifications_none_rounded, labelKey: 'nav_alerts'),
-    _NavItem(icon: Icons.person_outline, labelKey: 'nav_profile'),
+    _NavItem(symbol: MSymbols.search, labelKey: 'nav_search'),
+    _NavItem(symbol: MSymbols.confirmationNumber, labelKey: 'nav_bookings'),
+    _NavItem(symbol: MSymbols.notifications, labelKey: 'nav_notifications'),
+    _NavItem(symbol: MSymbols.person, labelKey: 'nav_profile'),
   ];
 
   @override
@@ -144,7 +145,7 @@ class _RootShellState extends State<RootShell> {
               final item = _navItems[index];
               final bool selected = index == _currentIndex;
               final Color color =
-                  selected ? const Color(0xFF1E5EFF) : Colors.grey.shade500;
+                  selected ? AppColors.primary : AppColors.inactiveNav;
               return InkWell(
                 onTap: () => setState(() => _currentIndex = index),
                 borderRadius: BorderRadius.circular(12),
@@ -153,15 +154,21 @@ class _RootShellState extends State<RootShell> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(item.icon, color: color, size: 24),
+                      MaterialSymbol(
+                        item.symbol,
+                        size: 24,
+                        color: color,
+                        weight: selected ? 300 : 200,
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         AppStrings.t(item.labelKey),
                         style: TextStyle(
-                          fontSize: 11,
+                          fontFamily: 'IBM Plex Mono',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.6,
                           color: color,
-                          fontWeight:
-                              selected ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
                     ],
@@ -177,8 +184,8 @@ class _RootShellState extends State<RootShell> {
 }
 
 class _NavItem {
-  final IconData icon;
+  final int symbol;
   final String labelKey;
 
-  const _NavItem({required this.icon, required this.labelKey});
+  const _NavItem({required this.symbol, required this.labelKey});
 }

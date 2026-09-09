@@ -6,6 +6,7 @@ import '../services/notification_repository.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/stub_icon.dart';
 
 enum ShuttleUnitStatus { berangkat, standby }
 
@@ -194,14 +195,15 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+            icon:
+                const Icon(Icons.arrow_back_rounded, color: Color(0xFF16181F)),
             onPressed: () => Navigator.maybePop(context),
           ),
           title: Text(
             AppStrings.t('shuttle_appbar_title'),
             style: const TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
+                color: Color(0xFF16181F),
+                fontWeight: FontWeight.w800,
                 fontSize: 17),
           ),
           centerTitle: true,
@@ -212,12 +214,9 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
             _buildWalkingDirectionCard(),
             const SizedBox(height: 16),
             _buildRouteCard(),
-            const SizedBox(height: 20),
-            _buildSectionTitle(
-                AppStrings.t('shuttle_berangkat_section'),
-                Icons.directions_bus_filled,
-                AppColors.primary,
-                _berangkatUnits.length),
+            const SizedBox(height: 22),
+            _buildSectionTitle(AppStrings.t('shuttle_berangkat_section'),
+                AppColors.primary, _berangkatUnits.length),
             const SizedBox(height: 10),
             if (_berangkatUnits.isEmpty)
               _buildEmptyState(AppStrings.t('shuttle_empty_berangkat'))
@@ -226,9 +225,9 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _buildBerangkatCard(u),
                   )),
-            const SizedBox(height: 20),
+            const SizedBox(height: 22),
             _buildSectionTitle(AppStrings.t('shuttle_standby_section'),
-                Icons.pause_circle_outline, Colors.teal, _standbyUnits.length),
+                const Color(0xFF0EA5A4), _standbyUnits.length),
             const SizedBox(height: 10),
             if (_standbyUnits.isEmpty)
               _buildEmptyState(AppStrings.t('shuttle_empty_standby'))
@@ -251,75 +250,86 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
+          BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 6))
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.directions_walk, size: 16, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Text(AppStrings.t('shuttle_walking_title'),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14)),
-            ],
-          ),
+          BarAccentLabel(
+              text: AppStrings.t('shuttle_walking_title').toUpperCase(),
+              color: AppColors.primary),
           const SizedBox(height: 14),
           SizedBox(
             height: 90,
             width: double.infinity,
             child: CustomPaint(painter: _WalkingPathPainter()),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _stopLabel(Icons.local_parking, AppStrings.t('shuttle_slot_anda'),
-                  widget.userSlotCode, Colors.redAccent),
-              _stopLabel(Icons.flag, AppStrings.t('shuttle_halte_terdekat'),
-                  halte.name, Colors.orange),
+              _stopLabel(
+                  Icons.local_parking_rounded,
+                  AppStrings.t('shuttle_slot_anda'),
+                  widget.userSlotCode,
+                  const Color(0xFFDC2626)),
+              _stopLabel(
+                  Icons.flag_rounded,
+                  AppStrings.t('shuttle_halte_terdekat'),
+                  halte.name,
+                  const Color(0xFFFF8A00)),
             ],
           ),
           const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12)),
-            child: Row(
-              children: [
-                Icon(Icons.social_distance, size: 16, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Text('± $meters ${AppStrings.t('shuttle_meter_suffix')}',
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600)),
-                const SizedBox(width: 16),
-                Icon(Icons.timer_outlined, size: 16, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Text('± $minutes ${AppStrings.t('shuttle_menit_jalan_kaki')}',
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600)),
-              ],
-            ),
+          const PerforationDivider(),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.social_distance_rounded,
+                  size: 16, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text('± $meters ${AppStrings.t('shuttle_meter_suffix')}',
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF16181F))),
+              const SizedBox(width: 16),
+              Icon(Icons.timer_rounded, size: 16, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text('± $minutes ${AppStrings.t('shuttle_menit_jalan_kaki')}',
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF16181F))),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            height: 42,
-            child: OutlinedButton.icon(
+            height: 46,
+            child: OutlinedButton(
               onPressed: _openExternalMaps,
-              icon: const Icon(Icons.map_outlined, size: 16),
-              label: Text(AppStrings.t('shuttle_petunjuk_arah_btn'),
-                  style: const TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
-                side: BorderSide(color: AppColors.primary),
+                side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(13)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.map_rounded, size: 16),
+                  const SizedBox(width: 7),
+                  Text(AppStrings.t('shuttle_petunjuk_arah_btn'),
+                      style: const TextStyle(
+                          fontSize: 12.5, fontWeight: FontWeight.w700)),
+                ],
               ),
             ),
           ),
@@ -331,21 +341,21 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
   Widget _stopLabel(IconData icon, String label, String value, Color color) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-              color: color.withOpacity(0.1), shape: BoxShape.circle),
-          child: Icon(icon, size: 14, color: color),
-        ),
-        const SizedBox(width: 6),
+        StubIcon(icon: icon, color: color, size: 32),
+        const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label,
-                style: TextStyle(fontSize: 9, color: Colors.grey.shade500)),
+                style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.grey.shade400,
+                    fontWeight: FontWeight.w700)),
             Text(value,
-                style:
-                    const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF16181F))),
           ],
         ),
       ],
@@ -357,23 +367,20 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
+          BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 6))
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.route_outlined, size: 16, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Text(AppStrings.t('shuttle_rute_title'),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14)),
-            ],
-          ),
+          BarAccentLabel(
+              text: AppStrings.t('shuttle_rute_title').toUpperCase(),
+              color: AppColors.primary),
           const SizedBox(height: 16),
           ...List.generate(_stops.length, (i) {
             final stop = _stops[i];
@@ -392,21 +399,24 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
                         height: 14,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color:
-                              stop.isHalte ? Colors.orange : AppColors.primary,
+                          color: stop.isHalte
+                              ? const Color(0xFFFF8A00)
+                              : AppColors.primary,
                         ),
-                        child: stop.isHalte
-                            ? const Icon(Icons.flag,
-                                size: 8, color: Colors.white)
-                            : const Icon(Icons.flight,
-                                size: 8, color: Colors.white),
+                        child: Icon(
+                            stop.isHalte
+                                ? Icons.flag_rounded
+                                : Icons.flight_rounded,
+                            size: 8,
+                            color: Colors.white),
                       ),
                       if (!isLast)
                         Expanded(
                           child: Container(
-                              width: 2,
-                              color: Colors.grey.shade300,
-                              margin: const EdgeInsets.symmetric(vertical: 2)),
+                            width: 2,
+                            color: Colors.grey.shade200,
+                            margin: const EdgeInsets.symmetric(vertical: 2),
+                          ),
                         ),
                     ],
                   ),
@@ -424,8 +434,9 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
                                 Text(
                                   stop.name,
                                   style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600),
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF16181F)),
                                 ),
                                 Text(
                                   stop.isHalte
@@ -433,7 +444,7 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
                                       : AppStrings.t('shuttle_titik_terminal'),
                                   style: TextStyle(
                                       fontSize: 10,
-                                      color: Colors.grey.shade500),
+                                      color: Colors.grey.shade400),
                                 ),
                               ],
                             ),
@@ -457,12 +468,12 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
                                     padding: const EdgeInsets.all(5),
                                     decoration: BoxDecoration(
                                       color: isStandby
-                                          ? Colors.teal
-                                          : Colors.orange,
+                                          ? const Color(0xFF0EA5A4)
+                                          : const Color(0xFFFF8A00),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
-                                        Icons.directions_bus_filled,
+                                        Icons.directions_bus_filled_rounded,
                                         color: Colors.white,
                                         size: 11),
                                   ),
@@ -482,29 +493,26 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
     );
   }
 
-  Widget _buildSectionTitle(
-      String title, IconData icon, Color color, int count) {
+  Widget _buildSectionTitle(String title, Color color, int count) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: color),
+        BarAccentLabel(text: title.toUpperCase(), color: color),
         const SizedBox(width: 8),
-        Text(title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        const SizedBox(width: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10)),
           child: Text('$count',
               style: TextStyle(
-                  fontSize: 10, fontWeight: FontWeight.bold, color: color)),
+                  fontSize: 10.5, fontWeight: FontWeight.w800, color: color)),
         ),
       ],
     );
   }
 
   Widget _buildBerangkatCard(ShuttleUnit u) {
+    const accent = Color(0xFFFF8A00);
     final currentStop = _stops[u.currentStopIndex];
     final nextStop = u.currentStopIndex < _stops.length - 1
         ? _stops[u.currentStopIndex + 1]
@@ -516,21 +524,20 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: const Border(left: BorderSide(color: Colors.orange, width: 4)),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
+          BoxShadow(
+              color: accent.withOpacity(0.1),
+              blurRadius: 14,
+              offset: const Offset(0, 6))
         ],
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1), shape: BoxShape.circle),
-            child:
-                const Icon(Icons.directions_bus_filled, color: Colors.orange),
-          ),
+          StubIcon(
+              icon: Icons.directions_bus_filled_rounded,
+              color: accent,
+              size: 42),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -538,20 +545,22 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
               children: [
                 Text('${AppStrings.t('shuttle_prefix')} ${u.plateNumber}',
                     style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 2),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: Color(0xFF16181F))),
+                const SizedBox(height: 3),
                 Text(
                     '${AppStrings.t('shuttle_baru_lewat')} ${currentStop.name}',
                     style:
                         TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                 if (nextStop != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     '${AppStrings.t('shuttle_menuju')} ${nextStop.name} · ETA ${m}m ${s.toString().padLeft(2, '0')}d',
                     style: const TextStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.orange),
+                        fontWeight: FontWeight.w700,
+                        color: accent),
                   ),
                 ],
               ],
@@ -563,25 +572,24 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
   }
 
   Widget _buildStandbyCard(ShuttleUnit u) {
+    const accent = Color(0xFF0EA5A4);
     final stop = _stops[u.currentStopIndex];
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: const Border(left: BorderSide(color: Colors.teal, width: 4)),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
+          BoxShadow(
+              color: accent.withOpacity(0.1),
+              blurRadius: 14,
+              offset: const Offset(0, 6))
         ],
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: Colors.teal.withOpacity(0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.pause_circle_filled, color: Colors.teal),
-          ),
+          StubIcon(
+              icon: Icons.pause_circle_filled_rounded, color: accent, size: 42),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -589,8 +597,10 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
               children: [
                 Text('${AppStrings.t('shuttle_prefix')} ${u.plateNumber}',
                     style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 2),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: Color(0xFF16181F))),
+                const SizedBox(height: 3),
                 Text('${AppStrings.t('shuttle_standby_di')} ${stop.name}',
                     style:
                         TextStyle(fontSize: 11, color: Colors.grey.shade600)),
@@ -598,15 +608,16 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
             decoration: BoxDecoration(
-                color: Colors.teal.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8)),
-            child: Text(AppStrings.t('shuttle_siap_berangkat'),
+                color: accent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(9)),
+            child: Text(AppStrings.t('shuttle_siap_berangkat').toUpperCase(),
                 style: const TextStyle(
                     fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal)),
+                    fontWeight: FontWeight.w800,
+                    color: accent,
+                    letterSpacing: 0.3)),
           ),
         ],
       ),
@@ -618,11 +629,12 @@ class _ShuttleTrackingScreenState extends State<ShuttleTrackingScreen>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade200)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade100)),
       child: Row(
         children: [
-          Icon(Icons.info_outline, size: 16, color: Colors.grey.shade400),
+          Icon(Icons.info_outline_rounded,
+              size: 16, color: Colors.grey.shade400),
           const SizedBox(width: 10),
           Expanded(
               child: Text(message,
@@ -658,10 +670,10 @@ class _WalkingPathPainter extends CustomPainter {
       }
     }
 
-    final startPaint = Paint()..color = Colors.redAccent;
+    final startPaint = Paint()..color = const Color(0xFFDC2626);
     canvas.drawCircle(Offset(24, size.height - 20), 8, startPaint);
 
-    final endPaint = Paint()..color = Colors.orange;
+    final endPaint = Paint()..color = const Color(0xFFFF8A00);
     canvas.drawCircle(Offset(size.width - 24, size.height - 20), 8, endPaint);
   }
 

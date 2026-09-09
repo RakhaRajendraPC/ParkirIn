@@ -36,6 +36,17 @@ class AppColors {
   /// Drag-handle / strong-border gray used across sheets and toasts.
   static const Color borderStrong = Color(0xFFD0D5DD);
 
+  // Home / Search Results design-sync tokens (target: Parkirin Home /
+  // Search Results canvas files) — additive only, not used outside those
+  // two screens yet.
+  static const Color ink = Color(0xFF0D2A45);
+  static const Color body = Color(0xFF5F6979);
+  static const Color label = Color(0xFF5D6779);
+  static const Color inactiveNav = Color(0xFF667283);
+  static const Color hairline = Color(0xFFD8DCE4);
+  static const Color paper = Color(0xFFFCFCFB);
+  static const Color canvas = Color(0xFFF4F5F7);
+
   static Color forSeverity(AppSeverity severity) {
     switch (severity) {
       case AppSeverity.neutral:

@@ -1,12 +1,21 @@
+// lib/screens/search_screen.dart
 import 'package:flutter/material.dart';
 import 'shuttle_tracking_screen.dart';
 import 'search_results_screen.dart';
 import 'ground_transport_screen.dart';
+import 'notifications_screen.dart';
 import '../models/booking_model.dart';
-import '../services/booking_repository.dart';
+import '../models/notification_model.dart';
+import '../services/bookings_api_service.dart';
+import '../services/notifications_api_service.dart';
+import '../services/notification_preferences.dart';
 import '../services/app_settings.dart';
 import '../utils/app_colors.dart';
 import 'booking_detail_screen.dart';
+import '../widgets/hero_banner_carousel.dart';
+import '../widgets/material_symbol.dart';
+import '../widgets/parkirin_header_bar.dart';
+import '../widgets/stub_icon.dart' show PerforationDivider;
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -20,18 +29,18 @@ class _SearchScreenState extends State<SearchScreen> {
   DateTime checkIn = DateTime(2026, 10, 12, 8, 0);
   DateTime checkOut = DateTime(2026, 10, 15, 18, 0);
 
-  final BookingRepository _bookingRepo = BookingRepository.instance;
+  final BookingsApiService _bookingsApi = BookingsApiService();
+  List<BookingModel> _bookings = [];
 
   @override
   void initState() {
     super.initState();
-    _bookingRepo.addListener(_onChanged);
     AppSettings.instance.addListener(_onChanged);
+    _loadActiveBooking();
   }
 
   @override
   void dispose() {
-    _bookingRepo.removeListener(_onChanged);
     AppSettings.instance.removeListener(_onChanged);
     super.dispose();
   }
@@ -40,58 +49,88 @@ class _SearchScreenState extends State<SearchScreen> {
     if (mounted) setState(() {});
   }
 
+  /// Real backend fetch, replacing the old mock `BookingRepository` binding
+  /// — mirrors the pattern already used in bookings_screen.dart. Best-effort:
+  /// the active-booking slab just doesn't render if this fails, same as any
+  /// other optional Home-screen module.
+  Future<void> _loadActiveBooking() async {
+    try {
+      final json = await _bookingsApi.getBookings();
+      final bookings = json.map(BookingModel.fromApi).toList();
+      if (!mounted) return;
+      setState(() => _bookings = bookings);
+    } catch (_) {
+      // Offline / unauthenticated at first paint — Home still works without
+      // the active-booking slab.
+    }
+  }
+
   BookingModel? get _activeBooking {
-    final active = _bookingRepo.all.where((b) =>
+    final active = _bookings.where((b) =>
         b.status == BookingStatus.dipesan || b.status == BookingStatus.checkIn);
     return active.isEmpty ? null : active.first;
   }
+
+  List<BannerSlide> get _banners => [
+        BannerSlide(
+          imagePath: 'assets/images/hero_banner.png',
+          badgeText: 'PARK & FLY',
+          badgeIcon: Icons.local_parking,
+          title: 'Parkir Aman\nSampai Pulang',
+          subtitle: 'Lahan parkir 24 jam dengan pengawasan CCTV & satpam.',
+          accent: AppColors.primary,
+        ),
+        const BannerSlide(
+          imagePath: 'assets/images/hero_banner2.jpeg',
+          badgeText: 'GRATIS SHUTTLE',
+          badgeIcon: Icons.directions_bus_filled,
+          title: 'Antar-Jemput\nLangsung ke Terminal',
+          subtitle:
+              'Layanan shuttle gratis dan cepat setiap 15 menit ke terminal.',
+          accent: Color(0xFFFF8A00),
+        ),
+        const BannerSlide(
+          imagePath: 'assets/images/hero_banner3.jpeg',
+          badgeText: 'PROMO PENGGUNA BARU',
+          badgeIcon: Icons.local_offer_rounded,
+          title: 'Diskon 20%\nBooking Pertama',
+          subtitle:
+              'Berlaku untuk semua lokasi parkir inap yang ada di bandara.',
+          accent: Color(0xFF4B4FE0),
+        ),
+      ];
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F8FA),
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leadingWidth: 56,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Icon(Icons.airport_shuttle, color: AppColors.primary),
-          ),
-          title: Text(
-            AppStrings.t('search_appbar_title'),
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          centerTitle: true,
-          actions: const [
-            Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: Color(0xFFEDEDED),
-                child: Icon(Icons.person, color: Colors.grey, size: 18),
-              ),
-            ),
-          ],
-        ),
+        appBar: const ParkirInHeaderBar(actions: [_NotificationBell()]),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeroBanner(),
-              if (_activeBooking != null) ...[
-                const SizedBox(height: 12),
-                _buildActiveBookingBanner(),
-              ],
-              const SizedBox(height: 20),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  HeroBannerCarousel(slides: _banners),
+                  if (_activeBooking != null)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: -40,
+                      child: _buildActiveBookingSlab(),
+                    ),
+                ],
+              ),
+              SizedBox(height: _activeBooking != null ? 54 : 22),
+              _buildSeamDivider(),
+              const SizedBox(height: 22),
               _buildTitle(),
               const SizedBox(height: 16),
+              _buildEyebrowLabel('PERJALANAN KAMU'),
+              const SizedBox(height: 11),
               _buildSearchCard(),
               const SizedBox(height: 16),
               _buildSearchButton(),
@@ -99,12 +138,12 @@ class _SearchScreenState extends State<SearchScreen> {
               _buildPromoBanner(),
               const SizedBox(height: 24),
               _buildWhyChooseUsTitle(),
+              const SizedBox(height: 4),
+              _buildWhyChooseList(),
               const SizedBox(height: 12),
-              _buildFeatureGrid(),
-              const SizedBox(height: 12),
-              _buildShuttleTracker(),
-              const SizedBox(height: 12),
-              _buildGroundTransportCard(),
+              _buildEyebrowLabel('AKSES & TRANSPORTASI'),
+              const SizedBox(height: 10),
+              _buildAksesGrid(),
               const SizedBox(height: 24),
             ],
           ),
@@ -113,148 +152,157 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildActiveBookingBanner() {
+  /// Overlaps the hero by 58px in the target design; scaled to ~40px here
+  /// since this carousel's hero is shorter (180px vs. the target's static
+  /// 272px), keeping a proportionally similar overlap.
+  Widget _buildActiveBookingSlab() {
     final b = _activeBooking;
     if (b == null) return const SizedBox.shrink();
 
     final isParked = b.status == BookingStatus.checkIn;
+    final statusLabel = isParked
+        ? AppStrings.t('search_active_booking_parked')
+        : AppStrings.t('search_active_booking_waiting');
+
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => BookingDetailScreen(booking: b),
-        ),
+            builder: (context) => BookingDetailScreen(booking: b)),
       ),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.primary, AppColors.primary.withOpacity(0.85)],
-          ),
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.28),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isParked
-                    ? Icons.local_parking
-                    : Icons.confirmation_number_outlined,
+            Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'ACTIVE BOOKING',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Mono',
+                    color: Colors.white.withOpacity(0.82),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.6,
+                  ),
+                ),
+                const Spacer(),
+                MaterialSymbol(MSymbols.northEast,
+                    color: Colors.white, size: 18, weight: 300),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              statusLabel,
+              style: const TextStyle(
+                fontFamily: 'Outfit',
                 color: Colors.white,
-                size: 20,
+                fontWeight: FontWeight.w700,
+                fontSize: 19,
+                letterSpacing: -0.3,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isParked
-                        ? AppStrings.t('search_active_booking_parked')
-                        : AppStrings.t('search_active_booking_waiting'),
+            const SizedBox(height: 14),
+            const _DashedDivider(),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    b.locationName,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
+                        color: Colors.white.withOpacity(0.92),
+                        fontSize: 12.5),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.45), width: 1),
+                  ),
+                  child: Text(
+                    '${AppStrings.t('bookings_slot_label').toUpperCase()} ${b.slotCode}',
                     style: const TextStyle(
+                      fontFamily: 'IBM Plex Mono',
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${b.locationName} · ${AppStrings.t('bookings_slot_label')} ${b.slotCode}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 11),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const Icon(Icons.chevron_right, color: Colors.white70),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeroBanner() {
-    return Container(
-      height: 130,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/hero_banner.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: [Colors.black.withOpacity(0.35), Colors.transparent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              left: 16,
-              top: 16,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.local_parking,
-                        color: Colors.white, size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      AppStrings.t('search_hero_badge'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  /// 1px hairline seam between the hero zone and the content zone below it
+  /// — present in the target design, absent from the previous layout.
+  Widget _buildSeamDivider() {
+    return Container(height: 1, color: AppColors.ink.withOpacity(0.14));
   }
 
   Widget _buildTitle() {
     return RichText(
       text: TextSpan(
         style: const TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          height: 1.3,
-        ),
+            fontFamily: 'Outfit',
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: AppColors.ink,
+            height: 1.28,
+            letterSpacing: -0.4),
         children: [
           TextSpan(text: AppStrings.t('search_title_1')),
           TextSpan(
-            text: AppStrings.t('search_title_2'),
-            style: TextStyle(color: AppColors.primary),
-          ),
+              text: AppStrings.t('search_title_2'),
+              style: TextStyle(color: AppColors.primary)),
         ],
       ),
     );
+  }
+
+  /// Small mono section eyebrow — matches the target design's
+  /// "PERJALANAN KAMU" / "AKSES & TRANSPORTASI" labels.
+  Widget _buildEyebrowLabel(String text) {
+    return Text(text,
+        style: const TextStyle(
+            fontFamily: 'IBM Plex Mono',
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 1.8,
+            color: AppColors.label));
   }
 
   Widget _buildSearchCard() {
@@ -262,90 +310,72 @@ class _SearchScreenState extends State<SearchScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
+              color: Colors.black.withOpacity(0.045),
+              blurRadius: 18,
+              offset: const Offset(0, 8))
         ],
       ),
       child: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.local_parking,
-                    color: AppColors.primary,
-                    size: 18,
-                  ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        const Text('CGK',
+                            style: TextStyle(
+                                fontFamily: 'IBM Plex Mono',
+                                fontSize: 19,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -0.2,
+                                color: AppColors.ink)),
+                        const SizedBox(width: 9),
+                        const Text('Soekarno Hatta',
+                            style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.3,
+                                color: AppColors.ink)),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Lokasi Parkir',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey.shade500,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'CGK - Soekarno Hatta',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.verified,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-              ],
-            ),
+              ),
+              MaterialSymbol(MSymbols.verified,
+                  color: AppColors.primary, size: 20, weight: 300),
+            ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(height: 1),
-          ),
+          const SizedBox(height: 14),
+          const PerforationDivider(),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: _DateTile(
-                  icon: Icons.login,
-                  iconColor: Colors.orange,
+                  symbol: MSymbols.flightTakeoff,
+                  iconColor: const Color(0xFFFF8A00),
                   label: AppStrings.t('search_masuk'),
                   date: checkIn,
                   onTap: () => _pickDate(isCheckIn: true),
                 ),
               ),
               Container(
-                height: 36,
-                width: 1,
-                color: Colors.grey.shade200,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-              ),
+                  height: 34,
+                  width: 1,
+                  color: AppColors.hairline,
+                  margin: const EdgeInsets.symmetric(horizontal: 10)),
               Expanded(
                 child: _DateTile(
-                  icon: Icons.logout,
+                  symbol: MSymbols.flightLand,
                   iconColor: AppColors.primary,
                   label: AppStrings.t('search_keluar'),
                   date: checkOut,
@@ -362,235 +392,254 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildSearchButton() {
     return SizedBox(
       width: double.infinity,
-      height: 52,
-      child: ElevatedButton.icon(
+      height: 54,
+      child: ElevatedButton(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => SearchResultsScreen(
-                airportName: airportName,
-                checkIn: checkIn,
-                checkOut: checkOut,
-              ),
+                  airportName: airportName,
+                  checkIn: checkIn,
+                  checkOut: checkOut),
             ),
           );
         },
-        icon: const Icon(Icons.search),
-        label: Text(
-          AppStrings.t('search_cta'),
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFF8A00),
           foregroundColor: Colors.white,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPromoBanner() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEDEEFC),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4B4FE0),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    AppStrings.t('search_promo_badge'),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  AppStrings.t('search_promo_title'),
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 2),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
-                    children: [
-                      TextSpan(text: AppStrings.t('search_promo_code_label')),
-                      const TextSpan(
-                        text: 'TERBANGAMAN',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.local_offer_outlined, color: AppColors.primary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWhyChooseUsTitle() {
-    return Text(
-      AppStrings.t('search_why_title'),
-      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-    );
-  }
-
-  Widget _buildFeatureGrid() {
-    return Row(
-      children: [
-        Expanded(
-          child: _FeatureCard(
-            icon: Icons.verified_user_outlined,
-            iconColor: Colors.green,
-            title: AppStrings.t('search_feature_slot_title'),
-            subtitle: AppStrings.t('search_feature_slot_sub'),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _FeatureCard(
-            icon: Icons.attach_money,
-            iconColor: AppColors.primary,
-            title: AppStrings.t('search_feature_biaya_title'),
-            subtitle: AppStrings.t('search_feature_biaya_sub'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildShuttleTracker() {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ShuttleTrackingScreen(
-              bookingCode: 'PKR-88213',
-              pickupPointName: 'Titik Jemput A - Lahan Parkir',
-              destinationName: 'Terminal 3, CGK',
-            ),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF1E6),
-          borderRadius: BorderRadius.circular(14),
+          shadowColor: Colors.transparent,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.airport_shuttle, color: Colors.orange),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppStrings.t('search_shuttle_title'),
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    AppStrings.t('search_shuttle_sub'),
-                    style: const TextStyle(fontSize: 11, color: Colors.black54),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.black38),
+            const MaterialSymbol(MSymbols.search,
+                color: Colors.white, size: 20, weight: 300),
+            const SizedBox(width: 8),
+            Text(AppStrings.t('search_cta'),
+                style: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildGroundTransportCard() {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const GroundTransportScreen(),
-        ),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEDF6F2),
-          borderRadius: BorderRadius.circular(14),
-        ),
+  /// Plain white card, dashed border, no shadow/icon — matches the target
+  /// design's compact promo treatment exactly (replacing the previous
+  /// tinted, icon-and-badge card).
+  Widget _buildPromoBanner() {
+    return CustomPaint(
+      painter: const _DashedBorderPainter(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.commute, color: Color(0xFF00A896)),
-            ),
-            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppStrings.t('search_ground_transport_title'),
+                    '${AppStrings.t('search_promo_badge')} · ${AppStrings.t('search_promo_title')}'
+                        .toUpperCase(),
                     style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13),
+                        fontFamily: 'IBM Plex Mono',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 1.1,
+                        color: AppColors.label),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    AppStrings.t('search_ground_transport_sub'),
-                    style: const TextStyle(fontSize: 11, color: Colors.black54),
-                  ),
+                  const SizedBox(height: 4),
+                  const Text('TERBANGAMAN',
+                      style: TextStyle(
+                          fontFamily: 'IBM Plex Mono',
+                          fontSize: 19,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                          color: AppColors.ink)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black38),
+            InkWell(
+              onTap: () {},
+              child: Text(
+                'PAKAI KODE',
+                style: TextStyle(
+                    fontFamily: 'IBM Plex Mono',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.0,
+                    color: AppColors.primary,
+                    decoration: TextDecoration.underline,
+                    decorationColor: AppColors.primary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWhyChooseUsTitle() {
+    return Text(AppStrings.t('search_why_title'),
+        style: const TextStyle(
+            fontFamily: 'Outfit',
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: AppColors.ink,
+            letterSpacing: -0.2));
+  }
+
+  /// Plain numbered list (01/02), hairline top-dividers, no cards/shadow/
+  /// icons — replaces the previous 2-column card grid.
+  Widget _buildWhyChooseList() {
+    final items = [
+      (
+        AppStrings.t('search_feature_slot_title'),
+        AppStrings.t('search_feature_slot_sub'),
+      ),
+      (
+        AppStrings.t('search_feature_biaya_title'),
+        AppStrings.t('search_feature_biaya_sub'),
+      ),
+    ];
+    return Column(
+      children: List.generate(items.length, (i) {
+        final (title, subtitle) = items[i];
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: AppColors.hairline))),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Text('0${i + 1}',
+                    style: const TextStyle(
+                        fontFamily: 'IBM Plex Mono',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.label)),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.ink,
+                            letterSpacing: -0.2)),
+                    const SizedBox(height: 5),
+                    Text(subtitle,
+                        style: const TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w300,
+                            color: AppColors.body,
+                            height: 1.55)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  /// 2-column grid, white fill, hairline border per cell, plain outlined
+  /// icon at top — replaces the previous two stacked tinted rows.
+  Widget _buildAksesGrid() {
+    // IntrinsicHeight forces a bounded-height measurement pass before the
+    // Row's CrossAxisAlignment.stretch runs — without it, stretch tries to
+    // tighten each child to the Row's incoming height constraint, which is
+    // unbounded here (Row sits inside a Column inside a
+    // SingleChildScrollView), throwing "BoxConstraints forces an infinite
+    // height" and blanking the whole scroll view.
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _buildAksesCell(
+              icon: MSymbols.directionsBusFilled,
+              title: AppStrings.t('search_shuttle_title'),
+              subtitle: AppStrings.t('search_shuttle_sub'),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ShuttleTrackingScreen(
+                    bookingCode: 'PKR-88213',
+                    pickupPointName: 'Titik Jemput A - Lahan Parkir',
+                    destinationName: 'Terminal 3, CGK',
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: _buildAksesCell(
+              icon: MSymbols.localTaxi,
+              title: AppStrings.t('search_ground_transport_title'),
+              subtitle: AppStrings.t('search_ground_transport_sub'),
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const GroundTransportScreen())),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAksesCell({
+    required int icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: AppColors.hairline),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MaterialSymbol(icon, size: 22, color: AppColors.ink, weight: 200),
+            const SizedBox(height: 28),
+            Text(title,
+                style: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                    letterSpacing: -0.15,
+                    height: 1.25)),
+            const SizedBox(height: 5),
+            Text(subtitle,
+                style: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w300,
+                    color: AppColors.body,
+                    height: 1.45)),
           ],
         ),
       ),
@@ -600,16 +649,13 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _pickDate({required bool isCheckIn}) async {
     final initial = isCheckIn ? checkIn : checkOut;
     final date = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
+        context: context,
+        initialDate: initial,
+        firstDate: DateTime.now(),
+        lastDate: DateTime.now().add(const Duration(days: 365)));
     if (date == null) return;
     final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(initial),
-    );
+        context: context, initialTime: TimeOfDay.fromDateTime(initial));
     if (time == null) return;
     setState(() {
       final combined =
@@ -623,20 +669,110 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
+/// Notification-bell header action, replacing AppHeaderAvatar on Home only.
+/// Profile stays reachable via the bottom "PROFIL" tab. Unread count uses
+/// the exact same real-data + category-filter pattern as
+/// notifications_screen.dart's `_unreadCount`.
+class _NotificationBell extends StatefulWidget {
+  const _NotificationBell();
+
+  @override
+  State<_NotificationBell> createState() => _NotificationBellState();
+}
+
+class _NotificationBellState extends State<_NotificationBell> {
+  final NotificationsApiService _notificationsApi = NotificationsApiService();
+  List<AppNotification> _notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+    NotificationPreferences.instance.addListener(_onChanged);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    NotificationPreferences.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _load() async {
+    try {
+      final json = await _notificationsApi.getNotifications();
+      final notifications = json.map(AppNotification.fromApi).toList();
+      if (!mounted) return;
+      setState(() => _notifications = notifications);
+    } catch (_) {
+      // Best-effort — the bell just shows no unread dot if this fails.
+    }
+  }
+
+  int get _unreadCount {
+    final prefs = NotificationPreferences.instance;
+    return _notifications
+        .where((n) => prefs.isCategoryEnabled(n.type.category) && !n.isRead)
+        .length;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final unread = _unreadCount;
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const NotificationsScreen())),
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              const MaterialSymbol(MSymbols.notifications,
+                  size: 24, color: AppColors.ink, weight: 200),
+              if (unread > 0)
+                Positioned(
+                  top: 9,
+                  right: 10,
+                  child: Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DateTile extends StatelessWidget {
-  final IconData icon;
+  final int symbol;
   final Color iconColor;
   final String label;
   final DateTime date;
   final VoidCallback onTap;
 
-  const _DateTile({
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.date,
-    required this.onTap,
-  });
+  const _DateTile(
+      {required this.symbol,
+      required this.iconColor,
+      required this.label,
+      required this.date,
+      required this.onTap});
 
   String get _formatted {
     const months = [
@@ -663,31 +799,30 @@ class _DateTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: iconColor),
+          MaterialSymbol(symbol, size: 17, color: iconColor, weight: 300),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey.shade500,
-                    letterSpacing: 0.5,
-                  ),
-                ),
+                Text(label,
+                    style: const TextStyle(
+                        fontFamily: 'IBM Plex Mono',
+                        fontSize: 10,
+                        color: AppColors.label,
+                        letterSpacing: 0.8,
+                        fontWeight: FontWeight.w500)),
                 const SizedBox(height: 2),
-                Text(
-                  _formatted,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                Text(_formatted,
+                    style: const TextStyle(
+                        fontFamily: 'IBM Plex Mono',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.ink),
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -697,57 +832,67 @@ class _DateTile extends StatelessWidget {
   }
 }
 
-class _FeatureCard extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-
-  const _FeatureCard({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-  });
+class _DashedDivider extends StatelessWidget {
+  const _DashedDivider();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 11, color: Colors.black54),
-          ),
-        ],
+    return SizedBox(
+      height: 1,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const dashWidth = 5.0;
+          const dashGap = 4.0;
+          final count = (constraints.maxWidth / (dashWidth + dashGap)).floor();
+          return Row(
+            children: List.generate(count, (_) {
+              return Padding(
+                padding: const EdgeInsets.only(right: dashGap),
+                child: Container(
+                  width: dashWidth,
+                  height: 1,
+                  color: Colors.white.withOpacity(0.35),
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }
+}
+
+/// Dashed rounded-rect border painter for the promo card — matches the
+/// target design's `border: 1px dashed #C3C8D2` exactly (a one-off value
+/// from the design file, distinct from the [AppColors.hairline] token).
+class _DashedBorderPainter extends CustomPainter {
+  const _DashedBorderPainter();
+
+  static const double _radius = 18;
+  static const Color _color = Color(0xFFC3C8D2);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+        Offset.zero & size, const Radius.circular(_radius));
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..color = _color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    const dashWidth = 4.0;
+    const dashSpace = 3.0;
+    for (final metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final next = distance + dashWidth;
+        canvas.drawPath(
+            metric.extractPath(distance, next.clamp(0, metric.length)), paint);
+        distance = next + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) => false;
 }

@@ -403,11 +403,15 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: isTotal ? 14 : 12,
-                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: isTotal ? 14 : 12,
+                  fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
             ),
             Text(

@@ -54,10 +54,10 @@ class AppStrings {
   }
 
   static const _id = {
-    'nav_search': 'Search',
-    'nav_bookings': 'Bookings',
-    'nav_alerts': 'Alerts',
-    'nav_profile': 'Profile',
+    'nav_search': 'CARI',
+    'nav_bookings': 'BOOKING',
+    'nav_notifications': 'NOTIFIKASI',
+    'nav_profile': 'PROFIL',
     'loc_facilities_title': 'Fasilitas Keamanan',
     'loc_accessible_note':
         'Lokasi ini ramah untuk lansia & pengguna kursi roda (dekat lift/gate).',
@@ -68,7 +68,7 @@ class AppStrings {
     'loc_reviews_title': 'Ulasan Pengguna',
     'loc_reviews_suffix': 'ulasan',
     'loc_no_reviews': 'Belum ada ulasan untuk lokasi ini.',
-    'search_appbar_title': 'ParkirIn',
+    'search_appbar_title': 'Inapandara',
     'search_hero_badge': 'PARK & FLY',
     'search_title_1': 'Solusi Parkir Inap\nBandara yang ',
     'search_title_2': 'Aman & Mudah',
@@ -82,7 +82,7 @@ class AppStrings {
     'search_ground_transport_title': 'Transportasi Lanjutan',
     'search_ground_transport_sub':
         'Taksi, bus, travel, kereta bandara, dan lainnya.',
-    'search_why_title': 'Kenapa Pilih ParkirIn?',
+    'search_why_title': 'Kenapa Pilih Inapandara?',
     'search_feature_slot_title': 'Slot Terjamin',
     'search_feature_slot_sub': 'Pasti dapat tempat, fasilitas aman 24/7.',
     'search_feature_biaya_title': 'Biaya Transparan',
@@ -517,11 +517,11 @@ class AppStrings {
   };
 
   static const _en = {
-    'nav_search': 'Search',
-    'nav_bookings': 'Bookings',
-    'nav_alerts': 'Alerts',
-    'nav_profile': 'Profile',
-    'search_appbar_title': 'ParkirIn',
+    'nav_search': 'SEARCH',
+    'nav_bookings': 'BOOKING',
+    'nav_notifications': 'NOTIFICATIONS',
+    'nav_profile': 'PROFILE',
+    'search_appbar_title': 'Inapandara',
     'search_hero_badge': 'PARK & FLY',
     'search_title_1': 'Airport Overnight\nParking Made ',
     'search_title_2': 'Safe & Easy',
@@ -535,7 +535,7 @@ class AppStrings {
     'search_ground_transport_title': 'Onward Transport',
     'search_ground_transport_sub':
         'Taxi, bus, shuttle, airport train, and more.',
-    'search_why_title': 'Why Choose ParkirIn?',
+    'search_why_title': 'Why Choose Inapandara?',
     'search_feature_slot_title': 'Guaranteed Slot',
     'search_feature_slot_sub': 'Guaranteed space, secure 24/7 facilities.',
     'search_feature_biaya_title': 'Transparent Pricing',

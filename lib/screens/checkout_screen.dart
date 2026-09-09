@@ -7,6 +7,7 @@ import '../services/bookings_api_service.dart';
 import '../services/notification_repository.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/stub_icon.dart';
 import 'ground_transport_screen.dart';
 import 'overstay_payment_screen.dart';
 
@@ -154,14 +155,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: Text(
-            AppStrings.t('checkout_appbar_title'),
-            style: const TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.bold,
-              fontSize: 17,
-            ),
-          ),
+          title: Text(AppStrings.t('checkout_appbar_title'),
+              style: const TextStyle(
+                  color: Color(0xFF16181F),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17)),
         ),
         body: _buildBody(),
       ),
@@ -201,19 +199,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.warning_amber_rounded,
-                  size: 40, color: Colors.redAccent),
-            ),
-            const SizedBox(height: 16),
+            StubIcon(
+                icon: Icons.warning_amber_rounded,
+                color: const Color(0xFFDC2626),
+                size: 64),
+            const SizedBox(height: 18),
             Text(
               AppStrings.t('checkout_overstay_prompt_title'),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF16181F)),
             ),
             const SizedBox(height: 6),
             Text(
@@ -222,22 +218,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   .replaceAll(
                       '{amount}', CurrencyFormatter.rupiah(_overstayFee)),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 22),
             SizedBox(
-              height: 46,
-              child: ElevatedButton.icon(
+              height: 50,
+              child: ElevatedButton(
                 onPressed: _payOverstay,
-                icon: const Icon(Icons.payment, size: 18),
-                label: Text(AppStrings.t('checkout_pay_overstay_btn')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 28),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.payment_rounded, size: 18),
+                    const SizedBox(width: 8),
+                    Text(AppStrings.t('checkout_pay_overstay_btn'),
+                        style: const TextStyle(fontWeight: FontWeight.w800)),
+                  ],
                 ),
               ),
             ),
@@ -258,7 +262,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 16),
             Text(
               AppStrings.t('checkout_error_title'),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
@@ -268,7 +273,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 20),
             SizedBox(
-              height: 44,
+              height: 46,
               child: ElevatedButton.icon(
                 onPressed: _loadCheckoutStatus,
                 icon: const Icon(Icons.refresh, size: 18),
@@ -276,8 +281,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                 ),
@@ -298,69 +304,69 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-          title: Text(
-            AppStrings.t('checkout_invoice_title'),
-            style: const TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.bold,
-              fontSize: 17,
-            ),
-          ),
+          title: Text(AppStrings.t('checkout_invoice_title'),
+              style: const TextStyle(
+                  color: Color(0xFF16181F),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17)),
         ),
         body: ListView(
           padding: const EdgeInsets.all(20),
           children: [
             Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child:
-                  const Icon(Icons.check_circle, color: Colors.green, size: 40),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppStrings.t('checkout_success_title'),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              AppStrings.t('checkout_success_sub'),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 20),
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                    color: const Color(0xFF16A34A).withOpacity(0.1),
+                    shape: BoxShape.circle),
+                child: const Icon(Icons.check_circle_rounded,
+                    color: Color(0xFF16A34A), size: 42)),
+            const SizedBox(height: 18),
+            Text(AppStrings.t('checkout_success_title'),
+                style: const TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF16181F),
+                    letterSpacing: -0.3)),
+            const SizedBox(height: 3),
+            Text(AppStrings.t('checkout_success_sub'),
+                style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
+            const SizedBox(height: 22),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.035),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6))
+                  ]),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${AppStrings.t('checkout_kode_booking')} ${b.bookingCode}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                  Row(
+                    children: [
+                      Icon(Icons.confirmation_num_outlined,
+                          size: 13, color: Colors.grey.shade400),
+                      const SizedBox(width: 5),
+                      Text(
+                          '${AppStrings.t('checkout_kode_booking')} ${b.bookingCode}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                              fontFamily: 'monospace',
+                              letterSpacing: 0.3)),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    b.locationName,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10),
-                    child: Divider(height: 1),
-                  ),
+                  const SizedBox(height: 4),
+                  Text(b.locationName,
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  const SizedBox(height: 14),
+                  const PerforationDivider(),
+                  const SizedBox(height: 12),
                   _row(
                       '${AppStrings.t('checkout_tarif_dasar')} (${b.durationNights} ${AppStrings.t('checkout_malam')})',
                       b.subtotal),
@@ -369,10 +375,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     _row(AppStrings.t('checkout_biaya_keterlambatan'),
                         b.overstayFee,
                         isWarning: true),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 6),
-                    child: Divider(height: 1),
-                  ),
+                  const SizedBox(height: 6),
+                  const PerforationDivider(),
+                  const SizedBox(height: 10),
                   _row(AppStrings.t('checkout_total_akhir'), b.total,
                       isTotal: true),
                 ],
@@ -381,42 +386,44 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 54,
               child: ElevatedButton(
                 onPressed: () =>
                     Navigator.popUntil(context, (route) => route.isFirst),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  AppStrings.t('checkout_selesai_btn'),
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
+                child: Text(AppStrings.t('checkout_selesai_btn').toUpperCase(),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, letterSpacing: 0.4)),
               ),
             ),
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
-              height: 46,
-              child: OutlinedButton.icon(
+              height: 50,
+              child: OutlinedButton(
                 onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const GroundTransportScreen(),
-                  ),
-                ),
-                icon: const Icon(Icons.commute, size: 18),
-                label: Text(AppStrings.t('checkout_transport_btn')),
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const GroundTransportScreen())),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.commute_rounded, size: 18),
+                    const SizedBox(width: 7),
+                    Text(AppStrings.t('checkout_transport_btn'),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13)),
+                  ],
                 ),
               ),
             ),
@@ -426,33 +433,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _row(
-    String label,
-    double amount, {
-    bool isTotal = false,
-    bool isWarning = false,
-  }) {
+  Widget _row(String label, double amount,
+      {bool isTotal = false, bool isWarning = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isTotal ? 14 : 12,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-              color: isWarning ? Colors.redAccent : Colors.black87,
-            ),
+          Expanded(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: isTotal ? 14.5 : 12,
+                    fontWeight: isTotal ? FontWeight.w800 : FontWeight.normal,
+                    color: isWarning
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFF16181F))),
           ),
-          Text(
-            CurrencyFormatter.rupiah(amount),
-            style: TextStyle(
-              fontSize: isTotal ? 14 : 12,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-              color: isWarning ? Colors.redAccent : Colors.black87,
-            ),
-          ),
+          Text(CurrencyFormatter.rupiah(amount),
+              style: TextStyle(
+                  fontSize: isTotal ? 14.5 : 12,
+                  fontWeight: isTotal ? FontWeight.w800 : FontWeight.w600,
+                  color: isWarning
+                      ? const Color(0xFFDC2626)
+                      : (isTotal
+                          ? AppColors.primary
+                          : const Color(0xFF16181F)))),
         ],
       ),
     );

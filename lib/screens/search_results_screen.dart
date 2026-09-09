@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../models/parking_location_model.dart';
+import '../services/app_settings.dart';
 import '../services/favorites_service.dart';
 import '../services/locations_api_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
-import '../widgets/empty_search_view.dart';
-import '../widgets/network_error_view.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/empty_search_view.dart';
+import '../widgets/material_symbol.dart';
+import '../widgets/network_error_view.dart';
+import '../widgets/stub_icon.dart' show PerforationDivider;
+import 'advanced_filter_screen.dart';
 import 'location_detail_screen.dart';
 import 'map_view_screen.dart';
-import 'advanced_filter_screen.dart';
 
 class SearchResultsScreen extends StatefulWidget {
   final String airportName;
@@ -28,7 +31,6 @@ class SearchResultsScreen extends StatefulWidget {
 }
 
 class _SearchResultsScreenState extends State<SearchResultsScreen> {
-  static const Color primaryBlue = Color(0xFF1E5EFF);
   final FavoritesService _favorites = FavoritesService.instance;
   final LocationsApiService _locationsApi = LocationsApiService();
   String _sortBy = 'Terdekat';
@@ -42,17 +44,19 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   @override
   void initState() {
     super.initState();
-    _favorites.addListener(_onFavoritesChanged);
+    _favorites.addListener(_onChanged);
+    AppSettings.instance.addListener(_onChanged);
     _loadLocations();
   }
 
   @override
   void dispose() {
-    _favorites.removeListener(_onFavoritesChanged);
+    _favorites.removeListener(_onChanged);
+    AppSettings.instance.removeListener(_onChanged);
     super.dispose();
   }
 
-  void _onFavoritesChanged() {
+  void _onChanged() {
     if (mounted) setState(() {});
   }
 
@@ -103,7 +107,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       case 'Termurah':
         list.sort((a, b) => a.pricePerNight.compareTo(b.pricePerNight));
         break;
-      case 'Rating Tertinggi':
+      case 'Rating':
         list.sort((a, b) => b.rating.compareTo(a.rating));
         break;
       default:
@@ -117,6 +121,20 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     return n.ceil() < 1 ? 1 : n.ceil();
   }
 
+  String get _dateRangeLabel {
+    const months = [
+      '',
+      'JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN',
+      'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'
+    ];
+    final inD = widget.checkIn;
+    final outD = widget.checkOut;
+    if (inD.month == outD.month) {
+      return '${inD.day}–${outD.day} ${months[outD.month]}';
+    }
+    return '${inD.day} ${months[inD.month]} – ${outD.day} ${months[outD.month]}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -126,24 +144,22 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+            icon: const MaterialSymbol(MSymbols.arrowBack,
+                color: AppColors.ink, size: 22, weight: 300),
             onPressed: () => Navigator.maybePop(context),
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                widget.airportName,
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '$_nights malam · ${_results.length} lokasi ditemukan',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-              ),
+              Text(widget.airportName,
+                  style: const TextStyle(
+                      fontFamily: 'Outfit',
+                      color: AppColors.ink,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800)),
+              Text('$_nights malam · ${_results.length} lokasi ditemukan',
+                  style: const TextStyle(
+                      fontFamily: 'Outfit', color: AppColors.body, fontSize: 10.5)),
             ],
           ),
         ),
@@ -167,12 +183,19 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                         _onlyAccessible = false;
                       }),
                     )
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _results.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) =>
-                          _buildLocationCard(_results[index]),
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                      children: [
+                        _buildListHeadRow(),
+                        const SizedBox(height: 10),
+                        ...List.generate(_results.length, (i) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildLocationCard(_results[i]),
+                          );
+                        }),
+                        _buildEndOfListFooter(),
+                      ],
                     ),
             ),
           ],
@@ -181,266 +204,321 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     );
   }
 
-  Widget _buildFilterBar() {
+  /// Mono "URUT: <sortBy>" / date-range row above the list — present in the
+  /// target design, absent from the previous layout.
+  Widget _buildListHeadRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('URUT: ${_sortBy.toUpperCase()}',
+            style: const TextStyle(
+                fontFamily: 'IBM Plex Mono',
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 1.6,
+                color: AppColors.label)),
+        Text(_dateRangeLabel,
+            style: const TextStyle(
+                fontFamily: 'IBM Plex Mono',
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 1.6,
+                color: AppColors.label)),
+      ],
+    );
+  }
+
+  /// "<N> dari <N> lokasi" + hint text, always shown after a non-empty
+  /// result list — present in the target design, absent from the previous
+  /// layout.
+  Widget _buildEndOfListFooter() {
+    final n = _results.length;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Row(
+      padding: const EdgeInsets.only(top: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: ['Terdekat', 'Termurah', 'Rating Tertinggi'].map((s) {
-                  final selected = _sortBy == s;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(s),
-                      selected: selected,
-                      onSelected: (_) => setState(() => _sortBy = s),
-                      selectedColor: primaryBlue,
-                      backgroundColor: Colors.white,
-                      labelStyle: TextStyle(
-                        fontSize: 11,
-                        color: selected ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: selected ? primaryBlue : Colors.grey.shade300,
-                        ),
-                      ),
-                      showCheckmark: false,
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () => setState(() => _onlyAccessible = !_onlyAccessible),
-            icon: Icon(
-              Icons.accessible,
-              color: _onlyAccessible ? primaryBlue : Colors.grey.shade400,
-            ),
-            tooltip: 'Ramah kursi roda / lansia',
-          ),
-          IconButton(
-            onPressed: () async {
-              final result = await Navigator.push<SearchFilterResult>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      AdvancedFilterScreen(initialFilter: _advancedFilter),
-                ),
-              );
-              if (result != null) setState(() => _advancedFilter = result);
-            },
-            icon: const Icon(Icons.tune, color: primaryBlue),
-            tooltip: 'Filter Lanjutan',
-          ),
-          IconButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MapViewScreen(
-                  checkIn: widget.checkIn,
-                  checkOut: widget.checkOut,
-                ),
-              ),
-            ),
-            icon: const Icon(Icons.map_outlined, color: primaryBlue),
-            tooltip: 'Lihat di Peta',
+          Text('$n DARI $n LOKASI',
+              style: const TextStyle(
+                  fontFamily: 'IBM Plex Mono',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 1.6,
+                  color: AppColors.label)),
+          const SizedBox(height: 6),
+          const Text(
+            'Perluas radius pencarian untuk melihat lokasi lain di sekitar bandara.',
+            style: TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 13,
+                fontWeight: FontWeight.w300,
+                height: 1.5,
+                color: AppColors.body),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLocationCard(ParkingLocation loc) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LocationDetailScreen(
-              location: loc,
-              checkIn: widget.checkIn,
-              checkOut: widget.checkOut,
+  Widget _buildFilterBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: ['Terdekat', 'Termurah', 'Rating'].map((s) {
+                  final selected = _sortBy == s;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: InkWell(
+                      onTap: () => setState(() => _sortBy = s),
+                      child: Container(
+                        height: 36,
+                        padding: const EdgeInsets.symmetric(horizontal: 13),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: selected ? AppColors.primary : Colors.white,
+                          border: Border.all(
+                              color: selected
+                                  ? AppColors.primary
+                                  : AppColors.hairline),
+                        ),
+                        child: Text(s,
+                            style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 13,
+                                letterSpacing: -0.1,
+                                color: selected ? Colors.white : AppColors.ink,
+                                fontWeight:
+                                    selected ? FontWeight.w500 : FontWeight.w400)),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ),
-        );
-      },
+          _iconToggle(
+              MSymbols.accessible,
+              _onlyAccessible,
+              () => setState(() => _onlyAccessible = !_onlyAccessible),
+              'Ramah kursi roda / lansia'),
+          const SizedBox(width: 8),
+          _iconToggle(MSymbols.tune, _advancedFilter != null, () async {
+            final result = await Navigator.push<SearchFilterResult>(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        AdvancedFilterScreen(initialFilter: _advancedFilter)));
+            if (result != null) setState(() => _advancedFilter = result);
+          }, 'Filter Lanjutan'),
+          const SizedBox(width: 8),
+          _iconToggle(
+              MSymbols.map,
+              false,
+              () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => MapViewScreen(
+                          checkIn: widget.checkIn, checkOut: widget.checkOut))),
+              'Lihat di Peta'),
+        ],
+      ),
+    );
+  }
+
+  Widget _iconToggle(
+      int symbol, bool active, VoidCallback onTap, String tooltip) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+                color: active ? AppColors.primary : AppColors.hairline),
+          ),
+          child: MaterialSymbol(symbol,
+              size: 20,
+              color: active ? AppColors.primary : AppColors.inactiveNav,
+              weight: 300),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationCard(ParkingLocation loc) {
+    final isFav = _favorites.isFavorite(loc.id);
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => LocationDetailScreen(
+                  location: loc,
+                  checkIn: widget.checkIn,
+                  checkOut: widget.checkOut))),
       child: Stack(
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
+                    color: Colors.black.withOpacity(0.035),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6))
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: primaryBlue.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: loc.imagePath.isNotEmpty
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      loc.imagePath.isNotEmpty
                           ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                loc.imagePath,
-                                fit: BoxFit.cover,
-                                width: 70,
-                                height: 70,
-                              ),
-                            )
-                          : Icon(
-                              loc.isIndoor
-                                  ? Icons.warehouse
-                                  : Icons.local_parking,
-                              color: primaryBlue,
-                              size: 30,
+                              borderRadius: BorderRadius.circular(4),
+                              child: Image.asset(loc.imagePath,
+                                  fit: BoxFit.cover, width: 76, height: 76))
+                          : const _ImagePlaceholder(size: 76),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 30),
+                              child: Text(loc.name,
+                                  style: const TextStyle(
+                                      fontFamily: 'Outfit',
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 17,
+                                      letterSpacing: -0.2,
+                                      color: AppColors.ink)),
                             ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(right: 32),
-                            child: Text(
-                              loc.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            loc.address,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(Icons.star,
-                                  size: 14, color: Colors.amber),
-                              const SizedBox(width: 2),
-                              Text(
-                                '${loc.rating}',
+                            const SizedBox(height: 3),
+                            Text(loc.address,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Icon(
-                                Icons.directions_car,
-                                size: 13,
-                                color: Colors.grey.shade500,
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                '${loc.distanceKm} km',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                              if (loc.isAccessible) ...[
+                                    fontFamily: 'Outfit',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w300,
+                                    color: AppColors.body)),
+                            const SizedBox(height: 7),
+                            Row(
+                              children: [
+                                const MaterialSymbol(MSymbols.star,
+                                    size: 15, color: AppColors.ink, weight: 300),
+                                const SizedBox(width: 4),
+                                Text('${loc.rating}',
+                                    style: const TextStyle(
+                                        fontFamily: 'IBM Plex Mono',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.ink)),
                                 const SizedBox(width: 10),
-                                Icon(
-                                  Icons.accessible,
-                                  size: 14,
-                                  color: Colors.teal.shade400,
-                                ),
+                                const MaterialSymbol(MSymbols.directionsCar,
+                                    size: 15, color: AppColors.label, weight: 300),
+                                const SizedBox(width: 4),
+                                Text('${loc.distanceKm} km',
+                                    style: const TextStyle(
+                                        fontFamily: 'IBM Plex Mono',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.label)),
+                                if (loc.isAccessible) ...[
+                                  const SizedBox(width: 8),
+                                  const MaterialSymbol(MSymbols.accessible,
+                                      size: 15, color: AppColors.label, weight: 300),
+                                ],
                               ],
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(height: 1),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(color: Colors.black87),
-                        children: [
-                          TextSpan(
-                            text: CurrencyFormatter.rupiah(loc.pricePerNight),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
                             ),
-                          ),
-                          TextSpan(
-                            text: ' / malam',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryBlue,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Pilih',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 13),
+                  const PerforationDivider(),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                              fontFamily: 'IBM Plex Mono', color: AppColors.ink),
+                          children: [
+                            TextSpan(
+                                text:
+                                    CurrencyFormatter.rupiah(loc.pricePerNight),
+                                style: const TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: -0.2)),
+                            const TextSpan(
+                                text: ' / malam',
+                                style: TextStyle(
+                                    fontFamily: 'Outfit',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w300,
+                                    color: AppColors.body)),
+                          ],
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => LocationDetailScreen(
+                                    location: loc,
+                                    checkIn: widget.checkIn,
+                                    checkOut: widget.checkOut))),
+                        child: Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          decoration: BoxDecoration(
+                              color: const Color(0xFFFF8A00),
+                              borderRadius: BorderRadius.circular(18)),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('Pilih',
+                                  style: TextStyle(
+                                      fontFamily: 'Outfit',
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: -0.1)),
+                              const SizedBox(width: 7),
+                              const MaterialSymbol(MSymbols.northEast,
+                                  color: Colors.white, size: 17, weight: 300),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              onPressed: () {
+            top: 12,
+            right: 12,
+            child: InkWell(
+              onTap: () {
                 _favorites.toggle(loc).catchError((Object e) {
                   if (!mounted) return;
                   showAppToast(
@@ -452,18 +530,47 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   );
                 });
               },
-              icon: Icon(
-                _favorites.isFavorite(loc.id)
-                    ? Icons.favorite
-                    : Icons.favorite_border,
-                color: _favorites.isFavorite(loc.id)
-                    ? Colors.redAccent
-                    : Colors.grey.shade400,
+              child: MaterialSymbol(
+                MSymbols.favorite,
+                filled: isFav,
+                color: isFav ? const Color(0xFFE1306C) : AppColors.inactiveNav,
                 size: 20,
+                weight: 300,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Plain square placeholder for a missing location photo — matches the
+/// target design file's own placeholder treatment ("FOTO LOKASI"), replacing
+/// the previous StubIcon angled-clip fallback.
+class _ImagePlaceholder extends StatelessWidget {
+  final double size;
+
+  const _ImagePlaceholder({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.bottomLeft,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: AppColors.canvas,
+        border: Border.all(color: AppColors.hairline),
+      ),
+      child: const Text(
+        'FOTO LOKASI',
+        style: TextStyle(
+            fontFamily: 'IBM Plex Mono',
+            fontSize: 6,
+            letterSpacing: 0.4,
+            color: AppColors.label),
       ),
     );
   }

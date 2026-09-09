@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// A vehicle as returned by the real backend (GET/POST/PATCH /vehicles).
@@ -57,7 +58,7 @@ class SavedVehicle {
 /// Not a ChangeNotifier: confirmed via a full-codebase search that nothing
 /// listens to this class anywhere, and the `provider` package isn't even a
 /// project dependency — adopting that here would be speculative.
-class UserSession {
+class UserSession extends ChangeNotifier {
   UserSession._();
   static final UserSession instance = UserSession._();
 
@@ -66,6 +67,11 @@ class UserSession {
   String name = 'Budi Santoso';
   String email = 'budi.santoso@example.com';
   String phone = '0812-3456-7890';
+  // Local-only for now (no backend endpoint yet) — a real, working feature,
+  // just not synced across devices/accounts. Unlike `vehicles` above, this
+  // is fine to keep device-local: a profile photo has no correctness
+  // requirement to match across devices the way vehicle data does.
+  String? avatarPath;
   bool _isLoaded = false;
 
   Future<void> load() async {
@@ -79,6 +85,7 @@ class UserSession {
         name = data['name'] as String? ?? name;
         email = data['email'] as String? ?? email;
         phone = data['phone'] as String? ?? phone;
+        avatarPath = data['avatarPath'] as String?;
       } catch (_) {
         // Corrupt/unreadable data — keep the hardcoded defaults above.
       }
@@ -95,11 +102,18 @@ class UserSession {
       'name': name,
       'email': email,
       'phone': phone,
+      'avatarPath': avatarPath,
     });
     await prefs.setString(_prefsKey, raw);
   }
 
   void save() {
     _persist();
+  }
+
+  void setAvatarPath(String path) {
+    avatarPath = path;
+    _persist();
+    notifyListeners();
   }
 }
